@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { X, Eye, EyeOff, Mail, Lock, User, Phone, MapPin, CheckCircle } from 'lucide-react';
 
-const RegisterPanel = ({ 
-  isOpen, 
-  onClose, 
-  onRegister, 
-  title, 
-  subtitle, 
-  type,
-  loginAction 
-}) => {
+const fraunces = { fontFamily: "'Fraunces', ui-serif, Georgia, serif" };
+const ACCENT = '#BC573E';
+
+const RegisterPanel = ({ isOpen, onClose, onRegister, title, subtitle, type, loginAction }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -17,7 +12,7 @@ const RegisterPanel = ({
     password: '',
     confirmPassword: '',
     ward: '',
-    acceptTerms: false
+    acceptTerms: false,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -34,9 +29,9 @@ const RegisterPanel = ({
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -48,19 +43,17 @@ const RegisterPanel = ({
       setError('Passwords do not match');
       return;
     }
-
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
     }
-
     if (!formData.acceptTerms) {
       setError('Please accept the terms and conditions');
       return;
     }
 
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     onRegister({
       name: formData.name,
       email: formData.email,
@@ -73,46 +66,63 @@ const RegisterPanel = ({
 
   if (!isOpen) return null;
 
+  const inputClass =
+    'w-full pl-10 pr-4 py-3 bg-white/75 border border-[#DED7C8] rounded-xl text-[#1E3247] placeholder-[#8B969B] focus:outline-none focus:ring-2 focus:ring-[#BC573E]/40 focus:border-[#BC573E]/50 transition-all';
+
+  const stepLabels = ['About you', 'Location & security', 'Confirm'];
+
   return (
-    <div 
-      className="fixed inset-0 pointer-events-auto z-50 flex justify-start"
+    <div
+      className="panel-container fixed inset-0 pointer-events-auto z-50 flex justify-start bg-[#1E3247]/45 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div 
-        className={`w-full max-w-md h-full bg-[#1A1A2E]/95 backdrop-blur-xl border-r border-white/10 shadow-2xl transform transition-all duration-500 ease-out overflow-y-auto ${
+      <div
+        className={`w-full max-w-md min-h-full border-r border-[#DED7C8] shadow-2xl transform transition-all duration-500 ease-out overflow-y-auto ${
           isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
         }`}
+        style={{ background: 'linear-gradient(175deg, #FFFDF8 0%, #F4EEE2 60%)' }}
       >
-        <div className="p-8">
+        <div className="p-5 sm:p-8">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <User className="w-6 h-6 text-green-400" />
-                <h2 className="text-2xl font-bold text-white">{title}</h2>
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 bg-[#BC573E]/10">
+                <User className="w-5 h-5 text-[#BC573E]" />
               </div>
-              <p className="text-sm text-gray-400">{subtitle}</p>
+              <h2 className="text-2xl font-semibold text-[#1E3247]" style={fraunces}>
+                {title}
+              </h2>
+              <p className="text-sm text-[#60717C] mt-1">{subtitle}</p>
             </div>
-            <button 
+            <button
               onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
+              aria-label="Close"
+              className="p-2 -mr-2 -mt-1 hover:bg-[#1E3247]/5 rounded-lg transition-colors text-[#718087] hover:text-[#1E3247]"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <div className="flex items-center gap-2 mb-6">
-            {[1, 2, 3].map((s) => (
-              <div key={s} className={`flex-1 h-1 rounded-full transition-all ${
-                s <= step ? 'bg-[#D4A02B]' : 'bg-gray-700'
-              }`} />
-            ))}
+          {/* Step indicator */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-2">
+              {[1, 2, 3].map((s) => (
+                <div
+                  key={s}
+                  className="flex-1 h-1 rounded-full transition-all duration-300"
+                  style={{ backgroundColor: s <= step ? ACCENT : 'rgba(255,255,255,0.1)' }}
+                />
+              ))}
+            </div>
+            <p className="text-xs text-[#718087]">
+              Step {step} of 3 &middot; <span className="text-[#60717C]">{stepLabels[step - 1]}</span>
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-300 text-sm">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-300 text-sm">
                 {error}
               </div>
             )}
@@ -120,48 +130,54 @@ const RegisterPanel = ({
             {step === 1 && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Full Name</label>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">
+                    Full Name
+                  </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input
                       type="text"
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="Enter your full name"
-                      className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A02B] focus:ring-1 focus:ring-[#D4A02B] transition-all"
+                      className={inputClass}
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Email Address</label>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">
+                    Email Address
+                  </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="you@example.com"
-                      className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A02B] focus:ring-1 focus:ring-[#D4A02B] transition-all"
+                      className={inputClass}
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Phone Number</label>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">
+                    Phone Number
+                  </label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input
                       type="tel"
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
                       placeholder="+91 98765 43210"
-                      className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A02B] focus:ring-1 focus:ring-[#D4A02B] transition-all"
+                      className={inputClass}
                     />
                   </div>
                 </div>
@@ -171,20 +187,24 @@ const RegisterPanel = ({
             {step === 2 && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Ward / Area</label>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">
+                    Ward / Area
+                  </label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 z-10" />
                     <select
                       name="ward"
                       value={formData.ward}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A02B] focus:ring-1 focus:ring-[#D4A02B] transition-all appearance-none"
+                      className={`${inputClass} appearance-none`}
                       required
                     >
-                      <option value="" className="bg-[#1A1A2E]">Select your ward</option>
+                      <option value="" className="bg-[#0B1E3D]">
+                        Select your ward
+                      </option>
                       {[...Array(60)].map((_, i) => (
-                        <option key={i} value={`Ward-${i+1}`} className="bg-[#1A1A2E]">
-                          Ward {i+1}
+                        <option key={i} value={`Ward-${i + 1}`} className="bg-[#0B1E3D]">
+                          Ward {i + 1}
                         </option>
                       ))}
                     </select>
@@ -192,48 +212,54 @@ const RegisterPanel = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Password</label>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">
+                    Password
+                  </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="Min 6 characters"
-                      className="w-full pl-10 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A02B] focus:ring-1 focus:ring-[#D4A02B] transition-all"
+                      className={`${inputClass} pr-12`}
                       required
                       minLength="6"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                     >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Confirm Password</label>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">
+                    Confirm Password
+                  </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="Confirm your password"
-                      className="w-full pl-10 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A02B] focus:ring-1 focus:ring-[#D4A02B] transition-all"
+                      className={`${inputClass} pr-12`}
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                     >
-                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
@@ -242,25 +268,22 @@ const RegisterPanel = ({
 
             {step === 3 && (
               <div className="space-y-6">
-                <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                  <h3 className="text-white font-semibold text-lg mb-4">Verify Your Details</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Name</span>
-                      <span className="text-white">{formData.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Email</span>
-                      <span className="text-white">{formData.email}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Phone</span>
-                      <span className="text-white">{formData.phone || 'Not provided'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Ward</span>
-                      <span className="text-white">{formData.ward || 'Not selected'}</span>
-                    </div>
+                <div className="bg-white/65 rounded-2xl p-6 border border-[#DED7C8]">
+                  <h3 className="text-[#1E3247] font-medium text-sm uppercase tracking-wide mb-4">
+                    Verify your details
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    {[
+                      ['Name', formData.name],
+                      ['Email', formData.email],
+                      ['Phone', formData.phone || 'Not provided'],
+                      ['Ward', formData.ward || 'Not selected'],
+                    ].map(([label, value]) => (
+                      <div key={label} className="flex flex-col gap-1 border-b border-white/5 pb-2 last:border-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                        <span className="text-[#718087]">{label}</span>
+                        <span className="text-[#1E3247] font-medium break-all sm:text-right">{value}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -270,16 +293,16 @@ const RegisterPanel = ({
                     name="acceptTerms"
                     checked={formData.acceptTerms}
                     onChange={handleChange}
-                    className="mt-1 w-4 h-4 rounded border-gray-600 bg-transparent text-[#D4A02B] focus:ring-[#D4A02B] focus:ring-offset-0"
+                    className="mt-1 w-4 h-4 rounded border-slate-600 bg-transparent text-[#E3A438] focus:ring-[#E3A438] focus:ring-offset-0"
                     required
                   />
-                  <span className="text-sm text-gray-400">
+                  <span className="text-sm text-[#60717C] leading-relaxed">
                     I agree to the{' '}
-                    <button type="button" className="text-[#D4A02B] hover:underline">
+                    <button type="button" className="text-[#E3A438] hover:underline">
                       Terms of Service
-                    </button>
-                    {' '}and{' '}
-                    <button type="button" className="text-[#D4A02B] hover:underline">
+                    </button>{' '}
+                    and{' '}
+                    <button type="button" className="text-[#E3A438] hover:underline">
                       Privacy Policy
                     </button>
                   </span>
@@ -292,7 +315,7 @@ const RegisterPanel = ({
                 <button
                   type="button"
                   onClick={() => setStep(step - 1)}
-                  className="flex-1 py-3 border border-white/20 text-white rounded-xl hover:bg-white/5 transition-colors"
+                  className="flex-1 py-3 border border-[#DED7C8] text-[#1E3247] rounded-xl hover:bg-white/70 transition-colors font-medium"
                 >
                   Back
                 </button>
@@ -301,7 +324,8 @@ const RegisterPanel = ({
                 <button
                   type="button"
                   onClick={() => setStep(step + 1)}
-                  className="flex-1 py-3 bg-[#D4A02B] text-[#1A1A2E] font-semibold rounded-xl hover:bg-yellow-400 transition-colors"
+                  className="flex-1 py-3 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-[#1E3247]/15"
+                  style={{ backgroundColor: ACCENT }}
                 >
                   Continue
                 </button>
@@ -309,16 +333,16 @@ const RegisterPanel = ({
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl hover:from-green-400 hover:to-green-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 py-3 bg-[#3F7D58] text-white font-semibold rounded-xl hover:bg-[#356b4a] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <span className="flex items-center justify-center gap-2">
-                      <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      Creating Account...
+                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      Creating account&hellip;
                     </span>
                   ) : (
                     <span className="flex items-center justify-center gap-2">
-                      <CheckCircle className="w-5 h-5" />
+                      <CheckCircle className="w-4 h-4" />
                       Create Account
                     </span>
                   )}
@@ -327,13 +351,9 @@ const RegisterPanel = ({
             </div>
 
             {loginAction && (
-              <p className="text-center text-sm text-gray-400 mt-4">
+              <p className="text-center text-sm text-slate-400 mt-4">
                 Already have an account?{' '}
-                <button
-                  type="button"
-                  onClick={loginAction}
-                  className="text-[#D4A02B] hover:underline"
-                >
+                <button type="button" onClick={loginAction} className="text-[#E3A438] hover:underline font-medium">
                   Sign In
                 </button>
               </p>

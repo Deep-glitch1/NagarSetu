@@ -23,9 +23,9 @@ function App() {
   };
 
   if (currentView === 'entry') {
-    return <PortalEntry 
-      onUserLogin={handleUserLogin} 
-      onAdminLogin={handleAdminLogin} 
+    return <PortalEntry
+      onUserLogin={handleUserLogin}
+      onAdminLogin={handleAdminLogin}
     />;
   }
 

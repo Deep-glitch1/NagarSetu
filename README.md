@@ -1,19 +1,54 @@
-# React + Vite
+# NagarSetu
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An AI-powered civic complaint management platform for Haldwani-Kathgodam
+Municipal Corporation, Uttarakhand. Built with React 18, Vite, and Tailwind CSS 4.
 
-Currently, two official plugins are available:
+## Getting started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev
+```
 
-## React Compiler
+Then open the URL Vite prints (usually `http://localhost:5173`).
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## Other scripts
 
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
+```bash
+npm run build     # production build into dist/
+npm run preview   # preview the production build locally
+```
 
-## Expanding the ESLint configuration
+## Demo credentials
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+The login forms are wired to hardcoded demo accounts (no backend yet):
+
+- **Citizen** &mdash; `citizen@nagarsetu.in` / `citizen123`
+- **Administrator** &mdash; `admin@nagarsetu.in` / `admin123`
+
+## Project structure
+
+```
+index.html
+src/
+  main.jsx          entry point
+  App.jsx            top-level view switcher (entry / citizen / admin)
+  index.css          Tailwind import, fonts, global styles/animations
+  components/
+    PortalEntry.jsx     landing page (citizen/admin entry points)
+    LoginPanel.jsx       login modal
+    RegisterPanel.jsx    citizen registration drawer
+    UserPortal.jsx       citizen dashboard shell (sidebar + content)
+    UserDashboard.jsx    citizen dashboard content
+    AdminPortal.jsx      administrator dashboard shell + content
+```
+
+## Notes
+
+- Tailwind CSS 4 is wired up via `@tailwindcss/vite` — no `tailwind.config.js`
+  or `postcss.config.js` needed.
+- Fonts (Inter + Fraunces) load via the `@import` at the top of `src/index.css`.
+- The sidebar in `UserPortal.jsx` / `AdminPortal.jsx` is a full off-canvas
+  drawer below the `lg` breakpoint and persistent above it — don't remove the
+  `lg:translate-x-0` / `lg:ml-72` pairing or content will end up hidden
+  behind it again on smaller screens.
