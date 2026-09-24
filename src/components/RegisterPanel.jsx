@@ -1,366 +1,1063 @@
-import React, { useState, useEffect } from 'react';
-import { X, Eye, EyeOff, Mail, Lock, User, Phone, MapPin, CheckCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import {
+  X,
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Phone,
+  CheckCircle,
+} from 'lucide-react';
 
-const fraunces = { fontFamily: "'Fraunces', ui-serif, Georgia, serif" };
-const ACCENT = '#BC573E';
+import { apiFetch } from '../api/client';
 
-const RegisterPanel = ({ isOpen, onClose, onRegister, title, subtitle, type, loginAction }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    ward: '',
-    acceptTerms: false,
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [step, setStep] = useState(1);
+const INITIAL_FORM_DATA = {
+  name: '',
+  email: '',
+  phone: '',
+  password: '',
+  confirmPassword: '',
+  acceptTerms: false,
+};
 
+const RegisterPanel = ({
+  isOpen,
+  onClose,
+  onRegister,
+  title,
+  subtitle,
+  loginAction,
+}) => {
+  const [formData, setFormData] =
+    useState(INITIAL_FORM_DATA);
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
+
+  const [isLoading, setIsLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState('');
+
+  const [step, setStep] =
+    useState(1);
+
+  // OTP state
+  const [verificationCode, setVerificationCode] =
+    useState('');
+
+  const [verificationLoading, setVerificationLoading] =
+    useState(false);
+
+  const [resendLoading, setResendLoading] =
+    useState(false);
+
+  const [resendCooldown, setResendCooldown] =
+    useState(0);
+
+  /*
+   * Reset the registration state explicitly.
+   *
+   * IMPORTANT:
+   * Do not call this when the panel opens.
+   * The user may close and reopen the panel while waiting
+   * for email verification, and the OTP flow must be preserved.
+   */
+  const resetRegistration = () => {
+    setFormData(INITIAL_FORM_DATA);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setIsLoading(false);
+    setError('');
+    setStep(1);
+
+    setVerificationCode('');
+    setVerificationLoading(false);
+    setResendLoading(false);
+    setResendCooldown(0);
+  };
+
+  /*
+   * Clear transient errors when the panel opens.
+   * Do not reset the registration flow here.
+   */
   useEffect(() => {
     if (isOpen) {
       setError('');
-      setStep(1);
     }
   }, [isOpen]);
 
+  /*
+   * Resend OTP cooldown timer.
+   */
+  useEffect(() => {
+    if (resendCooldown <= 0) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setResendCooldown((prev) =>
+        prev > 0 ? prev - 1 : 0
+      );
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  /*
+   * Handle normal form inputs.
+   */
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]:
+        type === 'checkbox'
+          ? checked
+          : value,
     }));
+
+    if (error) {
+      setError('');
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  /*
+   * Validate current registration step.
+   */
+  const validateStep = () => {
+    if (step === 1) {
+      if (!formData.name.trim()) {
+        setError(
+          'Please enter your full name.'
+        );
+        return false;
+      }
+
+      if (formData.name.trim().length < 2) {
+        setError(
+          'Name must be at least 2 characters.'
+        );
+        return false;
+      }
+
+      if (!formData.email.trim()) {
+        setError(
+          'Please enter your email address.'
+        );
+        return false;
+      }
+
+      const emailRegex =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (
+        !emailRegex.test(
+          formData.email.trim()
+        )
+      ) {
+        setError(
+          'Please enter a valid email address.'
+        );
+        return false;
+      }
+
+      if (formData.phone.trim()) {
+        const phoneRegex =
+          /^[+]?[\d\s-]{10,15}$/;
+
+        if (
+          !phoneRegex.test(
+            formData.phone.trim()
+          )
+        ) {
+          setError(
+            'Please enter a valid phone number or leave it empty.'
+          );
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    if (step === 2) {
+      if (!formData.password) {
+        setError(
+          'Please create a password.'
+        );
+        return false;
+      }
+
+      if (formData.password.length < 6) {
+        setError(
+          'Password must be at least 6 characters.'
+        );
+        return false;
+      }
+
+      if (!formData.confirmPassword) {
+        setError(
+          'Please confirm your password.'
+        );
+        return false;
+      }
+
+      if (
+        formData.password !==
+        formData.confirmPassword
+      ) {
+        setError(
+          'Passwords do not match.'
+        );
+        return false;
+      }
+
+      return true;
+    }
+
+    return true;
+  };
+
+  /*
+   * Move from step 1 -> 2 -> 3.
+   */
+  const handleNextStep = () => {
     setError('');
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+    if (!validateStep()) {
       return;
     }
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
+
+    setStep((prev) => prev + 1);
+  };
+
+  /*
+   * Go back one registration step.
+   */
+  const handleBack = () => {
+    setError('');
+    setStep((prev) => prev - 1);
+  };
+
+  /*
+   * Create citizen account.
+   *
+   * IMPORTANT:
+   * Registration does NOT authenticate the user anymore.
+   * Backend sends an OTP instead.
+   */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    setError('');
+
     if (!formData.acceptTerms) {
-      setError('Please accept the terms and conditions');
+      setError(
+        'Please accept the terms and conditions.'
+      );
+      return;
+    }
+
+    if (!validateStep()) {
       return;
     }
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    onRegister({
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      ward: formData.ward,
-    });
-    onClose();
-    setIsLoading(false);
+
+    try {
+      await apiFetch('/auth/citizen/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
+          phone: formData.phone.trim() || null,
+          password: formData.password,
+        }),
+      });
+      /*
+       * Registration succeeded.
+       *
+       * Backend has already sent the OTP.
+       * Move to verification screen.
+       */
+      setVerificationCode('');
+      setError('');
+      setResendCooldown(25);
+      setStep(4);
+    } catch (err) {
+      console.error(
+        'Citizen registration error:',
+        err
+      );
+
+      setError(
+        err.message ||
+          'Something went wrong. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  if (!isOpen) return null;
+  /*
+   * Verify the 6-digit email OTP.
+   */
+ const handleVerifyEmail = async (e) => {
+  e.preventDefault();
 
-  const inputClass =
-    'w-full pl-10 pr-4 py-3 bg-white/75 border border-[#DED7C8] rounded-xl text-[#1E3247] placeholder-[#8B969B] focus:outline-none focus:ring-2 focus:ring-[#BC573E]/40 focus:border-[#BC573E]/50 transition-all';
+  setError('');
 
-  const stepLabels = ['About you', 'Location & security', 'Confirm'];
+  if (!/^\d{6}$/.test(verificationCode)) {
+    setError(
+      'Please enter the 6-digit verification code.'
+    );
+    return;
+  }
+
+  setVerificationLoading(true);
+
+  try {
+    const data = await apiFetch(
+        '/auth/citizen/verify-email',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            email: formData.email
+              .trim()
+              .toLowerCase(),
+            code: verificationCode,
+          }),
+        }
+      );
+
+      if (!data?.user) {
+        throw new Error(
+          'Email verified, but user information was not returned.'
+        );
+      }
+
+    resetRegistration();
+    onRegister(data.user);
+    onClose(); 
+  } catch (err) {
+    console.error(
+      'Email verification error:',
+      err
+    );
+
+    setError(
+      err.message ||
+        'Unable to verify your email. Please try again.'
+    );
+  } finally {
+    setVerificationLoading(false);
+  }
+};
+  /*
+   * Resend verification OTP.
+   */
+  const handleResendVerification =
+  async () => {
+    if (
+      resendCooldown > 0 ||
+      resendLoading
+    ) {
+      return;
+    }
+
+    setError('');
+    setResendLoading(true);
+
+    try {
+      await apiFetch('/auth/citizen/resend-verification', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: formData.email.trim().toLowerCase(),
+        }),
+      });
+
+      setVerificationCode('');
+      setResendCooldown(25);
+      setError('');
+    } catch (err) {
+      console.error(
+        'Resend verification error:',
+        err
+      );
+
+      setError(
+        err.message ||
+          'Unable to resend the verification code.'
+      );
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+if (!isOpen) {
+  return null;
+}
 
   return (
     <div
-      className="panel-container fixed inset-0 pointer-events-auto z-50 flex justify-start bg-[#1E3247]/45 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+      className="panel-container auth-overlay"
+      onMouseDown={(event) => {
+        if (
+          event.target ===
+          event.currentTarget
+        ) {
+          onClose();
+        }
       }}
     >
-      <div
-        className={`w-full max-w-md min-h-full border-r border-[#DED7C8] shadow-2xl transform transition-all duration-500 ease-out overflow-y-auto ${
-          isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
-        }`}
-        style={{ background: 'linear-gradient(175deg, #FFFDF8 0%, #F4EEE2 60%)' }}
+      <section
+        className="auth-card register-auth-card"
+        aria-modal="true"
+        role="dialog"
       >
-        <div className="p-5 sm:p-8">
-          <div className="flex justify-between items-start mb-6">
+        {/* LEFT VISUAL PANEL */}
+        <div className="auth-art register-art">
+          <div className="auth-art-mark">
+            <User size={24} />
+          </div>
+
+          <p>Citizen portal</p>
+
+          <h2>
+            Your voice can make your neighbourhood better.
+          </h2>
+
+          <span>
+            Create your NagarSetu account to
+            report civic issues, follow progress,
+            and stay connected with your
+            community.
+          </span>
+
+          <div className="register-art-points">
             <div>
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 bg-[#BC573E]/10">
-                <User className="w-5 h-5 text-[#BC573E]" />
+              <CheckCircle size={17} />
+              <span>
+                Report local issues
+              </span>
+            </div>
+
+            <div>
+              <CheckCircle size={17} />
+              <span>
+                Track complaint progress
+              </span>
+            </div>
+
+            <div>
+              <CheckCircle size={17} />
+              <span>
+                Stay connected with your city
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* FORM PANEL */}
+        <div className="auth-form register-form">
+          <button
+            type="button"
+            className="auth-close"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <X size={20} />
+          </button>
+
+          <p className="auth-kicker">
+            Join NagarSetu
+          </p>
+
+          <h1>{title}</h1>
+
+          <p className="auth-subtitle">
+            {subtitle}
+          </p>
+
+          {/* STEP INDICATOR */}
+          {step < 4 && (
+            <>
+              <div className="register-steps">
+                {[1, 2, 3].map(
+                  (s) => (
+                    <React.Fragment
+                      key={s}
+                    >
+                      <div
+                        className={`register-step ${
+                          s <= step
+                            ? 'active'
+                            : ''
+                        } ${
+                          s < step
+                            ? 'completed'
+                            : ''
+                        }`}
+                      >
+                        {s < step ? (
+                          <CheckCircle
+                            size={15}
+                          />
+                        ) : (
+                          s
+                        )}
+                      </div>
+
+                      {s < 3 && (
+                        <div
+                          className={`register-step-line ${
+                            s < step
+                              ? 'active'
+                              : ''
+                          }`}
+                        />
+                      )}
+                    </React.Fragment>
+                  )
+                )}
               </div>
-              <h2 className="text-2xl font-semibold text-[#1E3247]" style={fraunces}>
-                {title}
-              </h2>
-              <p className="text-sm text-[#60717C] mt-1">{subtitle}</p>
-            </div>
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="p-2 -mr-2 -mt-1 hover:bg-[#1E3247]/5 rounded-lg transition-colors text-[#718087] hover:text-[#1E3247]"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
 
-          {/* Step indicator */}
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-2">
-              {[1, 2, 3].map((s) => (
-                <div
-                  key={s}
-                  className="flex-1 h-1 rounded-full transition-all duration-300"
-                  style={{ backgroundColor: s <= step ? ACCENT : 'rgba(255,255,255,0.1)' }}
-                />
-              ))}
-            </div>
-            <p className="text-xs text-[#718087]">
-              Step {step} of 3 &middot; <span className="text-[#60717C]">{stepLabels[step - 1]}</span>
-            </p>
-          </div>
+              <div className="register-step-label">
+                <span>
+                  {step === 1 &&
+                    'About you'}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+                  {step === 2 &&
+                    'Security'}
+
+                  {step === 3 &&
+                    'Confirm details'}
+                </span>
+
+                <span>
+                  Step {step} of 3
+                </span>
+              </div>
+            </>
+          )}
+
+          <form
+            onSubmit={
+              step === 4
+                ? handleVerifyEmail
+                : handleSubmit
+            }
+            className="register-form-body"
+          >
+            {/* ERROR */}
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-300 text-sm">
+              <div className="auth-error register-error">
                 {error}
               </div>
             )}
 
+            {/* STEP 1 */}
             {step === 1 && (
-              <>
-                <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <div className="register-fields">
+                <label>
+                  Full name
+
+                  <span className="auth-input">
+                    <User size={17} />
+
                     <input
                       type="text"
                       name="name"
-                      value={formData.name}
-                      onChange={handleChange}
+                      value={
+                        formData.name
+                      }
+                      onChange={
+                        handleChange
+                      }
                       placeholder="Enter your full name"
-                      className={inputClass}
                       required
                     />
-                  </div>
-                </div>
+                  </span>
+                </label>
 
-                <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <label>
+                  Email address
+
+                  <span className="auth-input">
+                    <Mail size={17} />
+
                     <input
                       type="email"
                       name="email"
-                      value={formData.email}
-                      onChange={handleChange}
+                      value={
+                        formData.email
+                      }
+                      onChange={
+                        handleChange
+                      }
                       placeholder="you@example.com"
-                      className={inputClass}
                       required
                     />
-                  </div>
-                </div>
+                  </span>
+                </label>
 
-                <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">
-                    Phone Number
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <label>
+                  Phone number
+
+                  <span className="register-optional">
+                    Optional
+                  </span>
+
+                  <span className="auth-input">
+                    <Phone size={17} />
+
                     <input
                       type="tel"
                       name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
+                      value={
+                        formData.phone
+                      }
+                      onChange={
+                        handleChange
+                      }
                       placeholder="+91 98765 43210"
-                      className={inputClass}
                     />
-                  </div>
-                </div>
-              </>
-            )}
-
-            {step === 2 && (
-              <>
-                <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">
-                    Ward / Area
-                  </label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 z-10" />
-                    <select
-                      name="ward"
-                      value={formData.ward}
-                      onChange={handleChange}
-                      className={`${inputClass} appearance-none`}
-                      required
-                    >
-                      <option value="" className="bg-[#0B1E3D]">
-                        Select your ward
-                      </option>
-                      {[...Array(60)].map((_, i) => (
-                        <option key={i} value={`Ward-${i + 1}`} className="bg-[#0B1E3D]">
-                          Ward {i + 1}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      placeholder="Min 6 characters"
-                      className={`${inputClass} pr-12`}
-                      required
-                      minLength="6"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      placeholder="Confirm your password"
-                      className={`${inputClass} pr-12`}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {step === 3 && (
-              <div className="space-y-6">
-                <div className="bg-white/65 rounded-2xl p-6 border border-[#DED7C8]">
-                  <h3 className="text-[#1E3247] font-medium text-sm uppercase tracking-wide mb-4">
-                    Verify your details
-                  </h3>
-                  <div className="space-y-3 text-sm">
-                    {[
-                      ['Name', formData.name],
-                      ['Email', formData.email],
-                      ['Phone', formData.phone || 'Not provided'],
-                      ['Ward', formData.ward || 'Not selected'],
-                    ].map(([label, value]) => (
-                      <div key={label} className="flex flex-col gap-1 border-b border-white/5 pb-2 last:border-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                        <span className="text-[#718087]">{label}</span>
-                        <span className="text-[#1E3247] font-medium break-all sm:text-right">{value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="acceptTerms"
-                    checked={formData.acceptTerms}
-                    onChange={handleChange}
-                    className="mt-1 w-4 h-4 rounded border-slate-600 bg-transparent text-[#E3A438] focus:ring-[#E3A438] focus:ring-offset-0"
-                    required
-                  />
-                  <span className="text-sm text-[#60717C] leading-relaxed">
-                    I agree to the{' '}
-                    <button type="button" className="text-[#E3A438] hover:underline">
-                      Terms of Service
-                    </button>{' '}
-                    and{' '}
-                    <button type="button" className="text-[#E3A438] hover:underline">
-                      Privacy Policy
-                    </button>
                   </span>
                 </label>
               </div>
             )}
 
-            <div className="flex gap-3 pt-4">
-              {step > 1 && (
+            {/* STEP 2 */}
+            {step === 2 && (
+              <div className="register-fields">
+                <label>
+                  Password
+
+                  <span className="auth-input">
+                    <Lock size={17} />
+
+                    <input
+                      type={
+                        showPassword
+                          ? 'text'
+                          : 'password'
+                      }
+                      name="password"
+                      value={
+                        formData.password
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      placeholder="Create a password"
+                      minLength="6"
+                      required
+                    />
+
+                    <button
+                      type="button"
+                      className="auth-input-action"
+                      onClick={() =>
+                        setShowPassword(
+                          !showPassword
+                        )
+                      }
+                      aria-label={
+                        showPassword
+                          ? 'Hide password'
+                          : 'Show password'
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff
+                          size={17}
+                        />
+                      ) : (
+                        <Eye
+                          size={17}
+                        />
+                      )}
+                    </button>
+                  </span>
+                </label>
+
+                <label>
+                  Confirm password
+
+                  <span className="auth-input">
+                    <Lock size={17} />
+
+                    <input
+                      type={
+                        showConfirmPassword
+                          ? 'text'
+                          : 'password'
+                      }
+                      name="confirmPassword"
+                      value={
+                        formData.confirmPassword
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      placeholder="Re-enter your password"
+                      required
+                    />
+
+                    <button
+                      type="button"
+                      className="auth-input-action"
+                      onClick={() =>
+                        setShowConfirmPassword(
+                          !showConfirmPassword
+                        )
+                      }
+                      aria-label={
+                        showConfirmPassword
+                          ? 'Hide password'
+                          : 'Show password'
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff
+                          size={17}
+                        />
+                      ) : (
+                        <Eye
+                          size={17}
+                        />
+                      )}
+                    </button>
+                  </span>
+                </label>
+
+                <div className="register-security-note">
+                  <Lock size={16} />
+
+                  <div>
+                    <strong>
+                      Your account is protected
+                    </strong>
+
+                    <span>
+                      Use at least 6
+                      characters for
+                      your password.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3 */}
+            {step === 3 && (
+              <div className="register-confirm">
+                <div className="register-success-icon">
+                  <CheckCircle
+                    size={27}
+                  />
+                </div>
+
+                <h3>
+                  Almost there
+                </h3>
+
+                <p>
+                  Check your details
+                  before creating your
+                  NagarSetu account.
+                </p>
+
+                <div className="register-summary">
+                  <div>
+                    <span>
+                      Name
+                    </span>
+
+                    <strong>
+                      {formData.name}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Email
+                    </span>
+
+                    <strong>
+                      {formData.email}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Phone
+                    </span>
+
+                    <strong>
+                      {formData.phone ||
+                        'Not provided'}
+                    </strong>
+                  </div>
+                </div>
+
+                <label className="register-terms">
+                  <input
+                    type="checkbox"
+                    name="acceptTerms"
+                    checked={
+                      formData.acceptTerms
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    required
+                  />
+
+                  <span>
+                    I agree to the{' '}
+                    <button
+                      type="button"
+                    >
+                      Terms of Service
+                    </button>{' '}
+                    and{' '}
+                    <button
+                      type="button"
+                    >
+                      Privacy Policy
+                    </button>
+                    .
+                  </span>
+                </label>
+              </div>
+            )}
+
+            {/* STEP 4 - EMAIL VERIFICATION */}
+            {step === 4 && (
+              <div className="register-confirm">
+                <div className="register-success-icon">
+                  <Mail size={27} />
+                </div>
+
+                <h3>
+                  Verify your email
+                </h3>
+
+                <p>
+                  We sent a 6-digit
+                  verification code to
+                </p>
+
+                <strong
+                  style={{
+                    display: 'block',
+                    marginTop: '6px',
+                    color: '#1E3247',
+                    wordBreak:
+                      'break-word',
+                  }}
+                >
+                  {formData.email}
+                </strong>
+
+                <div
+                  style={{
+                    marginTop: '22px',
+                  }}
+                >
+                  <label>
+                    Verification code
+
+                    <span className="auth-input">
+                      <Mail
+                        size={17}
+                      />
+
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={6}
+                        value={
+                          verificationCode
+                        }
+                        onChange={(e) => {
+                          const value =
+                            e.target.value.replace(
+                              /\D/g,
+                              ''
+                            );
+
+                          setVerificationCode(
+                            value
+                          );
+
+                          if (error) {
+                            setError('');
+                          }
+                        }}
+                        placeholder="Enter 6-digit code"
+                        autoFocus
+                      />
+                    </span>
+                  </label>
+                </div>
+
+                <p
+                  style={{
+                    marginTop: '14px',
+                    fontSize: '13px',
+                    color: '#7A858A',
+                  }}
+                >
+                  The code expires
+                  after 60 seconds.
+                </p>
+
                 <button
                   type="button"
-                  onClick={() => setStep(step - 1)}
-                  className="flex-1 py-3 border border-[#DED7C8] text-[#1E3247] rounded-xl hover:bg-white/70 transition-colors font-medium"
+                  className="auth-secondary"
+                  onClick={
+                    handleResendVerification
+                  }
+                  disabled={
+                    resendCooldown >
+                      0 ||
+                    resendLoading ||
+                    verificationLoading
+                  }
+                  style={{
+                    marginTop: '10px',
+                    width: '100%',
+                  }}
                 >
-                  Back
+                  {resendLoading
+                    ? 'Sending…'
+                    : resendCooldown >
+                      0
+                    ? `Resend code in ${resendCooldown}s`
+                    : 'Resend verification code'}
                 </button>
-              )}
-              {step < 3 ? (
-                <button
-                  type="button"
-                  onClick={() => setStep(step + 1)}
-                  className="flex-1 py-3 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-[#1E3247]/15"
-                  style={{ backgroundColor: ACCENT }}
-                >
-                  Continue
-                </button>
-              ) : (
+              </div>
+            )}
+
+            {/* ACTIONS FOR STEPS 1-3 */}
+            {step < 4 && (
+              <div className="register-actions">
+                {step > 1 && (
+                  <button
+                    type="button"
+                    className="auth-secondary"
+                    onClick={
+                      handleBack
+                    }
+                    disabled={
+                      isLoading
+                    }
+                  >
+                    Back
+                  </button>
+                )}
+
+                {step < 3 ? (
+                  <button
+                    type="button"
+                    className="auth-submit"
+                    onClick={
+                      handleNextStep
+                    }
+                    disabled={
+                      isLoading
+                    }
+                  >
+                    Continue
+                    <span>→</span>
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="auth-submit"
+                    disabled={
+                      isLoading
+                    }
+                  >
+                    {isLoading ? (
+                      <>
+                        <span className="register-spinner" />
+                        Creating account…
+                      </>
+                    ) : (
+                      <>
+                        Create account
+                        <CheckCircle
+                          size={17}
+                        />
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* ACTIONS FOR OTP */}
+            {step === 4 && (
+              <div className="register-actions">
                 <button
                   type="submit"
-                  disabled={isLoading}
-                  className="flex-1 py-3 bg-[#3F7D58] text-white font-semibold rounded-xl hover:bg-[#356b4a] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="auth-submit"
+                  disabled={
+                    verificationLoading ||
+                    verificationCode.length !==
+                      6
+                  }
                 >
-                  {isLoading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      Creating account&hellip;
-                    </span>
+                  {verificationLoading ? (
+                    <>
+                      <span className="register-spinner" />
+                      Verifying…
+                    </>
                   ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      <CheckCircle className="w-4 h-4" />
-                      Create Account
-                    </span>
+                    <>
+                      Verify email
+                      <CheckCircle
+                        size={17}
+                      />
+                    </>
                   )}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
+          </form>
 
-            {loginAction && (
-              <p className="text-center text-sm text-slate-400 mt-4">
+          {/* LOGIN LINK */}
+          {loginAction &&
+            step < 4 && (
+              <p className="register-login">
                 Already have an account?{' '}
-                <button type="button" onClick={loginAction} className="text-[#E3A438] hover:underline font-medium">
-                  Sign In
+
+                <button
+                  type="button"
+                  onClick={loginAction}
+                >
+                  Sign in
                 </button>
               </p>
             )}
-          </form>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
