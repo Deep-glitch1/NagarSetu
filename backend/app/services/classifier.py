@@ -1,89 +1,90 @@
 """
-ML Classifier Service — Algorithm 1
+NagarSetu image classification service.
 
-NagarSetu uses a CNN (MobileNetV2 + transfer learning) to classify
-a citizen's complaint photo into one of five civic categories:
-
-    POTHOLE, GARBAGE, STREET_LIGHT, WATER_LEAK, ROAD_DAMAGE
-
-STATUS: STUB
------------
-The real trained model is not ready yet. This module returns a
-fixed category so that the rest of the complaint pipeline
-(duplicate detection, routing, priority scoring, DB persistence)
-can be built and tested independently of ML training.
-
-REPLACEMENT PLAN
-----------------
-When the real model is trained:
-
-    1. Save it to: app/models/civic_classifier.keras
-    2. Replace the body of classify_photo() below.
-    3. Do NOT change the return signature — the pipeline depends on it.
-
-The rest of the system will continue working without any changes.
+EfficientNetV2-S model with 4 classes:
+- GARBAGE
+- GOOD_ROAD
+- OTHER
+- ROAD_DAMAGED
 """
 
 from typing import TypedDict
 
-
-class ClassificationResult(TypedDict):
-    category_code: str   # UPPERCASE code matching complaint_categories.code
-    confidence: float    # 0.0 – 1.0
-
-
-# The five categories the real model will be trained on.
-# These MUST match the codes in the complaint_categories table.
-SUPPORTED_CATEGORIES = (
-    "POTHOLE",
-    "GARBAGE",
-    "STREET_LIGHT",
-    "WATER_LEAK",
-    "ROAD_DAMAGE",
+from app.ml.predict import (
+    model,
+    transform,
+    device,
+    CLASS_NAMES,
 )
 
+import torch
+from PIL import Image
+import io
+
+
+# ============================================================
+# RESULT TYPE
+# ============================================================
+
+class ClassificationResult(TypedDict):
+    category_code: str
+    confidence: float
+
+
+# ============================================================
+# CLASSIFICATION
+# ============================================================
 
 def classify_photo(photo_bytes: bytes) -> ClassificationResult:
     """
-    Classify a civic complaint photo into a category.
+    Classify a citizen-submitted complaint photo.
 
-    Parameters
-    ----------
-    photo_bytes : bytes
-        Raw bytes of the uploaded image file.
+    Args:
+        photo_bytes: Raw image bytes.
 
-    Returns
-    -------
-    ClassificationResult
-        A dict with two keys:
-            category_code : str   — matches complaint_categories.code
-            confidence    : float — 0.0 to 1.0
-
-    Notes
-    -----
-    STUB IMPLEMENTATION.
-    Always returns POTHOLE with confidence 0.95.
-
-    The real implementation will:
-        1. Load civic_classifier.keras into memory at app startup.
-        2. Resize the incoming image to 224x224.
-        3. Normalise pixel values to 0–1.
-        4. Run inference.
-        5. Apply argmax to pick the winning class.
+    Returns:
+        {
+            "category_code": "ROAD_DAMAGED",
+            "confidence": 0.95
+        }
     """
 
-    # --------------------------------------------------------
-    # Sanity check — reject empty input even in stub mode.
-    # --------------------------------------------------------
-
     if not photo_bytes:
-        raise ValueError("classify_photo received empty photo bytes")
+        raise ValueError("photo_bytes cannot be empty")
 
-    # --------------------------------------------------------
-    # STUB RETURN
-    # --------------------------------------------------------
+    # Convert bytes -> PIL Image
+    image = Image.open(
+        io.BytesIO(photo_bytes)
+    ).convert("RGB")
+
+    # Same preprocessing used during training
+    image_tensor = transform(image)
+
+    # Add batch dimension
+    image_tensor = image_tensor.unsqueeze(0)
+
+    # Move to CPU/GPU
+    image_tensor = image_tensor.to(device)
+
+    # Prediction
+    with torch.no_grad():
+
+        output = model(image_tensor)
+
+        probabilities = torch.softmax(
+            output,
+            dim=1
+        )
+
+        confidence, predicted_index = torch.max(
+            probabilities,
+            dim=1
+        )
+
+    predicted_index = predicted_index.item()
+    confidence = confidence.item()
 
     return {
-        "category_code": "POTHOLE",
-        "confidence": 0.95,
+        "category_code": CLASS_NAMES[predicted_index],
+        "confidence": float(confidence),
     }

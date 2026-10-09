@@ -17,6 +17,11 @@ __pycache__/
 venv/
 env/
 
+# Backend-generated files and local ML artifacts
+backend/uploads/
+*.pth
+backend/app/ml/test_*.jpg
+
 # Test, coverage, and tool caches
 .pytest_cache/
 .mypy_cache/

@@ -4,16 +4,28 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.connection import check_database_connection
 
+from app.routers import ml
 from app.routers import auth
 from app.routers import citizen
+from app.routers import complaint
+from pathlib import Path
 
+from fastapi.staticfiles import StaticFiles
 app = FastAPI(
     title="NagarSetu API",
     description="Civic Complaint Management System",
     version="1.0.0",
 )
 
+BASE_DIR = Path(__file__).resolve().parents[1]
 
+UPLOADS_DIR = BASE_DIR / "uploads"
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory=UPLOADS_DIR),
+    name="uploads",
+)
 # ============================================================
 # CORS
 # ============================================================
@@ -37,7 +49,8 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(citizen.router)
-
+app.include_router(ml.router)
+app.include_router(complaint.router)
 # ============================================================
 # ROOT
 # ============================================================

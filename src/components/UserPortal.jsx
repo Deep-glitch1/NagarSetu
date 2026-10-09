@@ -13,8 +13,15 @@ import CivicShell from './CivicShell';
 import CitizenProfile from './CitizenProfile';
 import CitizenDashboard from './citizen/CitizenDashboard';
 import AccountSettings from './citizen/AccountSettings';
+import ReportIssue from './citizen/ReportIssue';
+import MyComplaints from './citizen/MyComplaints';
+import MyImpact from './citizen/MyImpact';
 
-const UserPortal = ({userData,onLogout,onProfileUpdate,}) => {
+const UserPortal = ({
+  userData,
+  onLogout,
+  onProfileUpdate,
+}) => {
   /*
    * UserPortal owns the current page.
    * CivicShell only displays the navigation and
@@ -23,6 +30,7 @@ const UserPortal = ({userData,onLogout,onProfileUpdate,}) => {
    * Child components can also call onNavigate()
    * to move the user to another tab.
    */
+
   const [activeTab, setActiveTab] =
     useState('dashboard');
 
@@ -92,9 +100,17 @@ const UserPortal = ({userData,onLogout,onProfileUpdate,}) => {
             onProfileUpdate={onProfileUpdate}
             onLogout={onLogout}
           />
+        ) : currentTab === 'report' ? (
+          <ReportIssue />
         ) : currentTab === 'settings' ? (
           <AccountSettings />
-        ) : (
+        ) : currentTab === 'complaints' ? (
+          <MyComplaints />
+        ) : currentTab === 'achievements' ? (
+          <MyImpact />
+        ) : currentTab === 'settings' ? (
+          <AccountSettings />
+        ) :(
           <div className="civic-empty">
             {activeItem?.icon &&
               React.createElement(
