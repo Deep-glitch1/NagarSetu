@@ -10,14 +10,6 @@ EfficientNetV2-S model with 4 classes:
 
 from typing import TypedDict
 
-from app.ml.predict import (
-    model,
-    transform,
-    device,
-    CLASS_NAMES,
-)
-
-import torch
 from PIL import Image
 import io
 
@@ -51,6 +43,20 @@ def classify_photo(photo_bytes: bytes) -> ClassificationResult:
 
     if not photo_bytes:
         raise ValueError("photo_bytes cannot be empty")
+
+    try:
+        from app.ml.predict import (
+            model,
+            transform,
+            device,
+            CLASS_NAMES,
+        )
+        import torch
+    except (FileNotFoundError, PermissionError) as exc:
+        raise RuntimeError(
+            "Image classification is unavailable because the trained model "
+            "file is missing or is not a readable file."
+        ) from exc
 
     # Convert bytes -> PIL Image
     image = Image.open(

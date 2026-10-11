@@ -24,7 +24,12 @@ export async function apiFetch(path, options = {}) {
   }
 
   if (response.status === 401) {
-    const error = new Error('Session expired');
+    const error = new Error(
+      data?.detail ||
+        (path === '/auth/me'
+          ? 'Session expired'
+          : 'Authentication failed.')
+    );
     error.status = 401;
     throw error;
   }

@@ -7,6 +7,7 @@ import {
   Settings,
   Camera,
   UserCircle,
+  Truck,
 } from 'lucide-react';
 
 import CivicShell from './CivicShell';
@@ -16,6 +17,7 @@ import AccountSettings from './citizen/AccountSettings';
 import ReportIssue from './citizen/ReportIssue';
 import MyComplaints from './citizen/MyComplaints';
 import MyImpact from './citizen/MyImpact';
+import WasteCollectionTracking from './citizen/WasteCollectionTracking';
 
 const UserPortal = ({
   userData,
@@ -57,6 +59,12 @@ const UserPortal = ({
       id: 'complaints',
       label: 'My complaints',
       icon: MapPin,
+    },
+
+    {
+      id: 'waste-tracking',
+      label: 'Waste collection',
+      icon: Truck,
     },
 
     {
@@ -108,9 +116,9 @@ const UserPortal = ({
           <MyComplaints />
         ) : currentTab === 'achievements' ? (
           <MyImpact />
-        ) : currentTab === 'settings' ? (
-          <AccountSettings />
-        ) :(
+        ) : currentTab === 'waste-tracking' ? (
+          <WasteCollectionTracking />
+        ) : (
           <div className="civic-empty">
             {activeItem?.icon &&
               React.createElement(
