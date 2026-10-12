@@ -145,176 +145,6 @@ def get_my_tasks(
     }
 
 
-# ============================================================
-# GET MY TASK DETAIL
-# GET /employee/complaints/{complaint_id}/task
-# ============================================================
-
-@employee_router.get("/{complaint_id}/task")
-def get_my_task_detail(
-    complaint_id: int,
-    current_user: dict = Depends(get_current_identity),
-    db: Session = Depends(get_db),
-):
-    """Return a complaint only when it is actively assigned to this employee."""
-
-    require_employee(current_user)
-
-    require_employee_permission(
-        db=db,
-        employee_id=int(current_user["id"]),
-        permission_code="COMPLAINT_UPDATE_STATUS",
-    )
-
-    assignment = db.execute(
-        text(
-            """
-            SELECT
-                ca.officer_id,
-                ca.assigned_at,
-                e.employee_id AS officer_employee_id,
-                e.name AS officer_name
-            FROM complaint_assignments ca
-            JOIN employees e
-                ON e.id = ca.officer_id
-            WHERE ca.complaint_id = :complaint_id
-              AND ca.officer_id = :employee_id
-              AND ca.unassigned_at IS NULL
-              AND e.is_active = TRUE
-            LIMIT 1
-            """
-        ),
-        {
-            "complaint_id": complaint_id,
-            "employee_id": int(current_user["id"]),
-        },
-    ).mappings().first()
-
-    if assignment is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task not found or it is not assigned to you.",
-        )
-
-    result = db.execute(
-        text(
-            """
-            SELECT
-                c.id,
-                c.complaint_number,
-                cc.code AS category,
-                cc.name AS category_name,
-                c.title,
-                c.description,
-                c.latitude,
-                c.longitude,
-                c.status,
-                c.priority,
-                c.department_id,
-                d.name AS department_name,
-                c.master_complaint_id,
-                c.created_at,
-                c.updated_at
-            FROM complaints c
-            JOIN complaint_categories cc
-                ON cc.id = c.category_id
-            LEFT JOIN departments d
-                ON d.id = c.department_id
-            WHERE c.id = :complaint_id
-            LIMIT 1
-            """
-        ),
-        {"complaint_id": complaint_id},
-    ).mappings().first()
-
-    if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Complaint not found.",
-        )
-
-    photos = db.execute(
-        text(
-            """
-            SELECT
-                id,
-                photo_url,
-                photo_type,
-                uploaded_at
-            FROM complaint_photos
-            WHERE complaint_id = :complaint_id
-            ORDER BY uploaded_at ASC
-            """
-        ),
-        {"complaint_id": complaint_id},
-    ).mappings().all()
-
-    history = db.execute(
-        text(
-            """
-            SELECT
-                id,
-                old_status,
-                new_status,
-                remarks,
-                changed_at
-            FROM status_history
-            WHERE complaint_id = :complaint_id
-            ORDER BY changed_at ASC
-            """
-        ),
-        {"complaint_id": complaint_id},
-    ).mappings().all()
-
-    complaint = {
-        "id": int(result["id"]),
-        "complaint_number": result["complaint_number"],
-        "category": result["category"],
-        "category_name": result["category_name"],
-        "title": result["title"],
-        "description": result["description"],
-        "latitude": result["latitude"],
-        "longitude": result["longitude"],
-        "status": result["status"],
-        "priority": result["priority"],
-        "department_id": result["department_id"],
-        "department_name": result["department_name"],
-        "master_complaint_id": result["master_complaint_id"],
-        "is_duplicate": result["master_complaint_id"] is not None,
-        "created_at": result["created_at"],
-        "updated_at": result["updated_at"],
-        "assignment": {
-            "officer_id": int(assignment["officer_id"]),
-            "employee_id": assignment["officer_employee_id"],
-            "name": assignment["officer_name"],
-            "assigned_at": assignment["assigned_at"],
-        },
-        "photos": [
-            {
-                "id": int(photo["id"]),
-                "photo_url": photo["photo_url"],
-                "photo_type": photo["photo_type"],
-                "uploaded_at": photo["uploaded_at"],
-            }
-            for photo in photos
-        ],
-        "status_history": [
-            {
-                "id": int(item["id"]),
-                "old_status": item["old_status"],
-                "new_status": item["new_status"],
-                "remarks": item["remarks"],
-                "changed_at": item["changed_at"],
-            }
-            for item in history
-        ],
-    }
-
-    return {
-        "success": True,
-        "complaint": complaint,
-    }
-
 
 # ============================================================
 # GET EMPLOYEE COMPLAINT QUEUE
@@ -479,6 +309,295 @@ def get_employee_complaints(
         "success": True,
         "count": len(complaints),
         "complaints": complaints,
+    }
+
+
+# ============================================================
+# GET MY TASK DETAILS
+# GET /employee/complaints/{complaint_id}/task
+# ============================================================
+
+@employee_router.get("/{complaint_id}/task")
+def get_my_task_details(
+    complaint_id: int,
+    current_user: dict = Depends(get_current_identity),
+    db: Session = Depends(get_db),
+):
+    """
+    Return complete details for a complaint currently assigned
+    to the authenticated employee.
+
+    Access is restricted by the active assignment, not merely
+    by department or jurisdiction visibility.
+    """
+
+    if current_user.get("role") != "employee":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only employees can view task details.",
+        )
+
+    employee_id = int(current_user["id"])
+
+    row = db.execute(
+        text(
+            """
+            SELECT
+                c.id,
+                c.complaint_number,
+                cc.id AS category_id,
+                cc.code AS category,
+                cc.name AS category_name,
+                c.title,
+                c.description,
+                c.latitude,
+                c.longitude,
+                c.status,
+                c.priority,
+                c.department_id,
+                d.name AS department_name,
+                c.master_complaint_id,
+                c.created_at,
+                c.updated_at,
+
+                ca.id AS assignment_id,
+                ca.officer_id,
+                ca.assigned_at,
+                ca.assigned_by,
+                officer.employee_id AS officer_employee_id,
+                officer.name AS officer_name,
+                officer.email AS officer_email,
+
+                assigner.name AS assigned_by_name,
+
+                sla.target_hours,
+                sla.warning_percentage,
+                sla.supervisor_percentage,
+                sla.overdue_percentage,
+                sla.critical_backlog_percentage
+
+            FROM complaint_assignments ca
+
+            JOIN complaints c
+                ON c.id = ca.complaint_id
+
+            JOIN complaint_categories cc
+                ON cc.id = c.category_id
+
+            LEFT JOIN departments d
+                ON d.id = c.department_id
+
+            JOIN employees officer
+                ON officer.id = ca.officer_id
+
+            LEFT JOIN employees assigner
+                ON assigner.id = ca.assigned_by
+
+            LEFT JOIN complaint_sla sla
+                ON sla.category_id = c.category_id
+
+            WHERE ca.complaint_id = :complaint_id
+              AND ca.officer_id = :employee_id
+              AND ca.unassigned_at IS NULL
+
+            LIMIT 1
+            """
+        ),
+        {
+            "complaint_id": complaint_id,
+            "employee_id": employee_id,
+        },
+    ).mappings().first()
+
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found or is not assigned to you.",
+        )
+
+    # --------------------------------------------------------
+    # PHOTOS
+    # --------------------------------------------------------
+
+    photos = db.execute(
+        text(
+            """
+            SELECT
+                id,
+                photo_url,
+                photo_type,
+                uploaded_by,
+                uploaded_at
+            FROM complaint_photos
+            WHERE complaint_id = :complaint_id
+            ORDER BY uploaded_at ASC
+            """
+        ),
+        {
+            "complaint_id": complaint_id,
+        },
+    ).mappings().all()
+
+    # --------------------------------------------------------
+    # STATUS HISTORY
+    # --------------------------------------------------------
+
+    history = db.execute(
+        text(
+            """
+            SELECT
+                sh.id,
+                sh.old_status,
+                sh.new_status,
+                sh.remarks,
+                sh.changed_by,
+                e.name AS changed_by_name,
+                sh.changed_at
+            FROM status_history sh
+            LEFT JOIN employees e
+                ON e.id = sh.changed_by
+            WHERE sh.complaint_id = :complaint_id
+            ORDER BY sh.changed_at ASC
+            """
+        ),
+        {
+            "complaint_id": complaint_id,
+        },
+    ).mappings().all()
+
+    # --------------------------------------------------------
+    # SLA
+    # --------------------------------------------------------
+
+    elapsed_hours = None
+    elapsed_percentage = None
+    sla_state = None
+
+    if row["created_at"] is not None:
+        created_at = row["created_at"]
+
+        if created_at.tzinfo is None:
+            from datetime import timezone
+            created_at = created_at.replace(tzinfo=timezone.utc)
+
+        from datetime import datetime, timezone
+        elapsed_hours = max(
+            0.0,
+            (
+                datetime.now(timezone.utc) - created_at
+            ).total_seconds() / 3600.0,
+        )
+
+    target_hours = row["target_hours"]
+
+    if target_hours is not None and float(target_hours) > 0:
+        elapsed_percentage = (
+            elapsed_hours / float(target_hours)
+        ) * 100.0
+
+        warning_percentage = float(
+            row["warning_percentage"] or 50
+        )
+        supervisor_percentage = float(
+            row["supervisor_percentage"] or 80
+        )
+        overdue_percentage = float(
+            row["overdue_percentage"] or 100
+        )
+        critical_percentage = float(
+            row["critical_backlog_percentage"] or 300
+        )
+
+        if elapsed_percentage >= critical_percentage:
+            sla_state = "critical"
+        elif elapsed_percentage >= overdue_percentage:
+            sla_state = "overdue"
+        elif elapsed_percentage >= supervisor_percentage:
+            sla_state = "supervisor_escalation"
+        elif elapsed_percentage >= warning_percentage:
+            sla_state = "warning"
+        else:
+            sla_state = "on_track"
+
+    return {
+        "success": True,
+        "task": {
+            "id": int(row["id"]),
+            "complaint_number": row["complaint_number"],
+            "category_id": (
+                int(row["category_id"])
+                if row["category_id"] is not None
+                else None
+            ),
+            "category": row["category"],
+            "category_name": row["category_name"],
+            "title": row["title"],
+            "description": row["description"],
+            "latitude": row["latitude"],
+            "longitude": row["longitude"],
+            "status": row["status"],
+            "priority": row["priority"],
+            "department_id": row["department_id"],
+            "department_name": row["department_name"],
+            "master_complaint_id": row["master_complaint_id"],
+            "is_duplicate": row["master_complaint_id"] is not None,
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+
+            "assignment": {
+                "assignment_id": int(row["assignment_id"]),
+                "officer_id": int(row["officer_id"]),
+                "employee_id": row["officer_employee_id"],
+                "officer_name": row["officer_name"],
+                "officer_email": row["officer_email"],
+                "assigned_by": row["assigned_by"],
+                "assigned_by_name": row["assigned_by_name"],
+                "assigned_at": row["assigned_at"],
+            },
+
+            "photos": [
+                {
+                    "id": int(photo["id"]),
+                    "photo_url": photo["photo_url"],
+                    "photo_type": photo["photo_type"],
+                    "uploaded_by": (
+                        int(photo["uploaded_by"])
+                        if photo["uploaded_by"] is not None
+                        else None
+                    ),
+                    "uploaded_at": photo["uploaded_at"],
+                }
+                for photo in photos
+            ],
+
+            "status_history": [
+                {
+                    "id": int(item["id"]),
+                    "old_status": item["old_status"],
+                    "new_status": item["new_status"],
+                    "remarks": item["remarks"],
+                    "changed_by": (
+                        int(item["changed_by"])
+                        if item["changed_by"] is not None
+                        else None
+                    ),
+                    "changed_by_name": item["changed_by_name"],
+                    "changed_at": item["changed_at"],
+                }
+                for item in history
+            ],
+
+            "sla": {
+                "target_hours": (
+                    float(target_hours)
+                    if target_hours is not None
+                    else None
+                ),
+                "elapsed_hours": elapsed_hours,
+                "elapsed_percentage": elapsed_percentage,
+                "state": sla_state,
+            },
+        },
     }
 
 

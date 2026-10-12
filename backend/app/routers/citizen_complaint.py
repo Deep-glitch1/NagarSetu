@@ -102,13 +102,11 @@ def get_my_complaints(
             ComplaintPhoto,
             (
                 (
-                    ComplaintPhoto.complaint_id
-                    == Complaint.id
+                    ComplaintPhoto.complaint_id == Complaint.id
                 )
                 &
                 (
-                    ComplaintPhoto.photo_type
-                    == "initial"
+                    ComplaintPhoto.photo_type == "initial"
                 )
             ),
         )

@@ -1,185 +1,159 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import {
-  Search,
-  RefreshCw,
   ClipboardList,
+  RefreshCw,
   AlertTriangle,
+  MapPin,
+  Clock3,
+  ArrowRight,
 } from 'lucide-react';
 
-import { getMyTasks } from '../../api/employee';
-
-const statusLabel = (value) =>
-  String(value || '')
+const statusLabel = (status) => {
+  return String(status || '')
     .replaceAll('_', ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
+};
 
-const priorityClass = (value) =>
-  `priority-${String(value || 'low').toLowerCase()}`;
+const priorityClass = (priority) => {
+  const value = String(priority || 'low').toLowerCase();
+  return `priority-${value}`;
+};
 
-const EmployeeTasks = ({ onOpenTask }) => {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [priorityFilter, setPriorityFilter] = useState('all');
+const formatAssignedAt = (value) => {
+  if (!value) return 'Assignment time unavailable';
 
-  const loadTasks = async () => {
-    setLoading(true);
-    setError('');
+  const date = new Date(value);
 
-    try {
-      const data = await getMyTasks();
-      setTasks(Array.isArray(data?.complaints) ? data.complaints : []);
-    } catch (err) {
-      console.error('My tasks load failed:', err);
-      setError(err.message || 'Unable to load your tasks.');
-      setTasks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (Number.isNaN(date.getTime())) {
+    return 'Assignment time unavailable';
+  }
 
-  useEffect(() => {
-    loadTasks();
-  }, []);
+  return `Assigned ${date.toLocaleString()}`;
+};
 
-  const filteredTasks = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return tasks.filter((task) => {
-      const matchesSearch =
-        !query ||
-        [
-          task.complaint_number,
-          task.title,
-          task.description,
-          task.category_name,
-          task.department_name,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase()
-          .includes(query);
-
-      const matchesStatus =
-        statusFilter === 'all' || task.status === statusFilter;
-
-      const matchesPriority =
-        priorityFilter === 'all' || task.priority === priorityFilter;
-
-      return matchesSearch && matchesStatus && matchesPriority;
-    });
-  }, [tasks, search, statusFilter, priorityFilter]);
-
+const EmployeeTasks = ({
+  tasks,
+  loading,
+  error,
+  onRefresh,
+  onOpenTask,
+}) => {
   return (
-    <div>
-      <section className="civic-page-header">
-        <div>
-          <p className="civic-eyebrow">Work queue</p>
-          <h2>My Tasks</h2>
-          <p>Complaints currently assigned to you.</p>
+    <div className="civic-dashboard">
+      <section className="civic-panel">
+        <div className="civic-panel-title">
+          <div>
+            <p className="civic-eyebrow">Work queue</p>
+            <h3>My tasks</h3>
+          </div>
+
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+            aria-label="Refresh assigned tasks"
+            title="Refresh assigned tasks"
+          >
+            <RefreshCw
+              size={16}
+              className={loading ? 'animate-spin' : ''}
+            />
+          </button>
         </div>
 
-        <button type="button" onClick={loadTasks} disabled={loading}>
-          <RefreshCw
-            size={17}
-            className={loading ? 'animate-spin' : ''}
-          />
-          Refresh
-        </button>
-      </section>
+        {loading ? (
+          <div className="civic-empty">
+            <RefreshCw
+              size={28}
+              className="animate-spin"
+            />
+            <p>Loading your assigned tasks...</p>
+          </div>
+        ) : error ? (
+          <div className="civic-empty">
+            <AlertTriangle size={28} />
+            <h2>Unable to load tasks</h2>
+            <p>{error}</p>
+            <button
+              type="button"
+              onClick={onRefresh}
+            >
+              Try again
+            </button>
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="civic-empty">
+            <ClipboardList size={30} />
+            <h2>No assigned tasks</h2>
+            <p>
+              You do not have any active complaints assigned right now.
+            </p>
+          </div>
+        ) : (
+          <div className="employee-task-list">
+            {tasks.map((task) => (
+              <article
+                className="civic-panel employee-task-card"
+                key={task.assignment_id}
+              >
+                <div className="civic-panel-title">
+                  <div>
+                    <p className="civic-eyebrow">
+                      {task.complaint_number ||
+                        `Complaint #${task.id}`}
+                    </p>
 
-      <section className="civic-panel employee-task-controls">
-        <label>
-          <Search size={17} />
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search your tasks"
-          />
-        </label>
+                    <h3>
+                      {task.title || 'Civic complaint'}
+                    </h3>
+                  </div>
 
-        <select
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value)}
-        >
-          <option value="all">All statuses</option>
-          <option value="assigned">Assigned</option>
-          <option value="in_progress">In progress</option>
-          <option value="pending_verification">
-            Pending verification
-          </option>
-          <option value="reopened">Reopened</option>
-        </select>
-
-        <select
-          value={priorityFilter}
-          onChange={(event) => setPriorityFilter(event.target.value)}
-        >
-          <option value="all">All priorities</option>
-          <option value="critical">Critical</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
-      </section>
-
-      {loading ? (
-        <section className="civic-empty">
-          <RefreshCw size={28} className="animate-spin" />
-          <p>Loading your tasks...</p>
-        </section>
-      ) : error ? (
-        <section className="civic-empty">
-          <AlertTriangle size={28} />
-          <h3>Unable to load tasks</h3>
-          <p>{error}</p>
-          <button type="button" onClick={loadTasks}>
-            Try again
-          </button>
-        </section>
-      ) : filteredTasks.length === 0 ? (
-        <section className="civic-empty">
-          <ClipboardList size={32} />
-          <h3>No matching tasks</h3>
-          <p>There are no assigned complaints matching these filters.</p>
-        </section>
-      ) : (
-        <section className="employee-task-grid">
-          {filteredTasks.map((task) => (
-            <article className="civic-panel employee-task-card" key={task.id}>
-              <div className="employee-task-card-top">
-                <div>
-                  <span className="civic-eyebrow">
-                    {task.complaint_number}
+                  <span
+                    className={priorityClass(task.priority)}
+                  >
+                    {String(task.priority || 'low').toUpperCase()}
                   </span>
-                  <h3>{task.title || 'Complaint'}</h3>
                 </div>
 
-                <span className={priorityClass(task.priority)}>
-                  {String(task.priority || 'low').toUpperCase()}
-                </span>
-              </div>
+                <p>
+                  {task.description ||
+                    'No description provided.'}
+                </p>
 
-              <p>{task.description || 'No description provided.'}</p>
+                <div className="employee-task-meta">
+                  <span>
+                    <MapPin size={16} />
+                    {task.department_name || 'Department'}
+                  </span>
 
-              <div className="employee-task-meta">
-                <span>{task.category_name || task.category}</span>
-                <span>{task.department_name || 'Department'}</span>
-                <span>{statusLabel(task.status)}</span>
-              </div>
+                  <span>
+                    {task.category_name || task.category}
+                  </span>
 
-              <button
-                type="button"
-                onClick={() => onOpenTask(task.id)}
-              >
-                Open task
-              </button>
-            </article>
-          ))}
-        </section>
-      )}
+                  <span>
+                    {statusLabel(task.status)}
+                  </span>
+
+                  <span>
+                    <Clock3 size={15} />
+                    {formatAssignedAt(task.assigned_at)}
+                  </span>
+                </div>
+
+                <div className="employee-task-actions">
+                  <button
+                    type="button"
+                    onClick={() => onOpenTask(task)}
+                  >
+                    View task
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 };

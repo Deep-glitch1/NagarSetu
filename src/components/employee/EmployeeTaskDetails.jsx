@@ -34,7 +34,7 @@ const EmployeeTaskDetails = ({ taskId, onBack }) => {
 
     try {
       const data = await getTaskDetails(taskId);
-      setTask(data?.complaint || null);
+        setTask(data?.task || null);
     } catch (err) {
       console.error('Task detail load failed:', err);
       setError(err.message || 'Unable to load this task.');
@@ -146,16 +146,68 @@ const EmployeeTaskDetails = ({ taskId, onBack }) => {
             </div>
           </div>
         </article>
-      </section>
-
+      </section> 
+    {task.is_duplicate && (
       <section className="civic-panel">
         <div className="civic-panel-title">
           <div>
-            <p className="civic-eyebrow">Description</p>
-            <h3>Issue reported</h3>
+            <p className="civic-eyebrow">Duplicate</p>
+            <h3>Related complaint</h3>
           </div>
         </div>
 
+        <p>
+          Master complaint ID:{' '}
+          {task.master_complaint_id || '—'}
+        </p>
+      </section>
+    )}
+
+      <section className="civic-panel">
+          <div className="civic-panel-title">
+            <div>
+              <p className="civic-eyebrow">Description</p>
+              <h3>Issue reported</h3>
+            </div>
+          </div>
+      <section className="civic-panel">
+        <div className="civic-panel-title">
+          <div>
+            <p className="civic-eyebrow">Service level</p>
+            <h3>SLA status</h3>
+          </div>
+        </div>
+
+      <dl className="employee-detail-list">
+        <div>
+          <dt>Target</dt>
+          <dd>
+            {task.sla?.target_hours ?? '—'} hours
+          </dd>
+        </div>
+
+        <div>
+          <dt>Elapsed</dt>
+          <dd>
+            {task.sla?.elapsed_hours ?? '—'} hours
+          </dd>
+        </div>
+
+        <div>
+          <dt>Progress</dt>
+          <dd>
+            {task.sla?.elapsed_percentage ?? 0}%
+          </dd>
+          </div>
+
+          <div>
+            <dt>State</dt>
+            <dd>
+              {statusLabel(task.sla?.state) || '—'}
+            </dd>
+          </div>
+        </dl>
+      </section>
         <p className="employee-description">
           {task.description || 'No description provided.'}
         </p>
