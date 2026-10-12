@@ -1,0 +1,296 @@
+.employee-task-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.employee-task-controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 280px;
+}
+
+.employee-task-controls input,
+.employee-task-controls select,
+.employee-modal-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d9dee7;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.employee-task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.employee-task-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.employee-task-card-top,
+.employee-modal-header,
+.employee-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.employee-task-card-top h3 {
+  margin: 4px 0 0;
+}
+
+.employee-task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.employee-task-meta span,
+.employee-task-row > div:last-child span {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.employee-task-card > button,
+.employee-page-button,
+.employee-task-row,
+.employee-modal-actions button {
+  cursor: pointer;
+}
+
+.employee-task-row {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #e8ebf0;
+  background: transparent;
+  padding: 14px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+}
+
+.employee-task-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.employee-task-row > div:last-child {
+  text-align: right;
+}
+
+.employee-detail-list {
+  margin: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.employee-detail-list > div {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+}
+
+.employee-detail-list dt {
+  font-size: 13px;
+  opacity: 0.65;
+}
+
+.employee-detail-list dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.employee-assignee-box,
+.employee-location-box,
+.employee-settings-list > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.employee-assignee-box > div,
+.employee-settings-list > div > span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.employee-assignee-box span,
+.employee-settings-list small {
+  opacity: 0.65;
+  font-size: 13px;
+}
+
+.employee-description {
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.employee-history-list {
+  display: grid;
+  gap: 14px;
+}
+
+.employee-history-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.employee-history-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.employee-history-row span {
+  font-size: 13px;
+  opacity: 0.65;
+}
+
+.employee-history-row p {
+  margin: 2px 0 0;
+}
+
+.employee-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.employee-photo-grid figure {
+  margin: 0;
+}
+
+.employee-photo-grid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+
+.employee-photo-grid figcaption {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.employee-assignment-table {
+  overflow-x: auto;
+}
+
+.employee-assignment-row {
+  min-width: 820px;
+  display: grid;
+  grid-template-columns: 1.4fr 1.2fr 1fr 1.1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 13px 0;
+  border-bottom: 1px solid #e8ebf0;
+}
+
+.employee-assignment-head {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.65;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.employee-assignment-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.employee-assignment-row > div span {
+  font-size: 13px;
+  opacity: 0.72;
+}
+
+.employee-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.employee-modal {
+  width: min(520px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
+}
+
+.employee-modal-header button,
+.civic-panel-title button,
+.employee-page-header button {
+  border: 0;
+  background: transparent;
+}
+
+.employee-modal-field {
+  display: grid;
+  gap: 7px;
+  margin: 18px 0;
+}
+
+.employee-modal-field span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.employee-form-error,
+.employee-form-success {
+  margin: 10px 0;
+  font-size: 14px;
+}
+
+.employee-form-error {
+  color: #b42318;
+}
+
+.employee-form-success {
+  color: #18794e;
+}
+
+.employee-settings-list {
+  display: grid;
+  gap: 18px;
+}
+
+@media (max-width: 700px) {
+  .employee-detail-list > div {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .employee-task-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .employee-task-row > div:last-child {
+    text-align: left;
+  }
+}

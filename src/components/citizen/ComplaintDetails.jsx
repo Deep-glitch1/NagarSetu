@@ -5,30 +5,17 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
-  Construction,
   ExternalLink,
   Loader2,
   MapPin,
   RefreshCw,
-  Trash2,
   AlertCircle,
 } from 'lucide-react';
 
 import { apiFetch } from '../../api/client';
 import { API_BASE_URL } from '../../config';
+import { getCategoryMeta } from '../../constants/categories';
 
-
-const CATEGORY_META = {
-  ROAD_DAMAGED: {
-    label: 'Road Damaged',
-    icon: Construction,
-  },
-
-  GARBAGE: {
-    label: 'Garbage',
-    icon: Trash2,
-  },
-};
 
 
 const STATUS_META = {
@@ -225,10 +212,7 @@ const ComplaintDetails = ({
         >
           <Loader2
             size={20}
-            style={{
-              animation:
-                'spin 1s linear infinite',
-            }}
+            className="animate-spin"
           />
 
           Loading complaint...
@@ -295,16 +279,9 @@ const ComplaintDetails = ({
   }
 
 
-  const categoryMeta =
-    CATEGORY_META[
-      complaint.category
-    ] || {
-      label: complaint.category,
-      icon: MapPin,
-    };
 
-  const CategoryIcon =
-    categoryMeta.icon;
+  const categoryMeta = getCategoryMeta(complaint.category);
+  const CategoryIcon =categoryMeta.icon;
 
   const currentStatus =
     STATUS_META[

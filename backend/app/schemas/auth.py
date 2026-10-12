@@ -129,6 +129,7 @@ class UserInfo(BaseModel):
     name: str
     email: EmailStr
     role: str
+    employee_role: str | None = None
 
 class AuthResponse(BaseModel):
     user: UserInfo

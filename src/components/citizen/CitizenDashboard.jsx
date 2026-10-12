@@ -64,19 +64,6 @@ const STATUS_META = {
 };
 
 
-const getCategoryLabel = (category) => {
-  if (category === 'ROAD_DAMAGED') {
-    return 'Road Damaged';
-  }
-
-  if (category === 'GARBAGE') {
-    return 'Garbage';
-  }
-
-  return category || 'Complaint';
-};
-
-
 const getCategoryIcon = (category) => {
   if (category === 'ROAD_DAMAGED') {
     return Construction;
@@ -185,10 +172,7 @@ const CitizenDashboard = ({
         >
           <Loader2
             size={20}
-            style={{
-              animation:
-                'spin 1s linear infinite',
-            }}
+            className="animate-spin"
           />
 
           Loading your dashboard...

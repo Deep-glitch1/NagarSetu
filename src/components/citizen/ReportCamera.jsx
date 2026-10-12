@@ -13,7 +13,7 @@ import {
   Send,
 } from 'lucide-react';
 
-import { API_BASE_URL } from '../../config';
+import { apiFetch } from '../../api/client';
 
 const ReportCamera = ({
   reportType,
@@ -22,6 +22,8 @@ const ReportCamera = ({
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const photoUrlRef = useRef(null);
+  const cameraRequestRef = useRef(0);
 
   const [location, setLocation] = useState(null);
   const [locationLoading, setLocationLoading] =
@@ -119,84 +121,80 @@ const ReportCamera = ({
   /* ========================================================
      CAMERA
      ======================================================== */
-
   const startCamera = async () => {
-    try {
-      setCameraError('');
+    const requestId = ++cameraRequestRef.current;
 
-      if (
-        !navigator.mediaDevices?.getUserMedia
-      ) {
-        throw new Error(
-          'Camera is not supported.'
-        );
+    setCameraError('');
+    setCameraActive(false);
+
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Camera is not supported by this browser.');
       }
 
-      const stream =
-        await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: {
-              ideal: 1280,
-            },
-            height: {
-              ideal: 720,
-            },
-          },
-          audio: false,
-        });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
+      });
+
+      // Component/request invalid ho chuka hai
+      if (requestId !== cameraRequestRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
 
       streamRef.current = stream;
 
-      const track =
-        stream.getVideoTracks()[0];
+      // Optional 1x zoom handling
+      const videoTrack = stream.getVideoTracks()[0];
 
-      /*
-       * Request 1× zoom where supported.
-       */
-      if (track) {
-        const capabilities =
-          track.getCapabilities?.();
+      if (videoTrack?.getCapabilities && videoTrack?.applyConstraints) {
+        const capabilities = videoTrack.getCapabilities();
 
-        if (
-          capabilities?.zoom &&
-          capabilities.zoom.min <= 1 &&
-          capabilities.zoom.max >= 1
-        ) {
+        if (capabilities.zoom) {
           try {
-            await track.applyConstraints({
-              advanced: [{ zoom: 1 }],
+            await videoTrack.applyConstraints({
+              advanced: [{ zoom: capabilities.zoom.min }],
             });
-          } catch (zoomError) {
-            console.warn(
-              'Could not apply 1× zoom:',
-              zoomError
-            );
+          } catch (error) {
+            console.warn('Unable to set camera zoom:', error);
           }
         }
       }
 
+      // Request valid raha tabhi camera activate karo
+      if (requestId !== cameraRequestRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        return;
+      }
+
       setCameraActive(true);
     } catch (error) {
-      console.error(
-        'Camera error:',
-        error
-      );
+      // Agar request invalidate ho chuki hai,
+      // to user-facing error mat dikhao
+      if (requestId !== cameraRequestRef.current) {
+        return;
+      }
 
+      console.error('Camera error:', error);
       setCameraError(
-        'Unable to access camera. Please allow camera permission.'
+        error.name === 'NotAllowedError'
+          ? 'Camera permission was denied.'
+          : 'Unable to access the camera.'
       );
-
       setCameraActive(false);
     }
   };
-
+  
   const stopCamera = () => {
+    // Invalidate any pending camera request
+    cameraRequestRef.current += 1;
+
     if (streamRef.current) {
       streamRef.current
         .getTracks()
-        .forEach((track) => {
-          track.stop();
-        });
+        .forEach((track) => track.stop());
 
       streamRef.current = null;
     }
@@ -207,7 +205,6 @@ const ReportCamera = ({
 
     setCameraActive(false);
   };
-
   /*
    * Attach stream after <video> is mounted.
    */
@@ -246,7 +243,7 @@ const ReportCamera = ({
      ML CLASSIFICATION
      ======================================================== */
 
-  const classifyPhoto = async (blob) => {
+    const classifyPhoto = async (blob) => {
     setIsAnalyzing(true);
     setMlError('');
     setPrediction(null);
@@ -261,47 +258,38 @@ const ReportCamera = ({
         'complaint.jpg'
       );
 
-      const response = await fetch(
-        `${API_BASE_URL}/ml/classify`,
+      const data = await apiFetch(
+        '/ml/classify',
         {
           method: 'POST',
-          credentials: 'include',
           body: formData,
         }
       );
 
-      let data = {};
-
-      try {
-        data = await response.json();
-      } catch {
-        data = {};
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          data?.detail ||
-            `Classification failed (${response.status})`
-        );
-      }
-
       setPrediction(data.prediction);
       setConfidence(data.confidence);
+
     } catch (error) {
       console.error(
         'Classification error:',
         error
       );
 
-      setMlError(
-        error.message ||
-          'Unable to analyze the image.'
-      );
+      if (error.status === 401) {
+        setMlError(
+          'Your session has expired. Please sign in again.'
+        );
+      } else {
+        setMlError(
+          error.message ||
+            'Unable to analyze the image.'
+        );
+      }
+
     } finally {
       setIsAnalyzing(false);
     }
   };
-
   /* ========================================================
      CAPTURE
      ======================================================== */
@@ -350,8 +338,8 @@ const ReportCamera = ({
           return;
         }
 
-        const url =
-          URL.createObjectURL(blob);
+        const url =URL.createObjectURL(blob);
+        photoUrlRef.current = url;
 
         setPhoto({
           blob,
@@ -372,8 +360,9 @@ const ReportCamera = ({
      ======================================================== */
 
   const retakePhoto = () => {
-    if (photo?.url) {
-      URL.revokeObjectURL(photo.url);
+    if (photoUrlRef.current) {
+      URL.revokeObjectURL(photoUrlRef.current);
+      photoUrlRef.current = null;
     }
 
     setPhoto(null);
@@ -395,109 +384,98 @@ const ReportCamera = ({
      SUBMIT COMPLAINT
      ======================================================== */
 
-  const submitComplaint = async () => {
-    if (!photo?.blob) {
-      return;
-    }
+    const submitComplaint = async () => {
+      if (!photo?.blob) {
+        return;
+      }
 
-    if (!location) {
-      setSubmitError(
-        'Location is required.'
-      );
-      return;
-    }
+      if (!location) {
+        setSubmitError(
+          'Location is required.'
+        );
+        return;
+      }
 
-    if (prediction !== expectedClass) {
-      setSubmitError(
-        'This image does not match the selected complaint type.'
-      );
-      return;
-    }
+      if (prediction !== expectedClass) {
+        setSubmitError(
+          'This image does not match the selected complaint type.'
+        );
+        return;
+      }
 
-    setIsSubmitting(true);
-    setSubmitError('');
-    setComplaintResult(null);
-
-    try {
-      const formData = new FormData();
-
-      formData.append(
-        'title',
-        title
-      );
-
-      formData.append(
-        'description',
-        description.trim()
-      );
-
-      formData.append(
-        'latitude',
-        String(location.latitude)
-      );
-
-      formData.append(
-        'longitude',
-        String(location.longitude)
-      );
-
-      formData.append(
-        'file',
-        photo.blob,
-        'complaint.jpg'
-      );
-
-      const response = await fetch(
-        `${API_BASE_URL}${endpoint}`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          body: formData,
-        }
-      );
-
-      let data = {};
+      setIsSubmitting(true);
+      setSubmitError('');
+      setComplaintResult(null);
 
       try {
-        data = await response.json();
-      } catch {
-        data = {};
-      }
+        const formData = new FormData();
 
-      if (!response.ok) {
-        let message =
-          'Failed to create complaint.';
+        formData.append(
+          'title',
+          title
+        );
 
-        if (
-          typeof data?.detail === 'string'
-        ) {
-          message = data.detail;
+        formData.append(
+          'description',
+          description.trim()
+        );
+
+        formData.append(
+          'latitude',
+          String(location.latitude)
+        );
+
+        formData.append(
+          'longitude',
+          String(location.longitude)
+        );
+
+        formData.append(
+          'file',
+          photo.blob,
+          'complaint.jpg'
+        );
+
+        const data = await apiFetch(
+          endpoint,
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
+
+        setComplaintResult(data);
+
+      } catch (error) {
+        console.error(
+          'Complaint submission error:',
+          error
+        );
+
+        if (error.status === 401) {
+          setSubmitError(
+            'Your session has expired. Please sign in again.'
+          );
         } else if (
-          typeof data?.detail?.message ===
-          'string'
+          error.status === 422 &&
+          error.detail &&
+          typeof error.detail === 'object'
         ) {
-          message = data.detail.message;
+          setSubmitError(
+            error.detail.message ||
+              'This image does not match the selected complaint type.'
+          );
+        } else {
+          setSubmitError(
+            error.message ||
+              'Unable to create complaint.'
+          );
         }
 
-        throw new Error(message);
+      } finally {
+        setIsSubmitting(false);
       }
-
-      setComplaintResult(data);
-    } catch (error) {
-      console.error(
-        'Complaint submission error:',
-        error
-      );
-
-      setSubmitError(
-        error.message ||
-          'Unable to create complaint.'
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
+    };
   /* ========================================================
      BACK
      ======================================================== */
@@ -505,35 +483,42 @@ const ReportCamera = ({
   const handleBack = () => {
     stopCamera();
 
-    if (photo?.url) {
-      URL.revokeObjectURL(photo.url);
+    if (photoUrlRef.current) {
+      URL.revokeObjectURL(photoUrlRef.current);
+      photoUrlRef.current = null;
     }
 
+    setPhoto(null);
     onBack();
   };
-
   /* ========================================================
      CLEANUP
      ======================================================== */
-
   useEffect(() => {
     getLocation();
 
     return () => {
+      // Invalidate pending getUserMedia()
+      cameraRequestRef.current += 1;
+
       if (streamRef.current) {
         streamRef.current
           .getTracks()
-          .forEach((track) => {
-            track.stop();
-          });
+          .forEach((track) => track.stop());
+
+        streamRef.current = null;
       }
 
-      if (photo?.url) {
-        URL.revokeObjectURL(photo.url);
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+
+      if (photoUrlRef.current) {
+        URL.revokeObjectURL(photoUrlRef.current);
+        photoUrlRef.current = null;
       }
     };
   }, []);
-
   /* ========================================================
      RESULT
      ======================================================== */

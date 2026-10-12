@@ -872,3 +872,81 @@ body {
 .app-error-card button:hover {
   background: #1f3346;
 }
+
+
+.report-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  width: 100%;
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fffdf9;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.report-card-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 14px;
+}
+
+.report-card-icon-road {
+  color: #a94d38;
+  background: #f9e9e4;
+}
+
+.report-card-icon-garbage {
+  color: #397255;
+  background: #e8f3eb;
+}
+
+.report-card-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.report-card-label-road {
+  color: #a94d38;
+}
+
+.report-card-label-garbage {
+  color: #397255;
+}
+
+.report-card-title {
+  margin: 7px 0;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 22px;
+}
+
+.report-card-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.report-card-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.report-card-action-road {
+  color: #a94d38;
+}
+
+.report-card-action-garbage {
+  color: #397255;
+}

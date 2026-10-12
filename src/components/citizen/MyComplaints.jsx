@@ -8,14 +8,15 @@ import {
   AlertCircle,
   Loader2,
   RefreshCw,
-  Construction,
-  Trash2,
 } from 'lucide-react';
 
 import { apiFetch } from '../../api/client';
 import { API_BASE_URL } from '../../config';
 import ComplaintDetails from './ComplaintDetails';
-
+import {
+  getCategoryIcon,
+  getCategoryLabel,
+} from '../../constants/categories';
 
 const STATUS_META = {
   received: {
@@ -83,23 +84,6 @@ const STATUS_META = {
 };
 
 
-const CATEGORY_LABELS = {
-  ROAD_DAMAGED: 'Road Damaged',
-  GARBAGE: 'Garbage',
-};
-
-
-const getCategoryIcon = (category) => {
-  if (category === 'ROAD_DAMAGED') {
-    return Construction;
-  }
-
-  if (category === 'GARBAGE') {
-    return Trash2;
-  }
-
-  return MapPin;
-};
 
 
 const formatDate = (value) => {
@@ -214,10 +198,7 @@ const MyComplaints = () => {
         >
           <Loader2
             size={20}
-            style={{
-              animation:
-                'spin 1s linear infinite',
-            }}
+            className="animate-spin"
           />
 
           <span>
@@ -639,13 +620,7 @@ const MyComplaints = () => {
                       <CategoryIcon
                         size={15}
                       />
-
-                      {
-                        CATEGORY_LABELS[
-                          complaint.category
-                        ] ||
-                        complaint.category
-                      }
+                    {getCategoryLabel(complaint.category)}
                     </span>
 
 

@@ -8,6 +8,7 @@ from app.routers import ml
 from app.routers import auth
 from app.routers import citizen
 from app.routers import complaint
+from app.routers import waste_collection
 from pathlib import Path
 
 from fastapi.staticfiles import StaticFiles
@@ -51,6 +52,8 @@ app.include_router(auth.router)
 app.include_router(citizen.router)
 app.include_router(ml.router)
 app.include_router(complaint.router)
+app.include_router(complaint.employee_router)
+app.include_router(waste_collection.router)
 # ============================================================
 # ROOT
 # ============================================================
