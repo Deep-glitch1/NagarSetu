@@ -18,6 +18,7 @@ import ReportIssue from './citizen/ReportIssue';
 import MyComplaints from './citizen/MyComplaints';
 import MyImpact from './citizen/MyImpact';
 import WasteCollectionTracking from './citizen/WasteCollectionTracking';
+import './citizen/CitizenPortal.css';
 
 const UserPortal = ({
   userData,

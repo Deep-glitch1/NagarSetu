@@ -8,22 +8,21 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-const statusLabel = (status) => {
-  return String(status || '')
+const statusLabel = (status) =>
+  String(status || '')
     .replaceAll('_', ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
-};
 
-const priorityClass = (priority) => {
-  const value = String(priority || 'low').toLowerCase();
-  return `priority-${value}`;
-};
+const priorityClass = (priority) =>
+  `priority-${String(priority || 'low').toLowerCase()}`;
+
+const statusClass = (status) =>
+  `employee-status-${String(status || 'received').toLowerCase()}`;
 
 const formatAssignedAt = (value) => {
   if (!value) return 'Assignment time unavailable';
 
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) {
     return 'Assignment time unavailable';
   }
@@ -32,7 +31,7 @@ const formatAssignedAt = (value) => {
 };
 
 const EmployeeTasks = ({
-  tasks,
+  tasks = [],
   loading,
   error,
   onRefresh,
@@ -51,38 +50,33 @@ const EmployeeTasks = ({
             type="button"
             onClick={onRefresh}
             disabled={loading}
+            className="employee-icon-button"
             aria-label="Refresh assigned tasks"
             title="Refresh assigned tasks"
           >
             <RefreshCw
-              size={16}
+              size={17}
               className={loading ? 'animate-spin' : ''}
             />
           </button>
         </div>
 
         {loading ? (
-          <div className="civic-empty">
-            <RefreshCw
-              size={28}
-              className="animate-spin"
-            />
+          <div className="civic-empty employee-inline-empty">
+            <RefreshCw size={28} className="animate-spin" />
             <p>Loading your assigned tasks...</p>
           </div>
         ) : error ? (
-          <div className="civic-empty">
+          <div className="civic-empty employee-inline-empty">
             <AlertTriangle size={28} />
             <h2>Unable to load tasks</h2>
             <p>{error}</p>
-            <button
-              type="button"
-              onClick={onRefresh}
-            >
+            <button type="button" onClick={onRefresh}>
               Try again
             </button>
           </div>
         ) : tasks.length === 0 ? (
-          <div className="civic-empty">
+          <div className="civic-empty employee-inline-empty">
             <ClipboardList size={30} />
             <h2>No assigned tasks</h2>
             <p>
@@ -93,50 +87,45 @@ const EmployeeTasks = ({
           <div className="employee-task-list">
             {tasks.map((task) => (
               <article
-                className="civic-panel employee-task-card"
-                key={task.assignment_id}
+                className="employee-task-card"
+                key={task.id}
               >
-                <div className="civic-panel-title">
+                <div className="employee-task-card-head">
                   <div>
                     <p className="civic-eyebrow">
-                      {task.complaint_number ||
-                        `Complaint #${task.id}`}
+                      {task.complaint_number || `Complaint #${task.id}`}
                     </p>
-
-                    <h3>
-                      {task.title || 'Civic complaint'}
-                    </h3>
+                    <h3>{task.title || 'Civic complaint'}</h3>
                   </div>
 
-                  <span
-                    className={priorityClass(task.priority)}
-                  >
+                  <span className={`employee-priority ${priorityClass(task.priority)}`}>
                     {String(task.priority || 'low').toUpperCase()}
                   </span>
                 </div>
 
-                <p>
-                  {task.description ||
-                    'No description provided.'}
+                <p className="employee-task-description">
+                  {task.description || 'No description provided.'}
                 </p>
 
                 <div className="employee-task-meta">
                   <span>
-                    <MapPin size={16} />
+                    <MapPin size={15} />
                     {task.department_name || 'Department'}
                   </span>
 
-                  <span>
-                    {task.category_name || task.category}
+                  <span className="employee-meta-chip">
+                    {task.category_name || task.category || 'Category unavailable'}
                   </span>
 
-                  <span>
+                  <span className={`employee-meta-chip ${statusClass(task.status)}`}>
                     {statusLabel(task.status)}
                   </span>
 
                   <span>
                     <Clock3 size={15} />
-                    {formatAssignedAt(task.assigned_at)}
+                    {formatAssignedAt(
+                      task.assignment?.assigned_at ?? task.assigned_at
+                    )}
                   </span>
                 </div>
 

@@ -10,8 +10,8 @@ from app.routers import citizen
 from app.routers import  citizen_complaint
 from app.routers import waste_collection
 from pathlib import Path
-
 from fastapi.staticfiles import StaticFiles
+
 app = FastAPI(
     title="NagarSetu API",
     description="Civic Complaint Management System",
@@ -53,7 +53,6 @@ app.include_router(citizen.router)
 app.include_router(ml.router)
 app.include_router(citizen_complaint.router)
 app.include_router(employee_complaint.employee_router)
-app.include_router(employee_complaint.router)
 app.include_router(waste_collection.router)
 # ============================================================
 # ROOT

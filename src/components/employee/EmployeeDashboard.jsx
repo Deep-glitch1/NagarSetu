@@ -15,7 +15,6 @@ const statusLabel = (value) =>
 
 const EmployeeDashboard = ({
   userData,
-  employeeRole,
   tasks = [],
   stats = [],
   loading,
@@ -31,20 +30,13 @@ const EmployeeDashboard = ({
       <section className="civic-welcome">
         <div>
           <p className="civic-eyebrow">Employee workspace</p>
-
-          <h2>
-            Welcome, {userData?.name || 'Employee'}.
-          </h2>
-
+          <h2>Welcome, {userData?.name || 'Employee'}.</h2>
           <p>
             Keep your assigned complaints moving from intake to resolution.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onNavigate('tasks')}
-        >
+        <button type="button" onClick={() => onNavigate('tasks')}>
           View my tasks
           <ArrowRight size={17} />
         </button>
@@ -53,16 +45,11 @@ const EmployeeDashboard = ({
       <section className="civic-stat-grid">
         {stats.map((stat) => {
           const Icon = stat.icon;
-
           return (
-            <article
-              className="civic-stat"
-              key={stat.label}
-            >
+            <article className="civic-stat" key={stat.label}>
               <span>
                 <Icon size={20} />
               </span>
-
               <div>
                 <small>{stat.label}</small>
                 <strong>{stat.value}</strong>
@@ -83,49 +70,31 @@ const EmployeeDashboard = ({
             type="button"
             onClick={onRefresh}
             disabled={loading}
-            title="Refresh"
+            className="employee-icon-button"
+            title="Refresh tasks"
             aria-label="Refresh tasks"
           >
-            <RefreshCw
-              size={17}
-              className={loading ? 'animate-spin' : ''}
-            />
+            <RefreshCw size={17} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
 
         {loading ? (
-          <div className="civic-empty">
-            <RefreshCw
-              size={24}
-              className="animate-spin"
-            />
-
+          <div className="civic-empty employee-inline-empty">
+            <RefreshCw size={24} className="animate-spin" />
             <p>Loading your tasks...</p>
           </div>
         ) : error ? (
-          <div className="civic-empty">
+          <div className="civic-empty employee-inline-empty">
             <AlertTriangle size={24} />
-
             <h3>Unable to load tasks</h3>
-
             <p>{error}</p>
-
-            <button
-              type="button"
-              onClick={onRefresh}
-            >
-              Try again
-            </button>
+            <button type="button" onClick={onRefresh}>Try again</button>
           </div>
         ) : recentTasks.length === 0 ? (
-          <div className="civic-empty">
+          <div className="civic-empty employee-inline-empty">
             <ClipboardList size={30} />
-
             <h3>No active tasks</h3>
-
-            <p>
-              Assigned complaints will appear here.
-            </p>
+            <p>Assigned complaints will appear here.</p>
           </div>
         ) : (
           <div className="employee-task-list">
@@ -138,25 +107,13 @@ const EmployeeDashboard = ({
               >
                 <div>
                   <strong>
-                    {task.complaint_number ||
-                      `Complaint #${task.id}`}
+                    {task.complaint_number || `Complaint #${task.id}`}
                   </strong>
-
-                  <span>
-                    {task.title || task.category_name || 'Complaint'}
-                  </span>
+                  <span>{task.title || task.category_name || 'Complaint'}</span>
                 </div>
-
                 <div>
-                  <span>
-                    {statusLabel(task.status)}
-                  </span>
-
-                  <b>
-                    {String(
-                      task.priority || 'low'
-                    ).toUpperCase()}
-                  </b>
+                  <span>{statusLabel(task.status)}</span>
+                  <b>{String(task.priority || 'low').toUpperCase()}</b>
                 </div>
               </button>
             ))}

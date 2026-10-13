@@ -1,92 +1,212 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
+  AlertTriangle,
+  CheckCircle2,
+  Clock3,
+  ExternalLink,
+  FileImage,
+  ImageOff,
   MapPin,
   RefreshCw,
-  ClipboardList,
-  AlertTriangle,
-  CalendarDays,
-  UserRound,
 } from 'lucide-react';
 
+import { API_BASE_URL } from '../../config';
 import { getTaskDetails } from '../../api/employee';
 
-const statusLabel = (value) =>
-  String(value || '')
+const statusLabel = (status) =>
+  String(status || '')
     .replaceAll('_', ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
 
+const priorityClass = (priority) =>
+  `priority-${String(priority || 'low').toLowerCase()}`;
+
+const slaStateClass = (state) =>
+  `employee-sla-${String(state || 'on_track').toLowerCase()}`;
+
 const formatDate = (value) => {
-  if (!value) return '—';
+  if (!value) return 'Not available';
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Not available' : date.toLocaleString();
 };
 
-const EmployeeTaskDetails = ({ taskId, onBack }) => {
-  const [task, setTask] = useState(null);
-  const [loading, setLoading] = useState(true);
+const formatNumber = (value, digits = 1) => {
+  if (value === null || value === undefined) return 'Not available';
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(digits) : 'Not available';
+};
+
+const getPhotoUrl = (value) => {
+  if (!value) return '';
+  if (/^(https?:|data:|blob:)/i.test(value)) return value;
+  return `${String(API_BASE_URL).replace(/\/$/, '')}/${String(value).replace(/^\//, '')}`;
+};
+
+const PhotoCard = ({ photo }) => {
+  const [failed, setFailed] = useState(false);
+  const src = getPhotoUrl(photo.photo_url);
+
+  return (
+    <a
+      className="employee-photo-card"
+      href={src || '#'}
+      target="_blank"
+      rel="noreferrer"
+      onClick={(event) => {
+        if (!src) event.preventDefault();
+      }}
+    >
+      {!failed && src ? (
+        <img
+          src={src}
+          alt={`${photo.photo_type || 'Evidence'} complaint evidence`}
+          loading="lazy"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div className="employee-photo-fallback">
+          <ImageOff size={28} />
+          <span>Image unavailable</span>
+        </div>
+      )}
+      <div className="employee-photo-caption">
+        <span>{statusLabel(photo.photo_type || 'evidence')}</span>
+        <small>{formatDate(photo.uploaded_at)}</small>
+      </div>
+    </a>
+  );
+};
+
+const EmployeeTaskDetails = ({ taskId, onBack, onRefreshTasks }) => {
+  const [details, setDetails] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const loadTask = async () => {
+  const loadDetails = async () => {
+    if (!taskId) {
+      setDetails(null);
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
       const data = await getTaskDetails(taskId);
-        setTask(data?.task || null);
-    } catch (err) {
-      console.error('Task detail load failed:', err);
-      setError(err.message || 'Unable to load this task.');
-      setTask(null);
+      setDetails(data?.task || null);
+    } catch (requestError) {
+      console.error('Task details load failed:', requestError);
+      setDetails(null);
+      setError(requestError.message || 'Unable to load task details.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadTask();
+    loadDetails();
   }, [taskId]);
+
+  const slaProgress = useMemo(() => {
+    const percentage = Number(details?.sla?.elapsed_percentage);
+    if (!Number.isFinite(percentage)) return 0;
+    return Math.min(Math.max(percentage, 0), 100);
+  }, [details]);
+
+  if (!taskId) {
+    return (
+      <div className="civic-empty">
+        <AlertTriangle size={30} />
+        <h2>Task not selected</h2>
+        <p>Select a complaint from My Tasks.</p>
+        <button type="button" onClick={onBack}>Back to My Tasks</button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
       <div className="civic-empty">
-        <RefreshCw size={28} className="animate-spin" />
-        <p>Loading task details...</p>
+        <RefreshCw size={30} className="animate-spin" />
+        <h2>Loading task details</h2>
+        <p>Please wait...</p>
       </div>
     );
   }
 
-  if (error || !task) {
+  if (error) {
     return (
       <div className="civic-empty">
-        <AlertTriangle size={28} />
-        <h3>Unable to load task</h3>
-        <p>{error || 'Task not found.'}</p>
-        <button type="button" onClick={onBack}>
-          Back to my tasks
-        </button>
+        <AlertTriangle size={30} />
+        <h2>Unable to load task</h2>
+        <p>{error}</p>
+        <div className="employee-detail-actions">
+          <button type="button" onClick={loadDetails}>Try again</button>
+          <button type="button" onClick={onBack}>Back</button>
+        </div>
       </div>
     );
   }
 
+  if (!details) return null;
+
+  const initialPhotos = (details.photos || []).filter(
+    (photo) => photo.photo_type === 'initial'
+  );
+  const otherPhotos = (details.photos || []).filter(
+    (photo) => photo.photo_type !== 'initial'
+  );
+
+  const hasLocation =
+    details.latitude !== null &&
+    details.latitude !== undefined &&
+    details.longitude !== null &&
+    details.longitude !== undefined;
+
+  const slaState = details.sla?.state || 'on_track';
+  const slaLabel = statusLabel(slaState);
+
   return (
-    <div>
-      <section className="civic-page-header">
+    <div className="civic-dashboard">
+      <section className="civic-welcome employee-detail-hero">
         <div>
-          <button type="button" onClick={onBack}>
+          <button
+            type="button"
+            className="employee-back-button"
+            onClick={onBack}
+          >
             <ArrowLeft size={17} />
-            Back to my tasks
+            Back to My Tasks
           </button>
+
           <p className="civic-eyebrow">Task details</p>
-          <h2>{task.complaint_number}</h2>
-          <p>{task.title || 'Complaint'}</p>
+          <h2>{details.complaint_number || `Complaint #${details.id}`}</h2>
+          <p>{details.title || 'Civic complaint'}</p>
         </div>
 
-        <button type="button" onClick={loadTask}>
-          <RefreshCw size={17} />
-          Refresh
-        </button>
+        <span className={`employee-priority ${priorityClass(details.priority)}`}>
+          {String(details.priority || 'low').toUpperCase()}
+        </span>
+      </section>
+
+      <section className="civic-stat-grid">
+        <article className="civic-stat">
+          <span><Clock3 size={20} /></span>
+          <div><small>Status</small><strong>{statusLabel(details.status)}</strong></div>
+        </article>
+        <article className="civic-stat">
+          <span><FileImage size={20} /></span>
+          <div><small>Category</small><strong>{details.category_name || details.category || 'Unknown'}</strong></div>
+        </article>
+        <article className="civic-stat">
+          <span><MapPin size={20} /></span>
+          <div><small>Department</small><strong>{details.department_name || 'Not assigned'}</strong></div>
+        </article>
+        <article className="civic-stat">
+          <span><CheckCircle2 size={20} /></span>
+          <div><small>Assigned</small><strong>{formatDate(details.assignment?.assigned_at)}</strong></div>
+        </article>
       </section>
 
       <section className="civic-content-grid">
@@ -94,126 +214,23 @@ const EmployeeTaskDetails = ({ taskId, onBack }) => {
           <div className="civic-panel-title">
             <div>
               <p className="civic-eyebrow">Complaint</p>
-              <h3>Overview</h3>
+              <h3>Issue information</h3>
             </div>
           </div>
 
-          <dl className="employee-detail-list">
-            <div>
-              <dt>Category</dt>
-              <dd>{task.category_name || task.category || '—'}</dd>
-            </div>
-            <div>
-              <dt>Status</dt>
-              <dd>{statusLabel(task.status)}</dd>
-            </div>
-            <div>
-              <dt>Priority</dt>
-              <dd>{String(task.priority || 'low').toUpperCase()}</dd>
-            </div>
-            <div>
-              <dt>Department</dt>
-              <dd>{task.department_name || '—'}</dd>
-            </div>
-            <div>
-              <dt>Created</dt>
-              <dd>{formatDate(task.created_at)}</dd>
-            </div>
-            <div>
-              <dt>Updated</dt>
-              <dd>{formatDate(task.updated_at)}</dd>
-            </div>
-          </dl>
-        </article>
-
-        <article className="civic-panel">
-          <div className="civic-panel-title">
-            <div>
-              <p className="civic-eyebrow">Assignment</p>
-              <h3>Current assignee</h3>
-            </div>
+          <div className="employee-detail-grid">
+            <div><small>Title</small><p>{details.title || 'Not provided'}</p></div>
+            <div><small>Category</small><p>{details.category_name || details.category || 'Unknown'}</p></div>
+            <div><small>Created</small><p>{formatDate(details.created_at)}</p></div>
+            <div><small>Last updated</small><p>{formatDate(details.updated_at)}</p></div>
           </div>
 
-          <div className="employee-assignee-box">
-            <UserRound size={20} />
-            <div>
-              <strong>
-                {task.assignment?.name || 'Assigned to you'}
-              </strong>
-              <span>
-                {task.assignment?.employee_id || 'Current employee'}
-              </span>
-            </div>
+          <div className="employee-description-block">
+            <small>Description</small>
+            <p>{details.description || 'No description was provided.'}</p>
           </div>
         </article>
-      </section> 
-    {task.is_duplicate && (
-      <section className="civic-panel">
-        <div className="civic-panel-title">
-          <div>
-            <p className="civic-eyebrow">Duplicate</p>
-            <h3>Related complaint</h3>
-          </div>
-        </div>
 
-        <p>
-          Master complaint ID:{' '}
-          {task.master_complaint_id || '—'}
-        </p>
-      </section>
-    )}
-
-      <section className="civic-panel">
-          <div className="civic-panel-title">
-            <div>
-              <p className="civic-eyebrow">Description</p>
-              <h3>Issue reported</h3>
-            </div>
-          </div>
-      <section className="civic-panel">
-        <div className="civic-panel-title">
-          <div>
-            <p className="civic-eyebrow">Service level</p>
-            <h3>SLA status</h3>
-          </div>
-        </div>
-
-      <dl className="employee-detail-list">
-        <div>
-          <dt>Target</dt>
-          <dd>
-            {task.sla?.target_hours ?? '—'} hours
-          </dd>
-        </div>
-
-        <div>
-          <dt>Elapsed</dt>
-          <dd>
-            {task.sla?.elapsed_hours ?? '—'} hours
-          </dd>
-        </div>
-
-        <div>
-          <dt>Progress</dt>
-          <dd>
-            {task.sla?.elapsed_percentage ?? 0}%
-          </dd>
-          </div>
-
-          <div>
-            <dt>State</dt>
-            <dd>
-              {statusLabel(task.sla?.state) || '—'}
-            </dd>
-          </div>
-        </dl>
-      </section>
-        <p className="employee-description">
-          {task.description || 'No description provided.'}
-        </p>
-      </section>
-
-      <section className="civic-content-grid">
         <article className="civic-panel">
           <div className="civic-panel-title">
             <div>
@@ -222,69 +239,141 @@ const EmployeeTaskDetails = ({ taskId, onBack }) => {
             </div>
           </div>
 
-          <div className="employee-location-box">
-            <MapPin size={21} />
-            <div>
-              <strong>GPS location</strong>
-              <span>
-                {task.latitude ?? '—'}, {task.longitude ?? '—'}
-              </span>
-            </div>
-          </div>
-        </article>
-
-        <article className="civic-panel">
-          <div className="civic-panel-title">
-            <div>
-              <p className="civic-eyebrow">Timeline</p>
-              <h3>Status history</h3>
-            </div>
-          </div>
-
-          {Array.isArray(task.status_history) &&
-          task.status_history.length > 0 ? (
-            <div className="employee-history-list">
-              {task.status_history.map((item) => (
-                <div className="employee-history-row" key={item.id}>
-                  <CalendarDays size={16} />
-                  <div>
-                    <strong>{statusLabel(item.new_status)}</strong>
-                    <span>{formatDate(item.changed_at)}</span>
-                    {item.remarks && <p>{item.remarks}</p>}
-                  </div>
-                </div>
-              ))}
+          {hasLocation ? (
+            <div className="employee-location-block">
+              <div className="employee-coordinate">
+                <MapPin size={17} />
+                <span>{Number(details.latitude).toFixed(6)}, {Number(details.longitude).toFixed(6)}</span>
+              </div>
+              <a
+                className="employee-inline-link"
+                href={`https://www.google.com/maps?q=${details.latitude},${details.longitude}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open in Maps
+                <ExternalLink size={15} />
+              </a>
             </div>
           ) : (
-            <p>No status history available.</p>
+            <p>Location is not available.</p>
           )}
         </article>
       </section>
 
-      {Array.isArray(task.photos) && task.photos.length > 0 && (
-        <section className="civic-panel">
+      <section className="civic-content-grid">
+        <article className="civic-panel">
           <div className="civic-panel-title">
             <div>
               <p className="civic-eyebrow">Evidence</p>
               <h3>Complaint photos</h3>
             </div>
+            <span>{details.photos?.length || 0}</span>
           </div>
 
-          <div className="employee-photo-grid">
-            {task.photos.map((photo) => (
-              <figure key={photo.id}>
-                <img
-                  src={photo.photo_url}
-                  alt={`${photo.photo_type} evidence`}
-                />
-                <figcaption>
-                  {photo.photo_type} · {formatDate(photo.uploaded_at)}
-                </figcaption>
-              </figure>
+          {initialPhotos.length === 0 && otherPhotos.length === 0 ? (
+            <div className="employee-empty-block">No complaint photos are available.</div>
+          ) : (
+            <>
+              {initialPhotos.length > 0 && (
+                <div className="employee-photo-grid">
+                  {initialPhotos.map((photo) => <PhotoCard key={photo.id} photo={photo} />)}
+                </div>
+              )}
+
+              {otherPhotos.length > 0 && (
+                <>
+                  <p className="civic-eyebrow employee-subheading">Additional evidence</p>
+                  <div className="employee-photo-grid">
+                    {otherPhotos.map((photo) => <PhotoCard key={photo.id} photo={photo} />)}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </article>
+
+        <article className="civic-panel">
+          <div className="civic-panel-title">
+            <div>
+              <p className="civic-eyebrow">Service level</p>
+              <h3>SLA status</h3>
+            </div>
+            <span className={`employee-sla-badge ${slaStateClass(slaState)}`}>
+              {slaLabel}
+            </span>
+          </div>
+
+          <div className={`employee-sla-wrap ${slaStateClass(slaState)}`}>
+            <div className="employee-sla-track">
+              <div style={{ width: `${slaProgress}%` }} />
+            </div>
+            <div className="employee-sla-summary">
+              <strong>{formatNumber(details.sla?.elapsed_percentage)}%</strong>
+              <span>of target elapsed</span>
+            </div>
+          </div>
+
+          <div className="employee-detail-grid employee-sla-grid">
+            <div><small>Target</small><p>{details.sla?.target_hours != null ? `${formatNumber(details.sla.target_hours)} hours` : 'Not available'}</p></div>
+            <div><small>Elapsed</small><p>{details.sla?.elapsed_hours != null ? `${formatNumber(details.sla.elapsed_hours)} hours` : 'Not available'}</p></div>
+            <div><small>Progress</small><p>{details.sla?.elapsed_percentage != null ? `${formatNumber(details.sla.elapsed_percentage)}%` : 'Not available'}</p></div>
+          </div>
+        </article>
+      </section>
+
+      <section className="civic-panel">
+        <div className="civic-panel-title">
+          <div>
+            <p className="civic-eyebrow">Assignment</p>
+            <h3>Current assignment</h3>
+          </div>
+        </div>
+
+        <div className="employee-detail-grid">
+          <div><small>Officer</small><p>{details.assignment?.officer_name || 'Not available'}</p></div>
+          <div><small>Employee ID</small><p>{details.assignment?.employee_id || 'Not available'}</p></div>
+          <div><small>Assigned by</small><p>{details.assignment?.assigned_by_name || 'Not available'}</p></div>
+          <div><small>Assigned at</small><p>{formatDate(details.assignment?.assigned_at)}</p></div>
+        </div>
+      </section>
+
+      <section className="civic-panel">
+        <div className="civic-panel-title">
+          <div>
+            <p className="civic-eyebrow">Timeline</p>
+            <h3>Status history</h3>
+          </div>
+        </div>
+
+        {details.status_history?.length ? (
+          <div className="employee-status-history">
+            {details.status_history.map((item) => (
+              <div className="employee-history-item" key={item.id}>
+                <span><CheckCircle2 size={17} /></span>
+                <div>
+                  <strong>{statusLabel(item.new_status)}</strong>
+                  <p>{item.old_status ? `${statusLabel(item.old_status)} → ` : ''}{statusLabel(item.new_status)}</p>
+                  {item.remarks && <p>{item.remarks}</p>}
+                  <small>{item.changed_by_name || 'System'} · {formatDate(item.changed_at)}</small>
+                </div>
+              </div>
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <p>No status history is available.</p>
+        )}
+      </section>
+
+      <div className="employee-detail-actions">
+        <button type="button" onClick={loadDetails} disabled={loading}>
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          Refresh details
+        </button>
+        <button type="button" onClick={() => { onRefreshTasks?.(); onBack(); }}>
+          Back to My Tasks
+        </button>
+      </div>
     </div>
   );
 };
