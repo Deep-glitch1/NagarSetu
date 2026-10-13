@@ -37,7 +37,6 @@ export async function apiFetch(path, options = {}) {
     data = {};
   }
 
-  // Session expired
  // Session expired
   if (response.status === 401) {
     window.dispatchEvent(

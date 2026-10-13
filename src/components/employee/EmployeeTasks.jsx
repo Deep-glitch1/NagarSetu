@@ -8,13 +8,10 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-const statusLabel = (status) =>
-  String(status || '')
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-
-const priorityClass = (priority) =>
-  `priority-${String(priority || 'low').toLowerCase()}`;
+import {
+  statusLabel,
+  priorityClass,
+} from '../../utils/format';
 
 const statusClass = (status) =>
   `employee-status-${String(status || 'received').toLowerCase()}`;

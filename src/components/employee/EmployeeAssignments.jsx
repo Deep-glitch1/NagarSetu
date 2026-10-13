@@ -14,10 +14,7 @@ import {
   assignComplaint,
 } from '../../api/employee';
 
-const statusLabel = (value) =>
-  String(value || '')
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+import { statusLabel } from '../../utils/format'; 
 
 const EmployeeAssignments = () => {
   const [complaints, setComplaints] = useState([]);

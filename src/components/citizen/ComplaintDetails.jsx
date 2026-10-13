@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-
 import {
   ArrowLeft,
   CalendarDays,
@@ -11,170 +10,39 @@ import {
   RefreshCw,
   AlertCircle,
 } from 'lucide-react';
-
 import { apiFetch } from '../../api/client';
-import { API_BASE_URL } from '../../config';
 import { getCategoryMeta } from '../../constants/categories';
-
-
-
-const STATUS_META = {
-  received: {
-    label: 'Received',
-    icon: Clock3,
-    bg: '#eef4ff',
-    color: '#315c9d',
-  },
-
-  assigned: {
-    label: 'Assigned',
-    icon: CheckCircle2,
-    bg: '#eef7f1',
-    color: '#397255',
-  },
-
-  in_progress: {
-    label: 'In progress',
-    icon: Clock3,
-    bg: '#fff4e5',
-    color: '#b86d20',
-  },
-
-  pending_verification: {
-    label: 'Pending verification',
-    icon: Clock3,
-    bg: '#f4f0ff',
-    color: '#7654a6',
-  },
-
-  pending_citizen_response: {
-    label: 'Action required',
-    icon: AlertCircle,
-    bg: '#fff4e5',
-    color: '#b86d20',
-  },
-
-  verified: {
-    label: 'Verified',
-    icon: CheckCircle2,
-    bg: '#eaf7ef',
-    color: '#397255',
-  },
-
-  closed: {
-    label: 'Closed',
-    icon: CheckCircle2,
-    bg: '#eaf7ef',
-    color: '#397255',
-  },
-
-  reopened: {
-    label: 'Reopened',
-    icon: RefreshCw,
-    bg: '#fff0f0',
-    color: '#b94a48',
-  },
-
-  rejected: {
-    label: 'Rejected',
-    icon: AlertCircle,
-    bg: '#fff0f0',
-    color: '#b94a48',
-  },
-};
-
-
-const STATUS_LABELS = {
-  received: 'Received',
-  assigned: 'Assigned',
-  in_progress: 'In progress',
-  pending_verification: 'Pending verification',
-  pending_citizen_response: 'Action required',
-  verified: 'Verified',
-  closed: 'Closed',
-  reopened: 'Reopened',
-  rejected: 'Rejected',
-};
-
-
-const formatDate = (value) => {
-  if (!value) return '—';
-
-  return new Date(value).toLocaleDateString(
-    'en-IN',
-    {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }
-  );
-};
-
-
-const formatDateTime = (value) => {
-  if (!value) return '—';
-
-  return new Date(value).toLocaleString(
-    'en-IN',
-    {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }
-  );
-};
-
-
-const getPhotoUrl = (photoUrl) => {
-  if (!photoUrl) return null;
-
-  if (
-    photoUrl.startsWith('http://') ||
-    photoUrl.startsWith('https://')
-  ) {
-    return photoUrl;
-  }
-
-  return `${API_BASE_URL}${photoUrl}`;
-};
-
-
+import { STATUS_META } from '../../constants/statuses';
+import {
+  formatDate,
+  formatDateTime,
+  getPhotoUrl,
+} from '../../utils/format';
 const ComplaintDetails = ({
   complaintId,
   onBack,
 }) => {
   const [complaint, setComplaint] =
     useState(null);
-
   const [history, setHistory] =
     useState([]);
-
   const [loading, setLoading] =
     useState(true);
-
   const [error, setError] =
     useState('');
-
-
   const loadComplaint = async () => {
     setLoading(true);
     setError('');
-
     try {
       const data = await apiFetch(
         `/citizen/complaints/${complaintId}`
       );
-
       setComplaint(
         data?.complaint || null
       );
-
       setHistory(
         data?.status_history || []
       );
-
     } catch (err) {
       setError(
         err?.message ||
@@ -184,13 +52,9 @@ const ComplaintDetails = ({
       setLoading(false);
     }
   };
-
-
   useEffect(() => {
     loadComplaint();
   }, [complaintId]);
-
-
   if (loading) {
     return (
       <div
@@ -214,14 +78,11 @@ const ComplaintDetails = ({
             size={20}
             className="animate-spin"
           />
-
           Loading complaint...
         </div>
       </div>
     );
   }
-
-
   if (error || !complaint) {
     return (
       <div className="civic-dashboard">
@@ -239,11 +100,9 @@ const ComplaintDetails = ({
               marginBottom: '14px',
             }}
           />
-
           <h3>
             Could not load complaint
           </h3>
-
           <p
             style={{
               color: '#667085',
@@ -253,7 +112,6 @@ const ComplaintDetails = ({
             {error ||
               'Complaint details not found.'}
           </p>
-
           <button
             type="button"
             onClick={loadComplaint}
@@ -277,43 +135,30 @@ const ComplaintDetails = ({
       </div>
     );
   }
-
-
-
   const categoryMeta = getCategoryMeta(complaint.category);
   const CategoryIcon =categoryMeta.icon;
-
   const currentStatus =
     STATUS_META[
       complaint.status
     ] || STATUS_META.received;
-
   const StatusIcon =
     currentStatus.icon;
-
   const initialPhoto =
     complaint.photos?.find(
       (photo) =>
         photo.photo_type === 'initial'
     ) || complaint.photos?.[0];
-
   const photoUrl =
     getPhotoUrl(
       initialPhoto?.photo_url
     );
-
-
   const mapsUrl =
     `https://www.google.com/maps?q=${complaint.latitude},${complaint.longitude}`;
-
-
   return (
     <div className="civic-dashboard">
-
       {/* =====================================================
           BACK
       ===================================================== */}
-
       <button
         type="button"
         onClick={onBack}
@@ -334,29 +179,21 @@ const ComplaintDetails = ({
         <ArrowLeft size={17} />
         Back to My complaints
       </button>
-
-
       {/* =====================================================
           HEADER
       ===================================================== */}
-
       <section className="civic-welcome">
-
         <div>
           <p className="civic-eyebrow">
             Complaint details
           </p>
-
           <h2>
             {complaint.title}
           </h2>
-
           <p>
             {complaint.complaint_number}
           </p>
         </div>
-
-
         <span
           style={{
             display: 'inline-flex',
@@ -374,28 +211,20 @@ const ComplaintDetails = ({
           }}
         >
           <StatusIcon size={16} />
-
           {currentStatus.label}
         </span>
-
       </section>
-
-
       {/* =====================================================
           PHOTO + BASIC INFO
       ===================================================== */}
-
       <section
         className="civic-content-grid"
         style={{
           marginTop: '24px',
         }}
       >
-
         {/* PHOTO */}
-
         <article className="civic-panel">
-
           {photoUrl ? (
             <img
               src={photoUrl}
@@ -423,23 +252,17 @@ const ComplaintDetails = ({
               <CategoryIcon size={54} />
             </div>
           )}
-
         </article>
-
-
         {/* SUMMARY */}
-
         <article
           className="civic-panel"
           style={{
             padding: '24px',
           }}
         >
-
           <p className="civic-eyebrow">
             Report summary
           </p>
-
           <h3
             style={{
               marginBottom: '20px',
@@ -447,8 +270,6 @@ const ComplaintDetails = ({
           >
             Complaint information
           </h3>
-
-
           <div
             style={{
               display: 'flex',
@@ -456,7 +277,6 @@ const ComplaintDetails = ({
               gap: '17px',
             }}
           >
-
             <InfoRow
               icon={<CategoryIcon size={17} />}
               label="Category"
@@ -465,7 +285,6 @@ const ComplaintDetails = ({
                 categoryMeta.label
               }
             />
-
             <InfoRow
               icon={<StatusIcon size={17} />}
               label="Status"
@@ -473,7 +292,6 @@ const ComplaintDetails = ({
                 currentStatus.label
               }
             />
-
             <InfoRow
               icon={<Clock3 size={17} />}
               label="Priority"
@@ -481,7 +299,6 @@ const ComplaintDetails = ({
                 complaint.priority
               }
             />
-
             <InfoRow
               icon={<CalendarDays size={17} />}
               label="Reported"
@@ -491,18 +308,12 @@ const ComplaintDetails = ({
                 )
               }
             />
-
           </div>
-
         </article>
-
       </section>
-
-
       {/* =====================================================
           DESCRIPTION
       ===================================================== */}
-
       {complaint.description && (
         <section
           className="civic-panel"
@@ -514,7 +325,6 @@ const ComplaintDetails = ({
           <p className="civic-eyebrow">
             Description
           </p>
-
           <p
             style={{
               margin: 0,
@@ -526,12 +336,9 @@ const ComplaintDetails = ({
           </p>
         </section>
       )}
-
-
       {/* =====================================================
           LOCATION
       ===================================================== */}
-
       <section
         className="civic-panel"
         style={{
@@ -539,7 +346,6 @@ const ComplaintDetails = ({
           padding: '24px',
         }}
       >
-
         <div
           style={{
             display: 'flex',
@@ -549,16 +355,13 @@ const ComplaintDetails = ({
             gap: '16px',
           }}
         >
-
           <div>
             <p className="civic-eyebrow">
               Reported location
             </p>
-
             <h3>
               GPS location
             </h3>
-
             <p
               style={{
                 marginTop: '8px',
@@ -569,8 +372,6 @@ const ComplaintDetails = ({
               {complaint.longitude}
             </p>
           </div>
-
-
           <a
             href={mapsUrl}
             target="_blank"
@@ -592,16 +393,11 @@ const ComplaintDetails = ({
             Open in Maps
             <ExternalLink size={14} />
           </a>
-
         </div>
-
       </section>
-
-
       {/* =====================================================
           STATUS HISTORY
       ===================================================== */}
-
       <section
         className="civic-panel"
         style={{
@@ -609,11 +405,9 @@ const ComplaintDetails = ({
           padding: '24px',
         }}
       >
-
         <p className="civic-eyebrow">
           Progress
         </p>
-
         <h3
           style={{
             marginBottom: '24px',
@@ -621,8 +415,6 @@ const ComplaintDetails = ({
         >
           Status history
         </h3>
-
-
         {history.length === 0 ? (
           <p
             style={{
@@ -632,30 +424,24 @@ const ComplaintDetails = ({
             No status updates recorded yet.
           </p>
         ) : (
-
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
             }}
           >
-
             {history.map(
               (item, index) => {
-
                 const isLast =
                   index ===
                   history.length - 1;
-
                 const status =
                   STATUS_META[
                     item.new_status
                   ] ||
                   STATUS_META.received;
-
                 const HistoryIcon =
                   status.icon;
-
                 return (
                   <div
                     key={item.id}
@@ -664,9 +450,7 @@ const ComplaintDetails = ({
                       gap: '15px',
                     }}
                   >
-
                     {/* TIMELINE */}
-
                     <div
                       style={{
                         display: 'flex',
@@ -678,7 +462,6 @@ const ComplaintDetails = ({
                         flexShrink: 0,
                       }}
                     >
-
                       <span
                         style={{
                           width: '30px',
@@ -700,7 +483,6 @@ const ComplaintDetails = ({
                           size={15}
                         />
                       </span>
-
                       {!isLast && (
                         <span
                           style={{
@@ -715,12 +497,8 @@ const ComplaintDetails = ({
                           }}
                         />
                       )}
-
                     </div>
-
-
                     {/* EVENT */}
-
                     <div
                       style={{
                         paddingBottom:
@@ -730,7 +508,6 @@ const ComplaintDetails = ({
                         flex: 1,
                       }}
                     >
-
                       <div
                         style={{
                           display:
@@ -742,16 +519,12 @@ const ComplaintDetails = ({
                             'flex-start',
                         }}
                       >
-
                         <strong>
                           {
-                            STATUS_LABELS[
-                              item.new_status
-                            ] ||
+                            STATUS_META[status]?.label  ||
                             item.new_status
                           }
                         </strong>
-
                         <small
                           style={{
                             color:
@@ -764,10 +537,7 @@ const ComplaintDetails = ({
                             item.changed_at
                           )}
                         </small>
-
                       </div>
-
-
                       {item.old_status && (
                         <p
                           style={{
@@ -781,15 +551,11 @@ const ComplaintDetails = ({
                         >
                           From{' '}
                           {
-                            STATUS_LABELS[
-                              item.old_status
-                            ] ||
+                           STATUS_META[status]?.label  ||
                             item.old_status
                           }
                         </p>
                       )}
-
-
                       {item.remarks && (
                         <p
                           style={{
@@ -804,25 +570,17 @@ const ComplaintDetails = ({
                           {item.remarks}
                         </p>
                       )}
-
                     </div>
-
                   </div>
                 );
               }
             )}
-
           </div>
-
         )}
-
       </section>
-
     </div>
   );
 };
-
-
 const InfoRow = ({
   icon,
   label,
@@ -851,7 +609,6 @@ const InfoRow = ({
       >
         {icon}
       </span>
-
       <div>
         <small
           style={{
@@ -862,7 +619,6 @@ const InfoRow = ({
         >
           {label}
         </small>
-
         <strong>
           {value}
         </strong>
@@ -870,6 +626,4 @@ const InfoRow = ({
     </div>
   );
 };
-
-
 export default ComplaintDetails;

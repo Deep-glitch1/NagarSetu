@@ -11,37 +11,19 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-import { API_BASE_URL } from '../../config';
 import { getTaskDetails } from '../../api/employee';
 
-const statusLabel = (status) =>
-  String(status || '')
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+import {
+  statusLabel,
+  priorityClass,
+  formatDate,
+  formatNumber,
+  getPhotoUrl,
+} from '../../utils/format';
 
-const priorityClass = (priority) =>
-  `priority-${String(priority || 'low').toLowerCase()}`;
 
 const slaStateClass = (state) =>
   `employee-sla-${String(state || 'on_track').toLowerCase()}`;
-
-const formatDate = (value) => {
-  if (!value) return 'Not available';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Not available' : date.toLocaleString();
-};
-
-const formatNumber = (value, digits = 1) => {
-  if (value === null || value === undefined) return 'Not available';
-  const number = Number(value);
-  return Number.isFinite(number) ? number.toFixed(digits) : 'Not available';
-};
-
-const getPhotoUrl = (value) => {
-  if (!value) return '';
-  if (/^(https?:|data:|blob:)/i.test(value)) return value;
-  return `${String(API_BASE_URL).replace(/\/$/, '')}/${String(value).replace(/^\//, '')}`;
-};
 
 const PhotoCard = ({ photo }) => {
   const [failed, setFailed] = useState(false);

@@ -3,7 +3,6 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-
 import {
   Search,
   X,
@@ -13,122 +12,60 @@ import {
   RefreshCw,
   ClipboardList,
 } from 'lucide-react';
-
 import { apiFetch } from '../../api/client';
-
-
-const priorityClass = (priority) => {
-  return `priority-${
-    String(priority || 'low').toLowerCase()
-  }`;
-};
-
-
-const statusLabel = (status) => {
-  return String(status || '')
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (char) =>
-      char.toUpperCase()
-    );
-};
-
-
+import {
+  priorityClass,
+  statusLabel,
+} from '../../utils/format';
 const AdminComplaints = () => {
-
-  const [complaints, setComplaints] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState('');
-
-  const [search, setSearch] =
-    useState('');
-
-  const [statusFilter, setStatusFilter] =
-    useState('all');
-
-  const [priorityFilter, setPriorityFilter] =
-    useState('all');
-
-  const [selectedComplaint, setSelectedComplaint] =
-    useState(null);
-
-  const [officers, setOfficers] =
-    useState([]);
-
-  const [officersLoading, setOfficersLoading] =
-    useState(false);
-
-  const [officersError, setOfficersError] =
-    useState('');
-
-  const [selectedOfficer, setSelectedOfficer] =
-    useState('');
-
-  const [assigning, setAssigning] =
-    useState(false);
-
-  const [assignError, setAssignError] =
-    useState('');
-
-  const [assignSuccess, setAssignSuccess] =
-    useState('');
-
-
+  const [complaints, setComplaints] =  useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [officers, setOfficers] = useState([]);
+  const [officersLoading, setOfficersLoading] = useState(false);
+  const [officersError, setOfficersError] = useState('');
+  const [selectedOfficer, setSelectedOfficer] = useState('');
+  const [assigning, setAssigning] = useState(false);
+  const [assignError, setAssignError] = useState('');
+  const [assignSuccess, setAssignSuccess] = useState('');
   const loadComplaints = async () => {
-
     setLoading(true);
     setError('');
-
     try {
-
       const data = await apiFetch(
         '/employee/complaints'
       );
-
       setComplaints(
         Array.isArray(data?.complaints)
           ? data.complaints
           : []
       );
-
     } catch (err) {
-
       console.error(
         'Complaint queue load failed:',
         err
       );
-
       setError(
         err.message ||
         'Unable to load complaints.'
       );
-
     } finally {
-
       setLoading(false);
-
     }
   };
-
-
   useEffect(() => {
     loadComplaints();
   }, []);
-
-
   const filteredComplaints =
     useMemo(() => {
-
       const query =
         search.trim().toLowerCase();
-
       return complaints.filter(
         (complaint) => {
-
           const matchesSearch =
             !query ||
             String(
@@ -136,13 +73,11 @@ const AdminComplaints = () => {
             )
               .toLowerCase()
               .includes(query) ||
-
             String(
               complaint.title || ''
             )
               .toLowerCase()
               .includes(query) ||
-
             String(
               complaint.category_name ||
               complaint.category ||
@@ -150,20 +85,14 @@ const AdminComplaints = () => {
             )
               .toLowerCase()
               .includes(query);
-
-
           const matchesStatus =
             statusFilter === 'all' ||
             complaint.status ===
               statusFilter;
-
-
           const matchesPriority =
             priorityFilter === 'all' ||
             complaint.priority ===
               priorityFilter;
-
-
           return (
             matchesSearch &&
             matchesStatus &&
@@ -171,74 +100,50 @@ const AdminComplaints = () => {
           );
         }
       );
-
     }, [
       complaints,
       search,
       statusFilter,
       priorityFilter,
     ]);
-
-
   const openAssignment = async (
     complaint
   ) => {
-
     setSelectedComplaint(
       complaint
     );
-
     setOfficers([]);
-
     setSelectedOfficer('');
-
     setOfficersError('');
-
     setAssignError('');
-
     setAssignSuccess('');
-
     setOfficersLoading(true);
-
-
     try {
-
       const data = await apiFetch(
         `/employee/complaints/${complaint.id}/officers`
       );
-
       setOfficers(
         Array.isArray(data?.officers)
           ? data.officers
           : []
       );
-
     } catch (err) {
-
       console.error(
         'Officer list load failed:',
         err
       );
-
       setOfficersError(
         err.message ||
         'Unable to load officers.'
       );
-
     } finally {
-
       setOfficersLoading(false);
-
     }
   };
-
-
   const closeAssignment = () => {
-
     if (assigning) {
       return;
     }
-
     setSelectedComplaint(null);
     setOfficers([]);
     setSelectedOfficer('');
@@ -246,40 +151,26 @@ const AdminComplaints = () => {
     setAssignError('');
     setAssignSuccess('');
   };
-
-
   const handleAssign = async () => {
-
     if (
       !selectedComplaint ||
       !selectedOfficer
     ) {
-
       setAssignError(
         'Please select an officer.'
       );
-
       return;
     }
-
-
     setAssigning(true);
-
     setAssignError('');
     setAssignSuccess('');
-
-
     try {
-
       const formData =
         new FormData();
-
       formData.append(
         'officer_id',
         selectedOfficer
       );
-
-
       const data = await apiFetch(
         `/employee/complaints/${selectedComplaint.id}/assign`,
         {
@@ -287,99 +178,70 @@ const AdminComplaints = () => {
           body: formData,
         }
       );
-
-
       const assignment =
         data?.assignment;
-
-
       setComplaints((current) =>
         current.map((item) =>
           item.id ===
           selectedComplaint.id
-
             ? {
                 ...item,
-
                 status:
                   data?.complaint?.status ||
                   'assigned',
-
                 assignment:
                   assignment
                     ? {
                         officer_id:
                           assignment.officer_id,
-
                         employee_id:
                           assignment.employee_id,
-
                         name:
                           assignment.officer_name,
                       }
                     : item.assignment,
               }
-
             : item
         )
       );
-
-
       setAssignSuccess(
         data?.message ||
         'Complaint assigned successfully.'
       );
-
     } catch (err) {
-
       console.error(
         'Complaint assignment failed:',
         err
       );
-
       setAssignError(
         err.message ||
         'Unable to assign complaint.'
       );
-
     } finally {
-
       setAssigning(false);
-
     }
   };
-
-
   return (
     <div className="civic-dashboard">
-
       {/* HEADER */}
       <section className="civic-welcome">
-
         <div>
-
           <p className="civic-eyebrow">
             Complaint management
           </p>
-
           <h2>
             Complaints Queue
           </h2>
-
           <p>
             Review routed complaints and
             assign them to officers.
           </p>
-
         </div>
-
-
         <button
           type="button"
           onClick={loadComplaints}
           disabled={loading}
         >
-
           {loading ? (
             <Loader2
               size={17}
@@ -388,14 +250,9 @@ const AdminComplaints = () => {
           ) : (
             <RefreshCw size={17} />
           )}
-
           Refresh
-
         </button>
-
       </section>
-
-
       {/* FILTERS */}
       <div
         className="civic-panel"
@@ -403,7 +260,6 @@ const AdminComplaints = () => {
           marginBottom: '18px',
         }}
       >
-
         <div
           style={{
             display: 'grid',
@@ -412,13 +268,11 @@ const AdminComplaints = () => {
             gap: '12px',
           }}
         >
-
           <label
             style={{
               position: 'relative',
             }}
           >
-
             <Search
               size={17}
               style={{
@@ -431,7 +285,6 @@ const AdminComplaints = () => {
                   'var(--muted)',
               }}
             />
-
             <input
               value={search}
               onChange={(e) =>
@@ -444,10 +297,7 @@ const AdminComplaints = () => {
                 paddingLeft: '38px',
               }}
             />
-
           </label>
-
-
           <select
             value={statusFilter}
             onChange={(e) =>
@@ -457,41 +307,31 @@ const AdminComplaints = () => {
             <option value="all">
               All statuses
             </option>
-
             <option value="received">
               Received
             </option>
-
             <option value="assigned">
               Assigned
             </option>
-
             <option value="in_progress">
               In progress
             </option>
-
             <option value="reopened">
               Reopened
             </option>
-
             <option value="pending_verification">
               Pending verification
             </option>
-
             <option value="verified">
               Verified
             </option>
-
             <option value="closed">
               Closed
             </option>
-
             <option value="rejected">
               Rejected
             </option>
           </select>
-
-
           <select
             value={priorityFilter}
             onChange={(e) =>
@@ -501,29 +341,21 @@ const AdminComplaints = () => {
             <option value="all">
               All priorities
             </option>
-
             <option value="critical">
               Critical
             </option>
-
             <option value="high">
               High
             </option>
-
             <option value="medium">
               Medium
             </option>
-
             <option value="low">
               Low
             </option>
           </select>
-
         </div>
-
       </div>
-
-
       {/* ERROR */}
       {error && (
         <div
@@ -536,50 +368,36 @@ const AdminComplaints = () => {
           {error}
         </div>
       )}
-
-
       {/* QUEUE */}
       <div className="civic-panel">
-
         <div className="civic-panel-title">
-
           <div>
-
             <p className="civic-eyebrow">
               {filteredComplaints.length}
               {' '}
               shown
             </p>
-
             <h3>
               Complaints
             </h3>
-
           </div>
-
           <span>
             {complaints.length}
             {' '}
             total
           </span>
-
         </div>
-
-
         {loading ? (
-
           <div
             style={{
               padding: '50px 10px',
               textAlign: 'center',
             }}
           >
-
             <Loader2
               size={28}
               className="animate-spin"
             />
-
             <p
               style={{
                 color:
@@ -588,22 +406,17 @@ const AdminComplaints = () => {
             >
               Loading complaints...
             </p>
-
           </div>
-
         ) : filteredComplaints.length === 0 ? (
-
           <div
             style={{
               padding: '50px 10px',
               textAlign: 'center',
             }}
           >
-
             <ClipboardList
               size={30}
             />
-
             <p
               style={{
                 color:
@@ -612,21 +425,16 @@ const AdminComplaints = () => {
             >
               No complaints found.
             </p>
-
           </div>
-
         ) : (
-
           <div
             style={{
               display: 'grid',
               gap: '10px',
             }}
           >
-
             {filteredComplaints.map(
               (complaint) => (
-
                 <article
                   key={complaint.id}
                   style={{
@@ -643,9 +451,7 @@ const AdminComplaints = () => {
                       'center',
                   }}
                 >
-
                   <div>
-
                     <div
                       style={{
                         display: 'flex',
@@ -655,15 +461,12 @@ const AdminComplaints = () => {
                           'center',
                       }}
                     >
-
                       <strong>
                         {
                           complaint
                             .complaint_number
                         }
                       </strong>
-
-
                       <span
                         className={
                           priorityClass(
@@ -678,8 +481,6 @@ const AdminComplaints = () => {
                           ).toUpperCase()
                         }
                       </span>
-
-
                       <span>
                         {
                           statusLabel(
@@ -687,10 +488,7 @@ const AdminComplaints = () => {
                           )
                         }
                       </span>
-
                     </div>
-
-
                     <h4
                       style={{
                         margin:
@@ -702,8 +500,6 @@ const AdminComplaints = () => {
                         'Untitled complaint'
                       }
                     </h4>
-
-
                     <p
                       style={{
                         margin: 0,
@@ -718,16 +514,12 @@ const AdminComplaints = () => {
                         complaint.category ||
                         'Unknown'
                       }
-
                       {' · '}
-
                       {
                         complaint.department_name ||
                         'Department'
                       }
                     </p>
-
-
                     <p
                       style={{
                         margin:
@@ -738,18 +530,13 @@ const AdminComplaints = () => {
                           '12px',
                       }}
                     >
-
                       {
                         complaint.assignment
                           ? `Officer: ${complaint.assignment.name}`
                           : 'Officer: Not assigned'
                       }
-
                     </p>
-
                   </div>
-
-
                   <button
                     type="button"
                     onClick={() =>
@@ -766,34 +553,23 @@ const AdminComplaints = () => {
                       )
                     }
                   >
-
                     <UserRound
                       size={16}
                     />
-
                     {
                       complaint.assignment
                         ? 'Reassign'
                         : 'Assign officer'
                     }
-
                   </button>
-
                 </article>
-
               )
             )}
-
           </div>
-
         )}
-
       </div>
-
-
       {/* ASSIGNMENT MODAL */}
       {selectedComplaint && (
-
         <div
           style={{
             position: 'fixed',
@@ -809,7 +585,6 @@ const AdminComplaints = () => {
             closeAssignment
           }
         >
-
           <div
             className="civic-panel"
             style={{
@@ -822,27 +597,20 @@ const AdminComplaints = () => {
               e.stopPropagation()
             }
           >
-
             <div
               className="civic-panel-title"
             >
-
               <div>
-
                 <p className="civic-eyebrow">
                   Assign complaint
                 </p>
-
                 <h3>
                   {
                     selectedComplaint
                       .complaint_number
                   }
                 </h3>
-
               </div>
-
-
               <button
                 type="button"
                 onClick={
@@ -854,10 +622,7 @@ const AdminComplaints = () => {
               >
                 <X size={18} />
               </button>
-
             </div>
-
-
             <p
               style={{
                 color:
@@ -868,10 +633,7 @@ const AdminComplaints = () => {
                 selectedComplaint.title
               }
             </p>
-
-
             {officersLoading ? (
-
               <div
                 style={{
                   textAlign: 'center',
@@ -883,9 +645,7 @@ const AdminComplaints = () => {
                   className="animate-spin"
                 />
               </div>
-
             ) : officersError ? (
-
               <p
                 style={{
                   color: '#a94435',
@@ -893,16 +653,11 @@ const AdminComplaints = () => {
               >
                 {officersError}
               </p>
-
             ) : (
-
               <>
-
                 <label>
                   Select officer
                 </label>
-
-
                 <select
                   value={
                     selectedOfficer
@@ -920,45 +675,31 @@ const AdminComplaints = () => {
                     marginTop: '8px',
                   }}
                 >
-
                   <option value="">
                     Choose an officer
                   </option>
-
                   {officers.map(
                     (officer) => (
-
                       <option
                         key={officer.id}
                         value={officer.id}
                       >
-
                         {
                           officer.name
                         }
-
                         {' · '}
-
                         {
                           officer.employee_id
                         }
-
                         {' · '}
-
                         {
                           officer.active_assignments
                         }
-
                         {' active'}
-
                       </option>
-
                     )
                   )}
-
                 </select>
-
-
                 <div
                   style={{
                     marginTop: '15px',
@@ -966,10 +707,8 @@ const AdminComplaints = () => {
                     gap: '8px',
                   }}
                 >
-
                   {officers.map(
                     (officer) => (
-
                       <button
                         type="button"
                         key={officer.id}
@@ -994,15 +733,12 @@ const AdminComplaints = () => {
                             '10px',
                         }}
                       >
-
                         <span>
-
                           <strong>
                             {
                               officer.name
                             }
                           </strong>
-
                           <small
                             style={{
                               display:
@@ -1015,28 +751,19 @@ const AdminComplaints = () => {
                               officer.employee_id
                             }
                           </small>
-
                         </span>
-
-
                         <small>
                           {
                             officer.active_assignments
                           }
                           {' active'}
                         </small>
-
                       </button>
-
                     )
                   )}
-
                 </div>
-
               </>
             )}
-
-
             {assignError && (
               <p
                 style={{
@@ -1046,8 +773,6 @@ const AdminComplaints = () => {
                 {assignError}
               </p>
             )}
-
-
             {assignSuccess && (
               <p
                 style={{
@@ -1057,8 +782,6 @@ const AdminComplaints = () => {
                 {assignSuccess}
               </p>
             )}
-
-
             <div
               style={{
                 display: 'flex',
@@ -1068,7 +791,6 @@ const AdminComplaints = () => {
                 marginTop: '20px',
               }}
             >
-
               <button
                 type="button"
                 onClick={
@@ -1080,8 +802,6 @@ const AdminComplaints = () => {
               >
                 Close
               </button>
-
-
               <button
                 type="button"
                 onClick={
@@ -1093,33 +813,23 @@ const AdminComplaints = () => {
                   officers.length === 0
                 }
               >
-
                 {assigning && (
                   <Loader2
                     size={16}
                     className="animate-spin"
                   />
                 )}
-
                 {
                   assigning
                     ? 'Assigning...'
                     : 'Assign officer'
                 }
-
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       )}
-
     </div>
   );
 };
-
-
 export default AdminComplaints;

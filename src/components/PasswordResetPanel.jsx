@@ -48,35 +48,10 @@ const PasswordResetPanel = ({
    * Clear old messages whenever the mode changes.
    */
   useEffect(() => {
-    setError('');
-    setSuccess('');
-  }, [mode]);
-
-  /*
-   * Clear messages when the panel is opened again.
-   */
-  useEffect(() => {
-    if (isOpen) {
-      setError('');
-      setSuccess('');
-    }
-  }, [isOpen]);
-
-  /*
-   * IMPORTANT:
-   * Hooks must stay above this conditional return.
-   *
-   * When PortalEntry is at:
-   * http://localhost:5173/
-   *
-   * isOpen = false, so this component renders nothing.
-   *
-   * When Forgot Password is clicked:
-   * isOpen = true, so the panel appears.
-   *
-   * When the email reset URL is opened:
-   * App.jsx passes isOpen = true and mode = "reset".
-   */
+  setError('');
+  setSuccess('');
+}, [mode, isOpen]);
+  
   if (!isOpen) {
     return null;
   }

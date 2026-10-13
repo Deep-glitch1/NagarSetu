@@ -8,10 +8,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-const statusLabel = (value) =>
-  String(value || '')
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+import { statusLabel } from '../../utils/format';
 
 const EmployeeDashboard = ({
   userData,
