@@ -6,56 +6,51 @@ Employee complaint operations live in employee_complaint.py.
 """
 
 from fastapi import (
-    APIRouter,
+   APIRouter,
     Depends,
     File,
     Form,
+    HTTPException,
     UploadFile,
+    status,
 )
-
-from sqlalchemy import desc, func, select
+from pydantic import BaseModel
+from sqlalchemy import desc, func, select, text
 from sqlalchemy.orm import Session
-
 from app.db.database import get_db
-
 from app.db.models.category import (
     ComplaintCategory,
 )
-
 from app.db.models.complaint import (
     Complaint,
 )
-
 from app.db.models.photo import (
     ComplaintPhoto,
 )
-
 from app.db.models.status_history import (
     StatusHistory,
 )
-
 from app.routers.auth import (
     get_current_identity,
 )
-
 from app.routers.citizen import (
     get_authenticated_citizen,
 )
-
 from app.services.complaint_service import (
     create_complaint,
 )
-
-
 # ============================================================
 # ROUTER
 # ============================================================
-
 router = APIRouter(
     prefix="/citizen/complaints",
     tags=["complaints"],
 )
 
+class CitizenResponseRequest(BaseModel):
+    response: str
+    rating: int | None = None
+    review: str | None = None
 
 # ============================================================
 # GET MY COMPLAINTS
@@ -633,23 +628,14 @@ async def create_road_complaint(
 
     return await create_complaint(
         expected_class="ROAD_DAMAGED",
-
         title=title,
-
         description=description,
-
         latitude=latitude,
-
         longitude=longitude,
-
         file=file,
-
         current_user=current_user,
-
         db=db,
     )
-
-
 # ============================================================
 # GARBAGE COMPLAINT
 # POST /citizen/complaints/garbage
@@ -668,10 +654,40 @@ async def create_garbage_complaint(
     ),
 
     latitude: float = Form(...),
-
     longitude: float = Form(...),
-
     file: UploadFile = File(...),
+    current_user: dict = Depends(
+        get_current_identity
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Create a garbage complaint.
+    Only GARBAGE is accepted.
+    """
+    return await create_complaint(
+        expected_class="GARBAGE",
+        title=title,
+        description=description,
+        latitude=latitude,
+        longitude=longitude,
+        file=file,
+        current_user=current_user,
+        db=db,
+    )
+# ============================================================
+# SUBMIT CITIZEN RESPONSE
+# POST /citizen/complaints/{complaint_id}/response
+# ============================================================
+# ============================================================
+# SUBMIT CITIZEN RESPONSE
+# POST /citizen/complaints/{complaint_id}/response
+# ============================================================
+
+@router.post("/{complaint_id}/response")
+def submit_citizen_response(
+    complaint_id: int,
+    payload: CitizenResponseRequest,
 
     current_user: dict = Depends(
         get_current_identity
@@ -680,25 +696,45 @@ async def create_garbage_complaint(
     db: Session = Depends(get_db),
 ):
     """
-    Create a garbage complaint.
-
-    Only GARBAGE is accepted.
+    Submit citizen satisfaction/reopen response.
     """
 
-    return await create_complaint(
-        expected_class="GARBAGE",
-
-        title=title,
-
-        description=description,
-
-        latitude=latitude,
-
-        longitude=longitude,
-
-        file=file,
-
+    citizen = get_authenticated_citizen(
         current_user=current_user,
-
         db=db,
     )
+
+    try:
+        db.execute(
+            text("""
+                CALL sp_submit_citizen_response(
+                    :complaint_id,
+                    :citizen_id,
+                    :response,
+                    :rating,
+                    :review
+                )
+            """),
+            {
+                "complaint_id": complaint_id,
+                "citizen_id": citizen.id,
+                "response": payload.response,
+                "rating": payload.rating,
+                "review": payload.review,
+            },
+        )
+
+        db.commit()
+
+        return {
+            "success": True,
+            "message": "Response submitted successfully.",
+        }
+
+    except Exception as exc:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )

@@ -9,6 +9,8 @@ import {
   ClipboardList,
 } from 'lucide-react';
 
+import { apiFetch } from '../api/client';
+
 import CivicShell from './CivicShell';
 
 import AdminDashboard from './admin/AdminDashboard';
@@ -93,13 +95,11 @@ const AdminPortal = ({
           );
         }
 
-
         if (currentTab === 'complaints') {
           return (
             <AdminComplaints />
           );
         }
-
 
         if (currentTab === 'analytics') {
           return (
@@ -107,13 +107,11 @@ const AdminPortal = ({
           );
         }
 
-
         if (currentTab === 'departments') {
           return (
             <AdminDepartments />
           );
         }
-
 
         if (currentTab === 'users') {
           return (
@@ -121,13 +119,11 @@ const AdminPortal = ({
           );
         }
 
-
         if (currentTab === 'settings') {
           return (
             <AdminSettings />
           );
         }
-
 
         return null;
       }}

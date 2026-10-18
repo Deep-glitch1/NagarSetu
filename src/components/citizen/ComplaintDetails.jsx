@@ -9,6 +9,8 @@ import {
   MapPin,
   RefreshCw,
   AlertCircle,
+  Star,
+  Send,
 } from 'lucide-react';
 import { apiFetch } from '../../api/client';
 import { getCategoryMeta } from '../../constants/categories';
@@ -30,9 +32,29 @@ const ComplaintDetails = ({
     useState(true);
   const [error, setError] =
     useState('');
+
+  const [responseChoice, setResponseChoice] =
+    useState('');
+
+  const [responseRating, setResponseRating] =
+    useState(0);
+
+  const [responseReview, setResponseReview] =
+    useState('');
+
+  const [responseSubmitting, setResponseSubmitting] =
+    useState(false);
+
+  const [responseError, setResponseError] =
+    useState('');
+
+  const [responseSuccess, setResponseSuccess] =
+    useState('');
   const loadComplaint = async () => {
     setLoading(true);
     setError('');
+    setResponseError('');
+    setResponseSuccess('');
     try {
       const data = await apiFetch(
         `/citizen/complaints/${complaintId}`
@@ -52,6 +74,55 @@ const ComplaintDetails = ({
       setLoading(false);
     }
   };
+  const handleSubmitResponse = async () => {
+    if (!responseChoice) {
+      setResponseError(
+        'Please choose whether you are satisfied or want to reopen the complaint.'
+      );
+      return;
+    }
+
+    setResponseSubmitting(true);
+    setResponseError('');
+    setResponseSuccess('');
+
+    try {
+      const data = await apiFetch(
+        `/citizen/complaints/${complaintId}/response`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            response: responseChoice,
+            rating:
+              responseRating > 0
+                ? responseRating
+                : null,
+            review:
+              responseReview.trim() || null,
+          }),
+        }
+      );
+
+      setResponseSuccess(
+        data?.message ||
+          'Your response was submitted successfully.'
+      );
+
+      setResponseChoice('');
+      setResponseRating(0);
+      setResponseReview('');
+
+      await loadComplaint();
+    } catch (err) {
+      setResponseError(
+        err?.message ||
+          'Unable to submit your response.'
+      );
+    } finally {
+      setResponseSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     loadComplaint();
   }, [complaintId]);
@@ -396,6 +467,306 @@ const ComplaintDetails = ({
         </div>
       </section>
       {/* =====================================================
+          CITIZEN RESPONSE
+      ===================================================== */}
+      {[
+        'verified',
+        'pending_citizen_response',
+      ].includes(complaint.status) && (
+        <section
+          className="civic-panel"
+          style={{
+            marginTop: '16px',
+            padding: '24px',
+          }}
+        >
+          <p className="civic-eyebrow">
+            Resolution feedback
+          </p>
+
+          <h3
+            style={{
+              marginBottom: '8px',
+            }}
+          >
+            How was the resolution?
+          </h3>
+
+          <p
+            style={{
+              marginTop: 0,
+              color: '#667085',
+              lineHeight: 1.6,
+            }}
+          >
+            Confirm whether the issue was resolved
+            satisfactorily, or reopen the complaint if
+            the problem still exists.
+          </p>
+
+          {responseError && (
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: '10px',
+                marginTop: '16px',
+                background: '#fbeae5',
+                color: '#a43f2d',
+                fontSize: '14px',
+              }}
+            >
+              {responseError}
+            </div>
+          )}
+
+          {responseSuccess && (
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: '10px',
+                marginTop: '16px',
+                background: '#e6f4eb',
+                color: '#397255',
+                fontSize: '14px',
+              }}
+            >
+              {responseSuccess}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns:
+                'repeat(2, minmax(0, 1fr))',
+              gap: '12px',
+              marginTop: '20px',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                setResponseChoice('satisfied')
+              }
+              disabled={responseSubmitting}
+              style={{
+                padding: '15px 16px',
+                borderRadius: '12px',
+                border:
+                  responseChoice === 'satisfied'
+                    ? '2px solid #397255'
+                    : '1px solid #d7dee8',
+                background:
+                  responseChoice === 'satisfied'
+                    ? '#eef8f1'
+                    : '#fff',
+                cursor: responseSubmitting
+                  ? 'not-allowed'
+                  : 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <strong
+                style={{
+                  display: 'block',
+                  marginBottom: '4px',
+                }}
+              >
+                Resolution is satisfactory
+              </strong>
+              <span
+                style={{
+                  color: '#667085',
+                  fontSize: '13px',
+                }}
+              >
+                The issue has been fixed.
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setResponseChoice('reopen')
+              }
+              disabled={responseSubmitting}
+              style={{
+                padding: '15px 16px',
+                borderRadius: '12px',
+                border:
+                  responseChoice === 'reopen'
+                    ? '2px solid #b94a48'
+                    : '1px solid #d7dee8',
+                background:
+                  responseChoice === 'reopen'
+                    ? '#fdf0ee'
+                    : '#fff',
+                cursor: responseSubmitting
+                  ? 'not-allowed'
+                  : 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <strong
+                style={{
+                  display: 'block',
+                  marginBottom: '4px',
+                }}
+              >
+                Reopen complaint
+              </strong>
+              <span
+                style={{
+                  color: '#667085',
+                  fontSize: '13px',
+                }}
+              >
+                The issue is not fully resolved.
+              </span>
+            </button>
+          </div>
+
+          {responseChoice === 'satisfied' && (
+            <div
+              style={{
+                marginTop: '20px',
+              }}
+            >
+              <label
+                style={{
+                  display: 'block',
+                  fontWeight: 700,
+                  marginBottom: '9px',
+                }}
+              >
+                Rating
+              </label>
+
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '6px',
+                  alignItems: 'center',
+                }}
+              >
+                {[1, 2, 3, 4, 5].map(
+                  (value) => (
+                    <button
+                      type="button"
+                      key={value}
+                      onClick={() =>
+                        setResponseRating(value)
+                      }
+                      disabled={
+                        responseSubmitting
+                      }
+                      aria-label={`Rate ${value} out of 5`}
+                      style={{
+                        border: 'none',
+                        background:
+                          'transparent',
+                        padding: '2px',
+                        cursor:
+                          responseSubmitting
+                            ? 'not-allowed'
+                            : 'pointer',
+                        color:
+                          value <= responseRating
+                            ? '#d9a441'
+                            : '#c8ced8',
+                      }}
+                    >
+                      <Star
+                        size={28}
+                        fill={
+                          value <= responseRating
+                            ? 'currentColor'
+                            : 'none'
+                        }
+                      />
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          <div
+            style={{
+              marginTop: '20px',
+            }}
+          >
+            <label
+              style={{
+                display: 'block',
+                fontWeight: 700,
+                marginBottom: '9px',
+              }}
+            >
+              Review
+            </label>
+
+            <textarea
+              value={responseReview}
+              onChange={(event) =>
+                setResponseReview(
+                  event.target.value
+                )
+              }
+              disabled={responseSubmitting}
+              placeholder={
+                responseChoice === 'reopen'
+                  ? 'Tell us what is still unresolved...'
+                  : 'Share your feedback...'
+              }
+              rows={4}
+              style={{
+                width: '100%',
+                resize: 'vertical',
+              }}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSubmitResponse}
+            disabled={
+              responseSubmitting ||
+              !responseChoice
+            }
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginTop: '18px',
+              padding: '11px 16px',
+              borderRadius: '10px',
+              border: 'none',
+              cursor:
+                responseSubmitting ||
+                !responseChoice
+                  ? 'not-allowed'
+                  : 'pointer',
+              fontWeight: 700,
+            }}
+          >
+            {responseSubmitting ? (
+              <Loader2
+                size={16}
+                className="animate-spin"
+              />
+            ) : (
+              <Send size={16} />
+            )}
+
+            {responseSubmitting
+              ? 'Submitting...'
+              : 'Submit response'}
+          </button>
+        </section>
+      )}
+
+      {/* =====================================================
           STATUS HISTORY
       ===================================================== */}
       <section
@@ -551,7 +922,9 @@ const ComplaintDetails = ({
                         >
                           From{' '}
                           {
-                           STATUS_META[status]?.label  ||
+                            STATUS_META[
+                              item.old_status
+                            ]?.label ||
                             item.old_status
                           }
                         </p>

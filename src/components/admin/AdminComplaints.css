@@ -1,0 +1,486 @@
+/* NagarSetu — Admin Complaints polish */
+.admin-complaints-page {
+  --admin-card: #ffffff;
+  --admin-soft: #f8f6f1;
+  --admin-shadow: 0 10px 28px rgba(29, 35, 31, 0.06);
+}
+
+.admin-complaints-page .admin-complaints-header {
+  margin-bottom: 18px;
+}
+
+.admin-complaints-page .admin-refresh-btn,
+.admin-complaints-page .admin-action-btn,
+.admin-complaints-page .admin-primary-btn,
+.admin-complaints-page .admin-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font: 700 12px/1 Inter, sans-serif;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease, opacity .16s ease;
+}
+
+.admin-complaints-page .admin-refresh-btn {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+.admin-complaints-page .admin-refresh-btn:hover:not(:disabled),
+.admin-complaints-page .admin-primary-btn:hover:not(:disabled),
+.admin-complaints-page .admin-verify-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 18px rgba(24, 35, 29, .10);
+}
+
+.admin-complaints-page button:disabled {
+  opacity: .52;
+  cursor: not-allowed;
+}
+
+.admin-complaints-page .admin-filters-panel {
+  margin-bottom: 12px;
+  padding: 14px;
+}
+
+.admin-complaints-page .admin-filters-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px 170px;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-complaints-page .admin-filters-grid > * {
+  min-width: 0;
+}
+
+.admin-complaints-page .admin-search-field {
+  position: relative;
+  display: block;
+}
+
+.admin-complaints-page .admin-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.admin-complaints-page .admin-search-input,
+.admin-complaints-page .admin-filter-select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.admin-complaints-page .admin-search-input {
+  padding: 0 12px 0 38px;
+}
+
+.admin-complaints-page .admin-filter-select {
+  padding: 0 12px;
+}
+
+.admin-complaints-page .admin-search-input:focus,
+.admin-complaints-page .admin-filter-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(57, 114, 85, .10);
+}
+
+.admin-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.admin-summary-card {
+  min-width: 0;
+  padding: 14px 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--admin-card);
+  box-shadow: var(--admin-shadow);
+}
+
+.admin-summary-card span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+
+.admin-summary-card strong {
+  display: block;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.admin-summary-warning { border-left: 3px solid #c88a29; }
+.admin-summary-reopened { border-left: 3px solid #8b5b96; }
+.admin-summary-closed { border-left: 3px solid #397255; }
+
+.admin-error-panel {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  color: #a94435;
+  background: #fff8f7;
+  border: 1px solid #ecc7c2;
+  border-radius: 12px;
+}
+
+.admin-inline-error { margin-bottom: 14px; }
+
+.admin-complaint-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-complaint-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--admin-card);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.admin-complaint-card:hover {
+  transform: translateY(-1px);
+  border-color: #d3cdc1;
+  box-shadow: var(--admin-shadow);
+}
+
+.admin-complaint-card-final {
+  background: #fcfcfa;
+}
+
+.admin-complaint-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+}
+
+.admin-complaint-title {
+  margin: 8px 0 5px;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.admin-complaint-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.admin-complaint-assignment {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.admin-complaint-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.admin-action-btn {
+  background: #fff;
+  color: var(--ink);
+}
+
+.admin-action-btn:hover:not(:disabled),
+.admin-secondary-btn:hover:not(:disabled) {
+  background: #f6f3ed;
+  border-color: #cfc7ba;
+}
+
+.admin-view-btn { min-width: 106px; }
+.admin-assign-btn { min-width: 120px; }
+
+.admin-verify-btn {
+  background: #397255;
+  border-color: #397255;
+  color: #fff;
+}
+
+.admin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.admin-status-received { background: #eef4f0; color: #3e6751; border-color: #d9e6de; }
+.admin-status-assigned { background: #eef2f7; color: #4a6077; border-color: #dbe3ec; }
+.admin-status-in-progress { background: #edf5fa; color: #35647a; border-color: #d7e7f0; }
+.admin-status-pending-verification { background: #fff5e5; color: #8a6325; border-color: #f0ddba; }
+.admin-status-verified { background: #edf7f0; color: #357050; border-color: #d6e9da; }
+.admin-status-pending-citizen-response { background: #f8f2e8; color: #725d3a; border-color: #e9dcc5; }
+.admin-status-reopened { background: #f4edf7; color: #704c7c; border-color: #e5d7e9; }
+.admin-status-closed { background: #edf7f0; color: #356d4f; border-color: #d5e8da; }
+.admin-status-rejected { background: #fff0ee; color: #9a4c41; border-color: #edd6d2; }
+
+.admin-empty-state {
+  padding: 48px 10px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.admin-empty-state svg { margin-bottom: 6px; }
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 1000;
+  background: rgba(24, 27, 23, .46);
+  backdrop-filter: blur(3px);
+}
+
+.admin-report-modal { z-index: 1100; background: rgba(24, 27, 23, .50); }
+
+.admin-modal-panel {
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 70px rgba(20, 25, 22, .18);
+}
+
+.admin-report-panel { width: min(920px, 100%); max-height: 92vh; }
+
+.admin-modal-title {
+  align-items: flex-start;
+}
+
+.admin-complaints-page .admin-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.admin-complaints-page .admin-icon-btn:hover:not(:disabled) {
+  background: #f6f3ed;
+}
+
+.admin-officer-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.admin-officer-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.admin-officer-option:hover:not(:disabled) {
+  background: #faf8f3;
+  transform: translateY(-1px);
+}
+
+.admin-officer-option.selected {
+  border: 2px solid var(--accent);
+  background: rgba(57, 114, 85, .08);
+}
+
+.admin-primary-btn {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+.admin-secondary-btn {
+  background: #fff;
+  color: var(--ink);
+}
+
+.admin-report-section {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.admin-sla-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--admin-soft);
+}
+
+.admin-report-panel img {
+  background: #f6f4ef;
+}
+
+@media (max-width: 900px) {
+  .admin-complaints-page .admin-filters-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-search-field {
+    grid-column: 1 / -1;
+  }
+
+  .admin-summary-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-complaint-card {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-complaint-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-complaints-page .admin-filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-search-field { grid-column: auto; }
+
+  .admin-summary-strip {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .admin-summary-card {
+    padding: 12px;
+  }
+
+  .admin-complaint-card {
+    padding: 13px;
+  }
+
+  .admin-complaint-actions > button {
+    flex: 1 1 auto;
+  }
+
+  .admin-modal-backdrop {
+    padding: 10px;
+  }
+}
+
+.admin-report-content {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-report-content > div:first-child {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.admin-photo-card {
+  display: grid;
+  gap: 7px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  background: #fff;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.admin-photo-card:hover {
+  transform: translateY(-2px);
+  border-color: #d1cabf;
+  box-shadow: var(--admin-shadow);
+}
+
+.admin-photo-card img {
+  width: 100%;
+  height: 180px;
+  display: block;
+  object-fit: cover;
+}
+
+.admin-photo-card > div:last-child {
+  padding: 0 10px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.admin-queue-header > span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+@media (max-width: 600px) {
+  .admin-complaints-page .admin-action-btn,
+  .admin-complaints-page .admin-primary-btn,
+  .admin-complaints-page .admin-secondary-btn {
+    width: 100%;
+  }
+
+  .admin-complaint-actions {
+    width: 100%;
+  }
+}

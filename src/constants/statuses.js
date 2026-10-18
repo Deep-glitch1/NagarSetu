@@ -11,6 +11,7 @@ export const STATUS_META = {
     icon: Clock3,
     bg: '#eef4ff',
     color: '#315c9d',
+    className: '',
   },
 
   assigned: {
@@ -18,6 +19,7 @@ export const STATUS_META = {
     icon: CheckCircle2,
     bg: '#eef7f1',
     color: '#397255',
+    className: 'is-waiting',
   },
 
   in_progress: {
@@ -25,6 +27,7 @@ export const STATUS_META = {
     icon: Clock3,
     bg: '#fff4e5',
     color: '#b86d20',
+    className: 'is-waiting',
   },
 
   pending_verification: {
@@ -32,6 +35,7 @@ export const STATUS_META = {
     icon: Clock3,
     bg: '#f4f0ff',
     color: '#7654a6',
+    className: 'is-waiting',
   },
 
   pending_citizen_response: {
@@ -39,6 +43,7 @@ export const STATUS_META = {
     icon: AlertCircle,
     bg: '#fff4e5',
     color: '#b86d20',
+    className: 'is-waiting',
   },
 
   verified: {
@@ -46,6 +51,7 @@ export const STATUS_META = {
     icon: CheckCircle2,
     bg: '#eaf7ef',
     color: '#397255',
+    className: 'is-done',
   },
 
   closed: {
@@ -53,6 +59,7 @@ export const STATUS_META = {
     icon: CheckCircle2,
     bg: '#eaf7ef',
     color: '#397255',
+    className: 'is-done',
   },
 
   reopened: {
@@ -60,6 +67,7 @@ export const STATUS_META = {
     icon: RefreshCw,
     bg: '#fff0f0',
     color: '#b94a48',
+    className: 'is-waiting',
   },
 
   rejected: {
@@ -67,6 +75,7 @@ export const STATUS_META = {
     icon: AlertCircle,
     bg: '#fff0f0',
     color: '#b94a48',
+    className: '',
   },
 };
 

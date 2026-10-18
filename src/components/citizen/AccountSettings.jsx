@@ -10,33 +10,16 @@ import {
 import { apiFetch } from '../../api/client';
 
 const AccountSettings = () => {
-  const [currentPassword, setCurrentPassword] =
-    useState('');
-
-  const [newPassword, setNewPassword] =
-    useState('');
-
-  const [confirmPassword, setConfirmPassword] =
-    useState('');
-
-  const [showCurrentPassword, setShowCurrentPassword] =
-    useState(false);
-
-  const [showNewPassword, setShowNewPassword] =
-    useState(false);
-
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState(false);
-
-  const [passwordLoading, setPasswordLoading] =
-    useState(false);
-
-  const [passwordError, setPasswordError] =
-    useState('');
-
-  const [passwordSuccess, setPasswordSuccess] =
-    useState('');
-
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  
   const handleChangePassword = async (event) => {
     event.preventDefault();
 
@@ -115,69 +98,30 @@ const AccountSettings = () => {
           <ShieldCheck size={22} />
         </div>
 
-        <p
-          style={{
-            color: '#6b7780',
-            marginBottom: '24px',
-            lineHeight: 1.6,
-          }}
-        >
+        <p className="account-settings-description">
           Update your NagarSetu password
           using your current password.
         </p>
 
         <form
           onSubmit={handleChangePassword}
-          style={{
-            maxWidth: '520px',
-          }}
+          className="account-settings-form"
         >
           {passwordError && (
-            <div
-              style={{
-                padding: '12px 14px',
-                borderRadius: '10px',
-                marginBottom: '16px',
-                background: '#fbeae5',
-                color: '#a43f2d',
-                fontSize: '14px',
-              }}
-            >
+            <div className="account-settings-message account-settings-error">
               {passwordError}
             </div>
           )}
 
           {passwordSuccess && (
-            <div
-              style={{
-                padding: '12px 14px',
-                borderRadius: '10px',
-                marginBottom: '16px',
-                background: '#e6f4eb',
-                color: '#397255',
-                fontSize: '14px',
-              }}
-            >
+            <div className="account-settings-message account-settings-success">
               {passwordSuccess}
             </div>
           )}
 
           {/* CURRENT PASSWORD */}
-          <label
-            style={{
-              display: 'block',
-              marginBottom: '18px',
-            }}
-          >
-            <span
-              style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#34495a',
-              }}
-            >
+          <label className="account-settings-field">
+            <span className="account-settings-label">
               Current password
             </span>
 
@@ -224,21 +168,8 @@ const AccountSettings = () => {
           </label>
 
           {/* NEW PASSWORD */}
-          <label
-            style={{
-              display: 'block',
-              marginBottom: '18px',
-            }}
-          >
-            <span
-              style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#34495a',
-              }}
-            >
+          <label className="account-settings-field">
+            <span className="account-settings-label">
               New password
             </span>
 
@@ -286,21 +217,8 @@ const AccountSettings = () => {
           </label>
 
           {/* CONFIRM PASSWORD */}
-          <label
-            style={{
-              display: 'block',
-              marginBottom: '22px',
-            }}
-          >
-            <span
-              style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#34495a',
-              }}
-            >
+          <label className="account-settings-field account-settings-field-last">
+            <span className="account-settings-label">
               Confirm new password
             </span>
 
@@ -350,23 +268,7 @@ const AccountSettings = () => {
           <button
             type="submit"
             disabled={passwordLoading}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '11px 18px',
-              border: 0,
-              borderRadius: '10px',
-              background: '#315e63',
-              color: '#fff',
-              fontWeight: 600,
-              cursor: passwordLoading
-                ? 'not-allowed'
-                : 'pointer',
-              opacity: passwordLoading
-                ? 0.7
-                : 1,
-            }}
+            className="account-settings-submit"
           >
             <Lock size={16} />
 
