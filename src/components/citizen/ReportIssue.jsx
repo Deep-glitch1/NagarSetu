@@ -20,7 +20,12 @@ const ReportIssue = () => {
 
   return (
     <div className="civic-dashboard">
-      <div style={{ maxWidth: '1000px', width: '100%' }}>
+      <div
+        style={{
+          maxWidth: '1000px',
+          width: '100%',
+        }}
+      >
         <p className="civic-eyebrow">
           NAGARSETU • CIVIC REPORTING
         </p>
@@ -28,7 +33,8 @@ const ReportIssue = () => {
         <h1
           style={{
             margin: '6px 0 8px',
-            fontFamily: 'Fraunces, Georgia, serif',
+            fontFamily:
+              'Fraunces, Georgia, serif',
             fontSize: '32px',
           }}
         >
@@ -55,82 +61,64 @@ const ReportIssue = () => {
             marginTop: '28px',
           }}
         >
+          {/* ROAD */}
           <button
             type="button"
             onClick={() => setReportType('road')}
-            style={cardStyle}
+            className="report-card"
           >
-            <div
-              style={{
-                ...iconStyle,
-                color: '#a94d38',
-                background: '#f9e9e4',
-              }}
-            >
+            <div className="report-card-icon report-card-icon-road">
               <Construction size={28} />
             </div>
 
             <div style={{ flex: 1 }}>
-              <div style={labelStyle}>
+              <div className="report-card-label report-card-label-road">
                 ROAD & INFRASTRUCTURE
               </div>
 
-              <h3 style={titleStyle}>
+              <h3 className="report-card-title">
                 Report Road Issue
               </h3>
 
-              <p style={descriptionStyle}>
+              <p className="report-card-description">
                 Report potholes, damaged roads and
                 other road-related problems.
               </p>
 
-              <span style={actionStyle}>
-                Start report <ArrowRight size={16} />
+              <span className="report-card-action report-card-action-road">
+                Start report
+                <ArrowRight size={16} />
               </span>
             </div>
           </button>
 
+          {/* GARBAGE */}
           <button
             type="button"
             onClick={() => setReportType('garbage')}
-            style={cardStyle}
+            className="report-card"
           >
-            <div
-              style={{
-                ...iconStyle,
-                color: '#397255',
-                background: '#e8f3eb',
-              }}
-            >
+            <div className="report-card-icon report-card-icon-garbage">
               <Trash2 size={28} />
             </div>
 
             <div style={{ flex: 1 }}>
-              <div
-                style={{
-                  ...labelStyle,
-                  color: '#397255',
-                }}
-              >
+              <div className="report-card-label report-card-label-garbage">
                 WASTE MANAGEMENT
               </div>
 
-              <h3 style={titleStyle}>
+              <h3 className="report-card-title">
                 Report Garbage
               </h3>
 
-              <p style={descriptionStyle}>
+              <p className="report-card-description">
                 Report garbage accumulation and
                 improper waste disposal.
               </p>
 
-              <span
-                style={{
-                  ...actionStyle,
-                  color: '#397255',
-                }}
-              >
-                Start report <ArrowRight size={16} />
+              <span className="report-card-action report-card-action-garbage">
+                Start report
+                <ArrowRight size={16} />
               </span>
             </div>
           </button>
@@ -138,58 +126,6 @@ const ReportIssue = () => {
       </div>
     </div>
   );
-};
-
-const cardStyle = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: '18px',
-  padding: '26px',
-  border: '1px solid var(--line)',
-  borderRadius: '16px',
-  background: '#fffdf9',
-  color: 'var(--ink)',
-  textAlign: 'left',
-  cursor: 'pointer',
-};
-
-const iconStyle = {
-  display: 'grid',
-  placeItems: 'center',
-  width: '56px',
-  height: '56px',
-  flexShrink: 0,
-  borderRadius: '14px',
-};
-
-const labelStyle = {
-  fontSize: '10px',
-  fontWeight: 800,
-  letterSpacing: '1px',
-  color: '#a94d38',
-};
-
-const titleStyle = {
-  margin: '7px 0',
-  fontFamily: 'Fraunces, Georgia, serif',
-  fontSize: '22px',
-};
-
-const descriptionStyle = {
-  margin: 0,
-  color: 'var(--muted)',
-  fontSize: '13px',
-  lineHeight: 1.6,
-};
-
-const actionStyle = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
-  marginTop: '18px',
-  color: '#a94d38',
-  fontSize: '13px',
-  fontWeight: 700,
 };
 
 export default ReportIssue;

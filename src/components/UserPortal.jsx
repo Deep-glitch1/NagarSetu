@@ -18,6 +18,7 @@ import ReportIssue from './citizen/ReportIssue';
 import MyComplaints from './citizen/MyComplaints';
 import MyImpact from './citizen/MyImpact';
 import WasteCollectionTracking from './citizen/WasteCollectionTracking';
+import './citizen/CitizenPortal.css';
 
 const UserPortal = ({
   userData,
@@ -54,7 +55,11 @@ const UserPortal = ({
       label: 'Report an issue',
       icon: Camera,
     },
-
+    {
+      id: 'waste-collection',
+      label: 'Waste collection',
+      icon: Truck,
+    },
     {
       id: 'complaints',
       label: 'My complaints',
@@ -110,14 +115,18 @@ const UserPortal = ({
           />
         ) : currentTab === 'report' ? (
           <ReportIssue />
-        ) : currentTab === 'settings' ? (
-          <AccountSettings />
+        ) : currentTab === 'waste-collection' ? (
+          <WasteCollectionTracking />
         ) : currentTab === 'complaints' ? (
           <MyComplaints />
         ) : currentTab === 'achievements' ? (
           <MyImpact />
         ) : currentTab === 'waste-tracking' ? (
           <WasteCollectionTracking />
+        ) : currentTab === 'settings' ? (
+          <AccountSettings
+            onLogout={onLogout}
+          />
         ) : (
           <div className="civic-empty">
             {activeItem?.icon &&

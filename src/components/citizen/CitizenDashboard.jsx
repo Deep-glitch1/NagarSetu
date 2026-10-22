@@ -8,103 +8,13 @@ import {
   Camera,
   Loader2,
   RefreshCw,
-  Construction,
-  Trash2,
   AlertCircle,
 } from 'lucide-react';
 
 import { apiFetch } from '../../api/client';
-
-
-const STATUS_META = {
-  received: {
-    label: 'Received',
-    className: '',
-  },
-
-  assigned: {
-    label: 'Assigned',
-    className: 'is-waiting',
-  },
-
-  in_progress: {
-    label: 'In progress',
-    className: 'is-waiting',
-  },
-
-  pending_verification: {
-    label: 'Pending verification',
-    className: 'is-waiting',
-  },
-
-  pending_citizen_response: {
-    label: 'Action required',
-    className: 'is-waiting',
-  },
-
-  verified: {
-    label: 'Verified',
-    className: 'is-done',
-  },
-
-  closed: {
-    label: 'Resolved',
-    className: 'is-done',
-  },
-
-  reopened: {
-    label: 'Reopened',
-    className: 'is-waiting',
-  },
-
-  rejected: {
-    label: 'Rejected',
-    className: '',
-  },
-};
-
-
-const getCategoryLabel = (category) => {
-  if (category === 'ROAD_DAMAGED') {
-    return 'Road Damaged';
-  }
-
-  if (category === 'GARBAGE') {
-    return 'Garbage';
-  }
-
-  return category || 'Complaint';
-};
-
-
-const getCategoryIcon = (category) => {
-  if (category === 'ROAD_DAMAGED') {
-    return Construction;
-  }
-
-  if (category === 'GARBAGE') {
-    return Trash2;
-  }
-
-  return MapPin;
-};
-
-
-const formatDate = (value) => {
-  if (!value) {
-    return '—';
-  }
-
-  return new Date(value).toLocaleDateString(
-    'en-IN',
-    {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }
-  );
-};
-
+import { STATUS_META } from '../../constants/statuses';
+import { getCategoryIcon, } from '../../constants/categories';
+import { formatDate } from '../../utils/format';
 
 const CitizenDashboard = ({
   userData,
@@ -185,10 +95,7 @@ const CitizenDashboard = ({
         >
           <Loader2
             size={20}
-            style={{
-              animation:
-                'spin 1s linear infinite',
-            }}
+            className="animate-spin"
           />
 
           Loading your dashboard...
@@ -525,8 +432,9 @@ const CitizenDashboard = ({
                             {' · '}
                             {
                               formatDate(
-                                complaint.created_at
-                              )
+                                  complaint.created_at,
+                                  '—'
+                                )
                             }
                           </small>
                         </span>

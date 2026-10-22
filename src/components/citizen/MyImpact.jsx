@@ -76,10 +76,7 @@ const MyImpact = () => {
         >
           <Loader2
             size={20}
-            style={{
-              animation:
-                'spin 1s linear infinite',
-            }}
+           className="animate-spin"
           />
 
           Loading your impact...

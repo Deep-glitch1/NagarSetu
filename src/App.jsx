@@ -1,9 +1,26 @@
 import React, { useEffect, useState } from 'react';
+
 import PortalEntry from './components/PortalEntry';
 import UserPortal from './components/UserPortal';
 import AdminPortal from './components/AdminPortal';
+import EmployeePortal from './components/EmployeePortal';
 import PasswordResetPanel from './components/PasswordResetPanel';
+
 import { apiFetch } from './api/client';
+
+
+// ============================================================
+// ADMIN ROLES
+// ============================================================
+
+const ADMIN_ROLES = [
+  'department_head',
+  'block_officer',
+  'district_officer',
+  'municipal_admin',
+  'super_admin',
+];
+
 
 function App() {
   const [currentView, setCurrentView] = useState('entry');
@@ -21,6 +38,7 @@ function App() {
   const isPasswordResetRoute =
     window.location.pathname === '/reset-password' &&
     !!resetToken;
+
 
   // ============================================================
   // RESTORE REDIS SESSION
@@ -46,11 +64,43 @@ function App() {
 
         setUserData(data.user);
 
-        if (data.user.role === 'employee') {
-          setCurrentView('admin');
-        } else {
+
+        // --------------------------------------------------------
+        // CITIZEN
+        // --------------------------------------------------------
+
+        if (data.user.role === 'citizen') {
           setCurrentView('user');
+          return;
         }
+
+
+        // --------------------------------------------------------
+        // EMPLOYEE
+        // --------------------------------------------------------
+
+        if (data.user.role === 'employee') {
+          if (
+            ADMIN_ROLES.includes(
+              data.user.employee_role
+            )
+          ) {
+            setCurrentView('admin');
+          } else {
+            setCurrentView('employee');
+          }
+
+          return;
+        }
+
+
+        // --------------------------------------------------------
+        // UNKNOWN ROLE
+        // --------------------------------------------------------
+
+        setUserData(null);
+        setCurrentView('entry');
+
       } catch (error) {
         console.error(
           'Session restore failed:',
@@ -59,13 +109,40 @@ function App() {
 
         setUserData(null);
         setCurrentView('entry');
+
       } finally {
         setCheckingSession(false);
       }
     };
 
     restoreSession();
+
   }, [isPasswordResetRoute]);
+
+
+  // ============================================================
+  // GLOBAL SESSION EXPIRY HANDLER
+  // ============================================================
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUserData(null);
+      setCurrentView('entry');
+    };
+
+    window.addEventListener(
+      'nagarsetu:unauthorized',
+      handleUnauthorized
+    );
+
+    return () => {
+      window.removeEventListener(
+        'nagarsetu:unauthorized',
+        handleUnauthorized
+      );
+    };
+  }, []);
+
 
   // ============================================================
   // CITIZEN LOGIN
@@ -76,14 +153,33 @@ function App() {
     setCurrentView('user');
   };
 
+
   // ============================================================
   // EMPLOYEE LOGIN
   // ============================================================
 
-  const handleAdminLogin = (data) => {
+  const handleEmployeeLogin = (data) => {
     setUserData(data);
-    setCurrentView('admin');
+
+    if (data.role === 'employee') {
+
+      if (
+        ADMIN_ROLES.includes(
+          data.employee_role
+        )
+      ) {
+        setCurrentView('admin');
+      } else {
+        setCurrentView('employee');
+      }
+
+      return;
+    }
+
+    // Safety fallback
+    setCurrentView('entry');
   };
+
 
   // ============================================================
   // LOGOUT
@@ -94,16 +190,19 @@ function App() {
       await apiFetch('/auth/logout', {
         method: 'POST',
       });
+
     } catch (error) {
       console.error(
         'Logout request failed:',
         error
       );
+
     } finally {
       setUserData(null);
       setCurrentView('entry');
     }
   };
+
 
   // ============================================================
   // PROFILE UPDATE
@@ -112,6 +211,7 @@ function App() {
   const handleProfileUpdate = (updatedUser) => {
     setUserData(updatedUser);
   };
+
 
   // ============================================================
   // PASSWORD RESET PAGE
@@ -134,6 +234,7 @@ function App() {
     );
   }
 
+
   // ============================================================
   // SESSION CHECK
   // ============================================================
@@ -141,6 +242,7 @@ function App() {
   if (checkingSession) {
     return null;
   }
+
 
   // ============================================================
   // PORTAL ENTRY
@@ -150,10 +252,11 @@ function App() {
     return (
       <PortalEntry
         onUserLogin={handleUserLogin}
-        onAdminLogin={handleAdminLogin}
+        onAdminLogin={handleEmployeeLogin}
       />
     );
   }
+
 
   // ============================================================
   // CITIZEN PORTAL
@@ -169,8 +272,23 @@ function App() {
     );
   }
 
+
   // ============================================================
-  // EMPLOYEE / ADMIN PORTAL
+  // EMPLOYEE PORTAL
+  // ============================================================
+
+  if (currentView === 'employee') {
+    return (
+      <EmployeePortal
+        userData={userData}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+
+  // ============================================================
+  // ADMIN PORTAL
   // ============================================================
 
   if (currentView === 'admin') {
@@ -182,7 +300,9 @@ function App() {
     );
   }
 
+
   return null;
 }
+
 
 export default App;

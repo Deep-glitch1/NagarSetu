@@ -1,193 +1,70 @@
 import React, { useEffect, useState } from 'react';
-
 import {
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
   Clock3,
-  Construction,
   ExternalLink,
   Loader2,
   MapPin,
   RefreshCw,
-  Trash2,
   AlertCircle,
+  Star,
+  Send,
 } from 'lucide-react';
-
 import { apiFetch } from '../../api/client';
-import { API_BASE_URL } from '../../config';
-
-
-const CATEGORY_META = {
-  ROAD_DAMAGED: {
-    label: 'Road Damaged',
-    icon: Construction,
-  },
-
-  GARBAGE: {
-    label: 'Garbage',
-    icon: Trash2,
-  },
-};
-
-
-const STATUS_META = {
-  received: {
-    label: 'Received',
-    icon: Clock3,
-    bg: '#eef4ff',
-    color: '#315c9d',
-  },
-
-  assigned: {
-    label: 'Assigned',
-    icon: CheckCircle2,
-    bg: '#eef7f1',
-    color: '#397255',
-  },
-
-  in_progress: {
-    label: 'In progress',
-    icon: Clock3,
-    bg: '#fff4e5',
-    color: '#b86d20',
-  },
-
-  pending_verification: {
-    label: 'Pending verification',
-    icon: Clock3,
-    bg: '#f4f0ff',
-    color: '#7654a6',
-  },
-
-  pending_citizen_response: {
-    label: 'Action required',
-    icon: AlertCircle,
-    bg: '#fff4e5',
-    color: '#b86d20',
-  },
-
-  verified: {
-    label: 'Verified',
-    icon: CheckCircle2,
-    bg: '#eaf7ef',
-    color: '#397255',
-  },
-
-  closed: {
-    label: 'Closed',
-    icon: CheckCircle2,
-    bg: '#eaf7ef',
-    color: '#397255',
-  },
-
-  reopened: {
-    label: 'Reopened',
-    icon: RefreshCw,
-    bg: '#fff0f0',
-    color: '#b94a48',
-  },
-
-  rejected: {
-    label: 'Rejected',
-    icon: AlertCircle,
-    bg: '#fff0f0',
-    color: '#b94a48',
-  },
-};
-
-
-const STATUS_LABELS = {
-  received: 'Received',
-  assigned: 'Assigned',
-  in_progress: 'In progress',
-  pending_verification: 'Pending verification',
-  pending_citizen_response: 'Action required',
-  verified: 'Verified',
-  closed: 'Closed',
-  reopened: 'Reopened',
-  rejected: 'Rejected',
-};
-
-
-const formatDate = (value) => {
-  if (!value) return '—';
-
-  return new Date(value).toLocaleDateString(
-    'en-IN',
-    {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }
-  );
-};
-
-
-const formatDateTime = (value) => {
-  if (!value) return '—';
-
-  return new Date(value).toLocaleString(
-    'en-IN',
-    {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }
-  );
-};
-
-
-const getPhotoUrl = (photoUrl) => {
-  if (!photoUrl) return null;
-
-  if (
-    photoUrl.startsWith('http://') ||
-    photoUrl.startsWith('https://')
-  ) {
-    return photoUrl;
-  }
-
-  return `${API_BASE_URL}${photoUrl}`;
-};
-
-
+import { getCategoryMeta } from '../../constants/categories';
+import { STATUS_META } from '../../constants/statuses';
+import {
+  formatDate,
+  formatDateTime,
+  getPhotoUrl,
+} from '../../utils/format';
 const ComplaintDetails = ({
   complaintId,
   onBack,
 }) => {
   const [complaint, setComplaint] =
     useState(null);
-
   const [history, setHistory] =
     useState([]);
-
   const [loading, setLoading] =
     useState(true);
-
   const [error, setError] =
     useState('');
 
+  const [responseChoice, setResponseChoice] =
+    useState('');
 
+  const [responseRating, setResponseRating] =
+    useState(0);
+
+  const [responseReview, setResponseReview] =
+    useState('');
+
+  const [responseSubmitting, setResponseSubmitting] =
+    useState(false);
+
+  const [responseError, setResponseError] =
+    useState('');
+
+  const [responseSuccess, setResponseSuccess] =
+    useState('');
   const loadComplaint = async () => {
     setLoading(true);
     setError('');
-
+    setResponseError('');
+    setResponseSuccess('');
     try {
       const data = await apiFetch(
         `/citizen/complaints/${complaintId}`
       );
-
       setComplaint(
         data?.complaint || null
       );
-
       setHistory(
         data?.status_history || []
       );
-
     } catch (err) {
       setError(
         err?.message ||
@@ -197,13 +74,58 @@ const ComplaintDetails = ({
       setLoading(false);
     }
   };
+  const handleSubmitResponse = async () => {
+    if (!responseChoice) {
+      setResponseError(
+        'Please choose whether you are satisfied or want to reopen the complaint.'
+      );
+      return;
+    }
 
+    setResponseSubmitting(true);
+    setResponseError('');
+    setResponseSuccess('');
+
+    try {
+      const data = await apiFetch(
+        `/citizen/complaints/${complaintId}/response`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            response: responseChoice,
+            rating:
+              responseRating > 0
+                ? responseRating
+                : null,
+            review:
+              responseReview.trim() || null,
+          }),
+        }
+      );
+
+      setResponseSuccess(
+        data?.message ||
+          'Your response was submitted successfully.'
+      );
+
+      setResponseChoice('');
+      setResponseRating(0);
+      setResponseReview('');
+
+      await loadComplaint();
+    } catch (err) {
+      setResponseError(
+        err?.message ||
+          'Unable to submit your response.'
+      );
+    } finally {
+      setResponseSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     loadComplaint();
   }, [complaintId]);
-
-
   if (loading) {
     return (
       <div
@@ -225,19 +147,13 @@ const ComplaintDetails = ({
         >
           <Loader2
             size={20}
-            style={{
-              animation:
-                'spin 1s linear infinite',
-            }}
+            className="animate-spin"
           />
-
           Loading complaint...
         </div>
       </div>
     );
   }
-
-
   if (error || !complaint) {
     return (
       <div className="civic-dashboard">
@@ -255,11 +171,9 @@ const ComplaintDetails = ({
               marginBottom: '14px',
             }}
           />
-
           <h3>
             Could not load complaint
           </h3>
-
           <p
             style={{
               color: '#667085',
@@ -269,7 +183,6 @@ const ComplaintDetails = ({
             {error ||
               'Complaint details not found.'}
           </p>
-
           <button
             type="button"
             onClick={loadComplaint}
@@ -293,50 +206,30 @@ const ComplaintDetails = ({
       </div>
     );
   }
-
-
-  const categoryMeta =
-    CATEGORY_META[
-      complaint.category
-    ] || {
-      label: complaint.category,
-      icon: MapPin,
-    };
-
-  const CategoryIcon =
-    categoryMeta.icon;
-
+  const categoryMeta = getCategoryMeta(complaint.category);
+  const CategoryIcon =categoryMeta.icon;
   const currentStatus =
     STATUS_META[
       complaint.status
     ] || STATUS_META.received;
-
   const StatusIcon =
     currentStatus.icon;
-
   const initialPhoto =
     complaint.photos?.find(
       (photo) =>
         photo.photo_type === 'initial'
     ) || complaint.photos?.[0];
-
   const photoUrl =
     getPhotoUrl(
       initialPhoto?.photo_url
     );
-
-
   const mapsUrl =
     `https://www.google.com/maps?q=${complaint.latitude},${complaint.longitude}`;
-
-
   return (
     <div className="civic-dashboard">
-
       {/* =====================================================
           BACK
       ===================================================== */}
-
       <button
         type="button"
         onClick={onBack}
@@ -357,29 +250,21 @@ const ComplaintDetails = ({
         <ArrowLeft size={17} />
         Back to My complaints
       </button>
-
-
       {/* =====================================================
           HEADER
       ===================================================== */}
-
       <section className="civic-welcome">
-
         <div>
           <p className="civic-eyebrow">
             Complaint details
           </p>
-
           <h2>
             {complaint.title}
           </h2>
-
           <p>
             {complaint.complaint_number}
           </p>
         </div>
-
-
         <span
           style={{
             display: 'inline-flex',
@@ -397,28 +282,20 @@ const ComplaintDetails = ({
           }}
         >
           <StatusIcon size={16} />
-
           {currentStatus.label}
         </span>
-
       </section>
-
-
       {/* =====================================================
           PHOTO + BASIC INFO
       ===================================================== */}
-
       <section
         className="civic-content-grid"
         style={{
           marginTop: '24px',
         }}
       >
-
         {/* PHOTO */}
-
         <article className="civic-panel">
-
           {photoUrl ? (
             <img
               src={photoUrl}
@@ -446,23 +323,17 @@ const ComplaintDetails = ({
               <CategoryIcon size={54} />
             </div>
           )}
-
         </article>
-
-
         {/* SUMMARY */}
-
         <article
           className="civic-panel"
           style={{
             padding: '24px',
           }}
         >
-
           <p className="civic-eyebrow">
             Report summary
           </p>
-
           <h3
             style={{
               marginBottom: '20px',
@@ -470,8 +341,6 @@ const ComplaintDetails = ({
           >
             Complaint information
           </h3>
-
-
           <div
             style={{
               display: 'flex',
@@ -479,7 +348,6 @@ const ComplaintDetails = ({
               gap: '17px',
             }}
           >
-
             <InfoRow
               icon={<CategoryIcon size={17} />}
               label="Category"
@@ -488,7 +356,6 @@ const ComplaintDetails = ({
                 categoryMeta.label
               }
             />
-
             <InfoRow
               icon={<StatusIcon size={17} />}
               label="Status"
@@ -496,7 +363,6 @@ const ComplaintDetails = ({
                 currentStatus.label
               }
             />
-
             <InfoRow
               icon={<Clock3 size={17} />}
               label="Priority"
@@ -504,7 +370,6 @@ const ComplaintDetails = ({
                 complaint.priority
               }
             />
-
             <InfoRow
               icon={<CalendarDays size={17} />}
               label="Reported"
@@ -514,18 +379,12 @@ const ComplaintDetails = ({
                 )
               }
             />
-
           </div>
-
         </article>
-
       </section>
-
-
       {/* =====================================================
           DESCRIPTION
       ===================================================== */}
-
       {complaint.description && (
         <section
           className="civic-panel"
@@ -537,7 +396,6 @@ const ComplaintDetails = ({
           <p className="civic-eyebrow">
             Description
           </p>
-
           <p
             style={{
               margin: 0,
@@ -549,12 +407,9 @@ const ComplaintDetails = ({
           </p>
         </section>
       )}
-
-
       {/* =====================================================
           LOCATION
       ===================================================== */}
-
       <section
         className="civic-panel"
         style={{
@@ -562,7 +417,6 @@ const ComplaintDetails = ({
           padding: '24px',
         }}
       >
-
         <div
           style={{
             display: 'flex',
@@ -572,16 +426,13 @@ const ComplaintDetails = ({
             gap: '16px',
           }}
         >
-
           <div>
             <p className="civic-eyebrow">
               Reported location
             </p>
-
             <h3>
               GPS location
             </h3>
-
             <p
               style={{
                 marginTop: '8px',
@@ -592,8 +443,6 @@ const ComplaintDetails = ({
               {complaint.longitude}
             </p>
           </div>
-
-
           <a
             href={mapsUrl}
             target="_blank"
@@ -615,16 +464,311 @@ const ComplaintDetails = ({
             Open in Maps
             <ExternalLink size={14} />
           </a>
-
         </div>
-
       </section>
+      {/* =====================================================
+          CITIZEN RESPONSE
+      ===================================================== */}
+      {[
+        'verified',
+        'pending_citizen_response',
+      ].includes(complaint.status) && (
+        <section
+          className="civic-panel"
+          style={{
+            marginTop: '16px',
+            padding: '24px',
+          }}
+        >
+          <p className="civic-eyebrow">
+            Resolution feedback
+          </p>
 
+          <h3
+            style={{
+              marginBottom: '8px',
+            }}
+          >
+            How was the resolution?
+          </h3>
+
+          <p
+            style={{
+              marginTop: 0,
+              color: '#667085',
+              lineHeight: 1.6,
+            }}
+          >
+            Confirm whether the issue was resolved
+            satisfactorily, or reopen the complaint if
+            the problem still exists.
+          </p>
+
+          {responseError && (
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: '10px',
+                marginTop: '16px',
+                background: '#fbeae5',
+                color: '#a43f2d',
+                fontSize: '14px',
+              }}
+            >
+              {responseError}
+            </div>
+          )}
+
+          {responseSuccess && (
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: '10px',
+                marginTop: '16px',
+                background: '#e6f4eb',
+                color: '#397255',
+                fontSize: '14px',
+              }}
+            >
+              {responseSuccess}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns:
+                'repeat(2, minmax(0, 1fr))',
+              gap: '12px',
+              marginTop: '20px',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                setResponseChoice('satisfied')
+              }
+              disabled={responseSubmitting}
+              style={{
+                padding: '15px 16px',
+                borderRadius: '12px',
+                border:
+                  responseChoice === 'satisfied'
+                    ? '2px solid #397255'
+                    : '1px solid #d7dee8',
+                background:
+                  responseChoice === 'satisfied'
+                    ? '#eef8f1'
+                    : '#fff',
+                cursor: responseSubmitting
+                  ? 'not-allowed'
+                  : 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <strong
+                style={{
+                  display: 'block',
+                  marginBottom: '4px',
+                }}
+              >
+                Resolution is satisfactory
+              </strong>
+              <span
+                style={{
+                  color: '#667085',
+                  fontSize: '13px',
+                }}
+              >
+                The issue has been fixed.
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setResponseChoice('reopen')
+              }
+              disabled={responseSubmitting}
+              style={{
+                padding: '15px 16px',
+                borderRadius: '12px',
+                border:
+                  responseChoice === 'reopen'
+                    ? '2px solid #b94a48'
+                    : '1px solid #d7dee8',
+                background:
+                  responseChoice === 'reopen'
+                    ? '#fdf0ee'
+                    : '#fff',
+                cursor: responseSubmitting
+                  ? 'not-allowed'
+                  : 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <strong
+                style={{
+                  display: 'block',
+                  marginBottom: '4px',
+                }}
+              >
+                Reopen complaint
+              </strong>
+              <span
+                style={{
+                  color: '#667085',
+                  fontSize: '13px',
+                }}
+              >
+                The issue is not fully resolved.
+              </span>
+            </button>
+          </div>
+
+          {responseChoice === 'satisfied' && (
+            <div
+              style={{
+                marginTop: '20px',
+              }}
+            >
+              <label
+                style={{
+                  display: 'block',
+                  fontWeight: 700,
+                  marginBottom: '9px',
+                }}
+              >
+                Rating
+              </label>
+
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '6px',
+                  alignItems: 'center',
+                }}
+              >
+                {[1, 2, 3, 4, 5].map(
+                  (value) => (
+                    <button
+                      type="button"
+                      key={value}
+                      onClick={() =>
+                        setResponseRating(value)
+                      }
+                      disabled={
+                        responseSubmitting
+                      }
+                      aria-label={`Rate ${value} out of 5`}
+                      style={{
+                        border: 'none',
+                        background:
+                          'transparent',
+                        padding: '2px',
+                        cursor:
+                          responseSubmitting
+                            ? 'not-allowed'
+                            : 'pointer',
+                        color:
+                          value <= responseRating
+                            ? '#d9a441'
+                            : '#c8ced8',
+                      }}
+                    >
+                      <Star
+                        size={28}
+                        fill={
+                          value <= responseRating
+                            ? 'currentColor'
+                            : 'none'
+                        }
+                      />
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          <div
+            style={{
+              marginTop: '20px',
+            }}
+          >
+            <label
+              style={{
+                display: 'block',
+                fontWeight: 700,
+                marginBottom: '9px',
+              }}
+            >
+              Review
+            </label>
+
+            <textarea
+              value={responseReview}
+              onChange={(event) =>
+                setResponseReview(
+                  event.target.value
+                )
+              }
+              disabled={responseSubmitting}
+              placeholder={
+                responseChoice === 'reopen'
+                  ? 'Tell us what is still unresolved...'
+                  : 'Share your feedback...'
+              }
+              rows={4}
+              style={{
+                width: '100%',
+                resize: 'vertical',
+              }}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSubmitResponse}
+            disabled={
+              responseSubmitting ||
+              !responseChoice
+            }
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginTop: '18px',
+              padding: '11px 16px',
+              borderRadius: '10px',
+              border: 'none',
+              cursor:
+                responseSubmitting ||
+                !responseChoice
+                  ? 'not-allowed'
+                  : 'pointer',
+              fontWeight: 700,
+            }}
+          >
+            {responseSubmitting ? (
+              <Loader2
+                size={16}
+                className="animate-spin"
+              />
+            ) : (
+              <Send size={16} />
+            )}
+
+            {responseSubmitting
+              ? 'Submitting...'
+              : 'Submit response'}
+          </button>
+        </section>
+      )}
 
       {/* =====================================================
           STATUS HISTORY
       ===================================================== */}
-
       <section
         className="civic-panel"
         style={{
@@ -632,11 +776,9 @@ const ComplaintDetails = ({
           padding: '24px',
         }}
       >
-
         <p className="civic-eyebrow">
           Progress
         </p>
-
         <h3
           style={{
             marginBottom: '24px',
@@ -644,8 +786,6 @@ const ComplaintDetails = ({
         >
           Status history
         </h3>
-
-
         {history.length === 0 ? (
           <p
             style={{
@@ -655,30 +795,24 @@ const ComplaintDetails = ({
             No status updates recorded yet.
           </p>
         ) : (
-
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
             }}
           >
-
             {history.map(
               (item, index) => {
-
                 const isLast =
                   index ===
                   history.length - 1;
-
                 const status =
                   STATUS_META[
                     item.new_status
                   ] ||
                   STATUS_META.received;
-
                 const HistoryIcon =
                   status.icon;
-
                 return (
                   <div
                     key={item.id}
@@ -687,9 +821,7 @@ const ComplaintDetails = ({
                       gap: '15px',
                     }}
                   >
-
                     {/* TIMELINE */}
-
                     <div
                       style={{
                         display: 'flex',
@@ -701,7 +833,6 @@ const ComplaintDetails = ({
                         flexShrink: 0,
                       }}
                     >
-
                       <span
                         style={{
                           width: '30px',
@@ -723,7 +854,6 @@ const ComplaintDetails = ({
                           size={15}
                         />
                       </span>
-
                       {!isLast && (
                         <span
                           style={{
@@ -738,12 +868,8 @@ const ComplaintDetails = ({
                           }}
                         />
                       )}
-
                     </div>
-
-
                     {/* EVENT */}
-
                     <div
                       style={{
                         paddingBottom:
@@ -753,7 +879,6 @@ const ComplaintDetails = ({
                         flex: 1,
                       }}
                     >
-
                       <div
                         style={{
                           display:
@@ -765,16 +890,12 @@ const ComplaintDetails = ({
                             'flex-start',
                         }}
                       >
-
                         <strong>
                           {
-                            STATUS_LABELS[
-                              item.new_status
-                            ] ||
+                            STATUS_META[status]?.label  ||
                             item.new_status
                           }
                         </strong>
-
                         <small
                           style={{
                             color:
@@ -787,10 +908,7 @@ const ComplaintDetails = ({
                             item.changed_at
                           )}
                         </small>
-
                       </div>
-
-
                       {item.old_status && (
                         <p
                           style={{
@@ -804,15 +922,13 @@ const ComplaintDetails = ({
                         >
                           From{' '}
                           {
-                            STATUS_LABELS[
+                            STATUS_META[
                               item.old_status
-                            ] ||
+                            ]?.label ||
                             item.old_status
                           }
                         </p>
                       )}
-
-
                       {item.remarks && (
                         <p
                           style={{
@@ -827,25 +943,17 @@ const ComplaintDetails = ({
                           {item.remarks}
                         </p>
                       )}
-
                     </div>
-
                   </div>
                 );
               }
             )}
-
           </div>
-
         )}
-
       </section>
-
     </div>
   );
 };
-
-
 const InfoRow = ({
   icon,
   label,
@@ -874,7 +982,6 @@ const InfoRow = ({
       >
         {icon}
       </span>
-
       <div>
         <small
           style={{
@@ -885,7 +992,6 @@ const InfoRow = ({
         >
           {label}
         </small>
-
         <strong>
           {value}
         </strong>
@@ -893,6 +999,4 @@ const InfoRow = ({
     </div>
   );
 };
-
-
 export default ComplaintDetails;

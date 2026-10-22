@@ -8,132 +8,22 @@ import {
   AlertCircle,
   Loader2,
   RefreshCw,
-  Construction,
-  Trash2,
 } from 'lucide-react';
 
 import { apiFetch } from '../../api/client';
-import { API_BASE_URL } from '../../config';
 import ComplaintDetails from './ComplaintDetails';
 
+import {
+  getCategoryIcon,
+  getCategoryLabel,
+} from '../../constants/categories';
 
-const STATUS_META = {
-  received: {
-    label: 'Received',
-    icon: Clock3,
-    bg: '#eef4ff',
-    color: '#315c9d',
-  },
+import { STATUS_META } from '../../constants/statuses';
 
-  assigned: {
-    label: 'Assigned',
-    icon: CheckCircle2,
-    bg: '#eef7f1',
-    color: '#397255',
-  },
-
-  in_progress: {
-    label: 'In progress',
-    icon: Clock3,
-    bg: '#fff4e5',
-    color: '#b86d20',
-  },
-
-  pending_verification: {
-    label: 'Pending verification',
-    icon: Clock3,
-    bg: '#f4f0ff',
-    color: '#7654a6',
-  },
-
-  pending_citizen_response: {
-    label: 'Action required',
-    icon: AlertCircle,
-    bg: '#fff4e5',
-    color: '#b86d20',
-  },
-
-  verified: {
-    label: 'Verified',
-    icon: CheckCircle2,
-    bg: '#eaf7ef',
-    color: '#397255',
-  },
-
-  closed: {
-    label: 'Closed',
-    icon: CheckCircle2,
-    bg: '#eaf7ef',
-    color: '#397255',
-  },
-
-  reopened: {
-    label: 'Reopened',
-    icon: RefreshCw,
-    bg: '#fff0f0',
-    color: '#b94a48',
-  },
-
-  rejected: {
-    label: 'Rejected',
-    icon: AlertCircle,
-    bg: '#fff0f0',
-    color: '#b94a48',
-  },
-};
-
-
-const CATEGORY_LABELS = {
-  ROAD_DAMAGED: 'Road Damaged',
-  GARBAGE: 'Garbage',
-};
-
-
-const getCategoryIcon = (category) => {
-  if (category === 'ROAD_DAMAGED') {
-    return Construction;
-  }
-
-  if (category === 'GARBAGE') {
-    return Trash2;
-  }
-
-  return MapPin;
-};
-
-
-const formatDate = (value) => {
-  if (!value) {
-    return '—';
-  }
-
-  return new Date(value).toLocaleDateString(
-    'en-IN',
-    {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }
-  );
-};
-
-
-const getPhotoUrl = (photoUrl) => {
-  if (!photoUrl) {
-    return null;
-  }
-
-  if (
-    photoUrl.startsWith('http://') ||
-    photoUrl.startsWith('https://')
-  ) {
-    return photoUrl;
-  }
-
-  return `${API_BASE_URL}${photoUrl}`;
-};
-
-
+import {
+  formatDate,
+  getPhotoUrl,
+} from '../../utils/format';
 const MyComplaints = () => {
   const [complaints, setComplaints] = useState([]);
 
@@ -214,10 +104,7 @@ const MyComplaints = () => {
         >
           <Loader2
             size={20}
-            style={{
-              animation:
-                'spin 1s linear infinite',
-            }}
+            className="animate-spin"
           />
 
           <span>
@@ -639,13 +526,7 @@ const MyComplaints = () => {
                       <CategoryIcon
                         size={15}
                       />
-
-                      {
-                        CATEGORY_LABELS[
-                          complaint.category
-                        ] ||
-                        complaint.category
-                      }
+                    {getCategoryLabel(complaint.category)}
                     </span>
 
 
