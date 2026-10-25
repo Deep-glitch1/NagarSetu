@@ -1463,9 +1463,13 @@ BEGIN
     END IF;
 
 
-    -- verified → pending_citizen_response
-    IF OLD.status = 'verified'
-       AND NEW.status NOT IN ('pending_citizen_response', 'reopened') THEN
+   -- verified → pending_citizen_response / closed / reopened
+IF OLD.status = 'verified'
+   AND NEW.status NOT IN (
+       'pending_citizen_response',
+       'closed',
+       'reopened'
+   ) THEN
 
         RAISE EXCEPTION
             'Invalid status transition: % -> %',
@@ -1570,11 +1574,11 @@ $$;
 CREATE OR REPLACE PROCEDURE sp_create_complaint(
     p_citizen_id BIGINT,
     p_category_id BIGINT,
-    p_admin_unit_id BIGINT,
-    p_title VARCHAR,
-    p_description TEXT,
-    p_latitude DOUBLE PRECISION,
-    p_longitude DOUBLE PRECISION,
+    p_admin_unit_id BIGINT DEFAULT NULL,
+    p_title VARCHAR DEFAULT NULL,
+    p_description TEXT DEFAULT NULL,
+    p_latitude DOUBLE PRECISION DEFAULT NULL,
+    p_longitude DOUBLE PRECISION DEFAULT NULL,
     p_priority VARCHAR DEFAULT 'medium'
 )
 LANGUAGE plpgsql
@@ -1808,6 +1812,7 @@ BEGIN
     -- 6. Complaint must be assignable
     IF v_complaint_status NOT IN (
         'received',
+        'assigned',
         'reopened'
     ) THEN
         RAISE EXCEPTION
@@ -2120,7 +2125,7 @@ BEGIN
 
 END;
 $$;
--- ==============================================================
+-- ============================================================
 -- VIEWS
 -- ============================================================
 
@@ -2550,11 +2555,6 @@ VALUES
         'Street lighting and electrical civic complaints'
     ),
     (
-        'WATER',
-        'Water and Drainage',
-        'Water leakage, drainage, sewer and flooding complaints'
-    ),
-    (
         'CC',
         'Complaint Cell',
         'General civic complaints and coordination'
@@ -2860,44 +2860,6 @@ FROM (
 
 
     -- ========================================================
-    -- WATER / DRAINAGE
-    -- ========================================================
-
-    (
-        'EMP-WATER-001',
-        'Amit Kandpal',
-        'amit.kandpal@nagarseu.demo',
-        '9100000008',
-        '<REAL_BCRYPT_HASH>',
-        'WATER',
-        'BLOCK-BHIMTAL',
-        TRUE
-    ),
-
-    (
-        'EMP-WATER-002',
-        'Ravi Bora',
-        'ravi.bora@nagarseu.demo',
-        '9100000009',
-        '<REAL_BCRYPT_HASH>',
-        'WATER',
-        'ULB-BHIMTAL',
-        TRUE
-    ),
-
-    (
-        'EMP-WATER-003',
-        'Mahesh Singh',
-        'mahesh.singh@nagarseu.demo',
-        '9100000010',
-        '<REAL_BCRYPT_HASH>',
-        'WATER',
-        'BLOCK-RAMNAGAR',
-        TRUE
-    ),
-
-
-    -- ========================================================
     -- COMPLAINT CELL
     -- ========================================================
 
@@ -2997,11 +2959,7 @@ SET password_hash = CASE employee_id
     WHEN 'EMP-LIGHT-001' THEN '$2b$12$6KwpCPmmE0S05.uMtR1y1.fSMCJLaXFnNRkUKpXOqVlroFTCf32P'
     WHEN 'EMP-LIGHT-002' THEN '$2b$12$6KwpCPmmE0S05.uMtR1y1.fSMCJLaXFnNRkUKpXOqVlroFTCf32P'
 
-    -- Water Officers
-    WHEN 'EMP-WATER-001' THEN '$2b$12$YvFFAbXTIs27n0lqmSho1uV46WGquuV5Nx32jsgWE1MVQFBJx7TdaE'
-    WHEN 'EMP-WATER-002' THEN '$2b$12$YvFFAbXTIs27n0lqmSho1uV46WGquuV5Nx32jsgWE1MVQFBJx7Tda'
-    WHEN 'EMP-WATER-003' THEN '$2b$12$YvFFAbXTIs27n0lqmSho1uV46WGquuV5Nx32jsgWE1MVQFBJx7Tda'
-
+   
     -- Complaint Cell Supervisor
     WHEN 'EMP-CC-001' THEN '$2b$12$BTHtiExDUUi1o0xajjsA7OD0I91sXVuz5pbA14ENMa37.LeYbMO6W'
 
@@ -3023,9 +2981,6 @@ WHERE employee_id IN (
     'EMP-SAN-002',
     'EMP-LIGHT-001',
     'EMP-LIGHT-002',
-    'EMP-WATER-001',
-    'EMP-WATER-002',
-    'EMP-WATER-003',
     'EMP-CC-001',
     'EMP-DIST-001',
     'EMP-MUNI-001',
@@ -3034,8 +2989,7 @@ WHERE employee_id IN (
 -- Demo password mapping (bcrypt-hashed in password_hash column):
 --   Engineer@123       → EMP-ENG-001..003
 --   Sanitation@123     → EMP-SAN-001..002
---   StreetLight@123    → EMP-LIGHT-001..002
---   Water@123          → EMP-WATER-001..003
+--   StreetLight@123    → EMP-LIGHT-001..002=
 --   ComplaintCell@123  → EMP-CC-001
 --   DistrictOfficer@123→ EMP-DIST-001
 --   MunicipalAdmin@123 → EMP-MUNI-001
@@ -3066,10 +3020,6 @@ JOIN roles r
             WHEN 'EMP-LIGHT-001' THEN 'officer'
             WHEN 'EMP-LIGHT-002' THEN 'officer'
 
-            WHEN 'EMP-WATER-001' THEN 'officer'
-            WHEN 'EMP-WATER-002' THEN 'officer'
-            WHEN 'EMP-WATER-003' THEN 'officer'
-
             WHEN 'EMP-CC-001'    THEN 'supervisor'
 
             WHEN 'EMP-DIST-001'  THEN 'district_officer'
@@ -3088,9 +3038,6 @@ WHERE e.employee_id IN (
     'EMP-SAN-002',
     'EMP-LIGHT-001',
     'EMP-LIGHT-002',
-    'EMP-WATER-001',
-    'EMP-WATER-002',
-    'EMP-WATER-003',
     'EMP-CC-001',
     'EMP-DIST-001',
     'EMP-MUNI-001',
@@ -3123,8 +3070,8 @@ VALUES
         FALSE
     ),
     (
-        'ROAD_DAMAGE',
-        'Road Damage',
+        'ROAD_DAMAGED',
+        'Road Damaged',
         'Damaged or unsafe road condition',
         FALSE
     ),
@@ -3139,30 +3086,6 @@ VALUES
         'Broken Street Light',
         'Non-functional or damaged street light',
         FALSE
-    ),
-    (
-        'WATER_LEAK',
-        'Water Leakage',
-        'Water pipe or public water leakage',
-        FALSE
-    ),
-    (
-        'DRAINAGE',
-        'Drainage Problem',
-        'Blocked or damaged drainage causing water accumulation',
-        FALSE
-    ),
-    (
-        'SEWER',
-        'Sewer Problem',
-        'Sewer blockage or damage',
-        FALSE
-    ),
-    (
-        'FLOOD',
-        'Flood',
-        'Flooding or severe water accumulation',
-        TRUE
     ),
     (
         'OTHER',
@@ -3189,7 +3112,7 @@ WHERE
         d.code = 'ENG'
         AND c.code IN (
             'POTHOLE',
-            'ROAD_DAMAGE'           
+            'ROAD_DAMAGED'           
         )
     )
     OR (
@@ -3202,15 +3125,7 @@ WHERE
         d.code = 'LIGHT'
         AND c.code = 'STREET_LIGHT'
     )
-    OR (
-        d.code = 'WATER'
-        AND c.code IN (
-            'WATER_LEAK',
-            'SEWER',
-            'FLOOD',
-            'DRAINAGE'
-        )
-    )
+ 
     OR (
         d.code = 'CC'
         AND c.code = 'OTHER'
@@ -3239,14 +3154,11 @@ SELECT
     c.id,
 
     CASE c.code
-        WHEN 'FLOOD'        THEN 2
-        WHEN 'WATER_LEAK'  THEN 24
+     
         WHEN 'STREET_LIGHT' THEN 24
-        WHEN 'DRAINAGE'    THEN 48
-        WHEN 'SEWER'       THEN 48
         WHEN 'GARBAGE'     THEN 24
         WHEN 'POTHOLE'     THEN 72
-        WHEN 'ROAD_DAMAGE' THEN 72
+        WHEN 'ROAD_DAMAGED' THEN 72
         WHEN 'OTHER'       THEN 72
     END,
 
@@ -3259,13 +3171,9 @@ FROM complaint_categories c
 
 WHERE c.code IN (
     'POTHOLE',
-    'ROAD_DAMAGE',
+    'ROAD_DAMAGED',
     'GARBAGE',
     'STREET_LIGHT',
-    'WATER_LEAK',
-    'DRAINAGE',
-    'SEWER',
-    'FLOOD',
     'OTHER'
 )
 

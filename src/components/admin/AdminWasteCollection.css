@@ -1,0 +1,75 @@
+.admin-waste-page { max-width:1440px; margin:0 auto; color:#20384a; }
+.admin-waste-hero { display:flex; align-items:center; justify-content:space-between; gap:22px; padding:26px 29px; border:1px solid #dce6dc; border-radius:18px; color:#fff; background:linear-gradient(115deg,#254b4c,#315f50 58%,#547a61); box-shadow:0 12px 32px #25475516; }
+.admin-waste-hero .civic-eyebrow,.admin-waste-section-heading .civic-eyebrow { margin:0 0 6px; color:#b27149; font-size:10px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; }
+.admin-waste-hero .civic-eyebrow { color:#f2c58e; }
+.admin-waste-hero h2 { margin:0; font:650 clamp(26px,3vw,35px)/1.1 Fraunces,Georgia,serif; }
+.admin-waste-hero p:not(.civic-eyebrow) { max-width:650px; margin:8px 0 0; color:#ffffffc9; font-size:13px; line-height:1.6; }
+.admin-waste-hero button { display:inline-flex; align-items:center; gap:8px; min-height:40px; flex:none; padding:0 13px; border:1px solid #f2c58e66; border-radius:10px; color:#3e5148; background:#f2c58e; font:700 12px Inter,sans-serif; cursor:pointer; }
+.admin-waste-hero button:disabled { opacity:.6; cursor:wait; }
+.admin-waste-spin { animation:adminWasteSpin .9s linear infinite; }
+@keyframes adminWasteSpin { to { transform:rotate(360deg); } }
+.admin-waste-message { display:flex; align-items:center; gap:9px; margin:14px 0; padding:11px 14px; border:1px solid #d5e5d6; border-radius:10px; color:#426b4c; background:#eff7ed; font-size:12px; }
+.admin-waste-message.is-error { border-color:#f0ccc3; color:#9c493b; background:#fff0ec; }
+.admin-waste-loading { display:flex; align-items:center; gap:9px; padding:25px 4px; color:#687d72; font-size:13px; }
+.admin-waste-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:16px 0; }
+.admin-waste-stats article { display:flex; align-items:center; gap:12px; min-height:78px; padding:14px 17px; border:1px solid #e5e7dd; border-radius:14px; background:#fffdf9; }
+.admin-waste-stats article > span { display:grid; place-items:center; width:40px; height:40px; border-radius:12px; color:#416c59; background:#e6efe5; }
+.admin-waste-stats article > span.assigned { color:#52749c; background:#eaf0f8; }
+.admin-waste-stats article > span.gps { color:#a86a37; background:#fff0dc; }
+.admin-waste-stats article div { display:grid; gap:4px; }
+.admin-waste-stats small { color:#78878d; font-size:11px; }
+.admin-waste-stats strong { color:#20384a; font:700 23px Fraunces,Georgia,serif; }
+.admin-waste-map-card,.admin-waste-fleet-card { margin-top:15px; padding:18px; border:1px solid #e5e7dd; border-radius:16px; background:#fffdf9; box-shadow:0 4px 16px #263c3508; }
+.admin-waste-section-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:13px; }
+.admin-waste-section-heading h3 { margin:0; color:#20384a; font:650 21px Fraunces,Georgia,serif; }
+.admin-waste-section-heading p:not(.civic-eyebrow) { margin:5px 0 0; color:#7b898d; font-size:12px; line-height:1.5; }
+.admin-waste-section-heading label { display:grid; gap:5px; color:#748188; font-size:10px; font-weight:700; }
+.admin-waste-section-heading select,.admin-waste-assignment-form select { min-width:160px; min-height:36px; padding:0 10px; border:1px solid #ded8cb; border-radius:8px; color:#334957; background:#fff; font:12px Inter,sans-serif; }
+.admin-waste-map-frame { position:relative; height:min(48vh,440px); min-height:280px; overflow:hidden; border:1px solid #dbe4d8; border-radius:13px; background:#e8eee5; }
+.admin-waste-map-empty { display:grid; place-items:center; align-content:center; gap:9px; height:100%; padding:20px; color:#718087; text-align:center; font-size:12px; }
+.admin-waste-map-empty svg { color:#6f957f; }
+.admin-waste-total { padding:6px 9px; border-radius:99px; color:#557363; background:#eaf1e8; font-size:11px; font-weight:700; white-space:nowrap; }
+.admin-waste-table-wrap { width:100%; overflow-x:auto; }
+.admin-waste-table { width:100%; border-collapse:collapse; text-align:left; }
+.admin-waste-table th { padding:10px 11px; border-bottom:1px solid #deded5; color:#849096; font-size:10px; letter-spacing:.06em; text-transform:uppercase; }
+.admin-waste-table td { min-width:125px; padding:12px 11px; border-bottom:1px solid #eee9e1; color:#536873; font-size:12px; vertical-align:top; }
+.admin-waste-table tbody tr:last-child td { border-bottom:0; }
+.admin-waste-table td strong,.admin-waste-table td small { display:block; }
+.admin-waste-table td strong { color:#334957; font-size:12px; }
+.admin-waste-table td small { margin-top:4px; color:#879399; font-size:10px; }
+.admin-waste-unassigned { color:#a46d27; font-weight:600; }
+.admin-waste-gps { display:inline-flex; align-items:center; gap:6px; color:#8b785e; font-size:11px; white-space:nowrap; }
+.admin-waste-gps i { width:7px; height:7px; border-radius:50%; background:#bd8a4d; }
+.admin-waste-gps.is-live { color:#397255; }
+.admin-waste-gps.is-live i { background:#49a362; box-shadow:0 0 0 3px #49a36220; }
+.admin-waste-gps.is-stale i { background:#d19a45; }
+.admin-waste-gps.no-signal i { background:#bd5c43; }
+.admin-waste-assignment-form { display:grid; grid-template-columns:minmax(145px,1fr) minmax(145px,1fr) auto; gap:6px; min-width:410px; }
+.admin-waste-assignment-form select { min-width:0; font-size:11px; }
+.admin-waste-assignment-form button { min-height:36px; padding:0 12px; border:0; border-radius:8px; color:white; background:#315f50; font:700 11px Inter,sans-serif; cursor:pointer; }
+.admin-waste-assignment-form button:hover:not(:disabled) { background:#254b4c; }
+.admin-waste-assignment-form button:disabled { cursor:not-allowed; opacity:.55; }
+.admin-waste-no-vehicles { padding:24px 5px; color:#7b898d; font-size:13px; }
+.admin-waste-pagination { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; padding-top:12px; border-top:1px solid #eee9e1; color:#7b898d; font-size:11px; }
+.admin-waste-pagination > div { display:flex; align-items:center; gap:10px; }
+.admin-waste-pagination button { display:inline-flex; align-items:center; justify-content:center; gap:5px; min-height:34px; padding:0 10px; border:1px solid #ded8cb; border-radius:8px; color:#426451; background:#fff; font:600 11px Inter,sans-serif; cursor:pointer; }
+.admin-waste-pagination button:hover:not(:disabled) { border-color:#9bb49c; background:#f5f8f1; }
+.admin-waste-pagination button:disabled { cursor:not-allowed; opacity:.45; }
+.admin-waste-page-count { color:#566b61; font-weight:700; white-space:nowrap; }
+.admin-waste-supervisors { margin-top:15px; }
+.admin-waste-supervisor-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:9px; }
+.admin-waste-supervisor-grid article { display:flex; align-items:center; gap:10px; min-width:0; padding:11px 12px; border:1px solid #ece9e0; border-radius:11px; background:#fff; }
+.admin-waste-supervisor-grid article > span { display:grid; place-items:center; width:34px; height:34px; flex:none; border-radius:10px; color:#52749c; background:#eaf0f8; }
+.admin-waste-supervisor-grid article div { display:grid; gap:4px; min-width:0; }
+.admin-waste-supervisor-grid article strong { color:#334957; font-size:11px; }
+.admin-waste-supervisor-grid article small { overflow:hidden; color:#879399; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+.admin-waste-availability,.admin-waste-trip { display:inline-flex; align-items:center; min-height:22px; padding:0 8px; border-radius:99px; color:#65747b; background:#f0f1ef; font-size:10px; font-weight:700; white-space:nowrap; }
+.admin-waste-availability.available { color:#397255; background:#eaf5eb; }
+.admin-waste-availability.on_leave { color:#9b6531; background:#fff1df; }
+.admin-waste-availability.off_duty { color:#65747b; background:#f0f1ef; }
+.admin-waste-trip.is-active { color:#397255; background:#eaf5eb; }
+.admin-waste-table td .admin-waste-gps { display:flex; margin-top:6px; }
+.admin-waste-footnote { display:flex; align-items:flex-start; gap:7px; margin:13px 2px 0; color:#7c898e; font-size:11px; line-height:1.5; }
+.admin-waste-footnote svg { flex:none; margin-top:1px; color:#a86a37; }
+@media (max-width:850px) { .admin-waste-stats { grid-template-columns:1fr; gap:8px; } .admin-waste-stats article { min-height:68px; } }
+@media (max-width:640px) { .admin-waste-hero { align-items:stretch; flex-direction:column; padding:22px; } .admin-waste-hero button { justify-content:center; } .admin-waste-map-card,.admin-waste-fleet-card { padding:13px; } .admin-waste-section-heading { flex-direction:column; } .admin-waste-section-heading label,.admin-waste-section-heading select { width:100%; } .admin-waste-map-frame { height:360px; min-height:260px; } .admin-waste-pagination { align-items:stretch; flex-direction:column; } .admin-waste-pagination > div { justify-content:space-between; } }

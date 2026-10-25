@@ -51,7 +51,7 @@ export default function WasteCollectionTracking() {
       .then((data) => {
         if (!mounted) return;
         setWards(data.wards || []);
-        if (!data.wards?.length) setError('No active ward boundaries are available yet.');
+        if (!data.wards?.length) setError('No active waste collection areas are available yet.');
       })
       .catch((requestError) => {
         if (mounted) setError(requestError.message || 'Could not load ward boundaries.');
@@ -82,7 +82,7 @@ export default function WasteCollectionTracking() {
       return true;
     } catch (requestError) {
       if (requestError.status === 404 && wards.length === 0) {
-        setError('Your point is selected, but no ward boundaries are loaded in the database yet. Add ward boundary data and vehicle records to enable tracking.');
+        setError('Your point does not match a mapped service area yet. Choose your area from the list to view active collection trips.');
       } else {
         setError(requestError.message || 'Could not load collection tracking for this ward.');
       }
@@ -176,14 +176,14 @@ export default function WasteCollectionTracking() {
         <div>
           <p className="civic-eyebrow">Waste collection</p>
           <h2>Track a collection vehicle</h2>
-          <p>See vehicles reporting GPS in your ward, check their latest route, and view geofence activity.</p>
+          <p>See collection vehicles travelling in your selected area while their driver is on an active trip.</p>
         </div>
         <div className="waste-location-actions">
           <label className="waste-ward-picker">
             <MapPin size={17} aria-hidden="true" />
-            <span className="sr-only">Choose ward</span>
+            <span className="sr-only">Choose collection area</span>
             <select value={selectedWardId} onChange={chooseWard} disabled={loadingWards}>
-              <option value="">Select a ward</option>
+              <option value="">Select an area</option>
               {wards.map((ward) => <option key={ward.id} value={ward.id}>{ward.name}</option>)}
             </select>
           </label>
@@ -216,33 +216,33 @@ export default function WasteCollectionTracking() {
       {!loadingWards && !overview && !error && (
         <section className="waste-empty-state">
           <span><MapPin size={23} /></span>
-          <h3>Choose your ward to get started</h3>
-          <p>Select a ward or share your location. We’ll show collection vehicles that have reported a GPS location for that area.</p>
+          <h3>Choose your collection area</h3>
+          <p>Select an area to see vehicles whose drivers have started a collection trip. Their live position appears while the trip is active.</p>
         </section>
       )}
 
       {overview && <>
         <section className="waste-summary-grid" aria-label="Collection summary">
-          <article className="waste-summary-card"><span className="waste-summary-icon"><Truck size={19} /></span><div><small>Vehicles assigned or inside ward</small><strong>{overview.vehicles.length}</strong></div><span className="waste-live-dot">{overview.vehicles.filter((vehicle) => vehicle.is_live).length} live</span></article>
+          <article className="waste-summary-card"><span className="waste-summary-icon"><Truck size={19} /></span><div><small>Drivers currently on a trip</small><strong>{overview.vehicles.length}</strong></div><span className="waste-live-dot">{overview.vehicles.filter((vehicle) => vehicle.is_live).length} live</span></article>
           <article className="waste-summary-card"><span className="waste-summary-icon waste-summary-icon-green"><Check size={19} /></span><div><small>GPS route points · last 24 hours</small><strong>{overview.vehicles.reduce((total, vehicle) => total + vehicle.route_logs.length, 0)}</strong></div></article>
           <article className="waste-summary-card"><span className="waste-summary-icon waste-summary-icon-amber"><Clock3 size={19} /></span><div><small>Nearest live vehicle estimate</small><strong>{(() => { const nearest = overview.vehicles.filter((vehicle) => vehicle.is_live && vehicle.eta_minutes != null).sort((a, b) => a.eta_minutes - b.eta_minutes)[0]; return nearest ? `${nearest.eta_minutes} min` : 'Unavailable'; })()}</strong></div></article>
         </section>
 
         <section className="waste-tracking-grid">
           <article className="waste-map-card">
-            <div className="waste-card-heading"><div><p className="civic-eyebrow">PostGIS ward boundary and GPS points</p><h3>{overview.ward.name}</h3></div><span className="waste-live-label"><i /> Updated {formatTime(overview.as_of)}</span></div>
+            <div className="waste-card-heading"><div><p className="civic-eyebrow">Service area and live trip GPS</p><h3>{overview.ward.name}</h3></div><span className="waste-live-label"><i /> Updated {formatTime(overview.as_of)}</span></div>
             <div className="waste-map">
               <Suspense fallback={<div className="waste-map-loading">Loading interactive map…</div>}>
                 <WasteCollectionMap overview={overview} selectedVehicleId={selectedVehicle?.id} citizenLocation={citizenLocation} onSelectVehicle={setSelectedVehicleId} />
               </Suspense>
               <div className="waste-map-legend"><span><i className="legend-vehicle" /> Vehicle GPS</span><span><i className="legend-ward" /> Ward geofence</span><span><i className="legend-cluster">#</i> Cluster - click to zoom</span>{citizenLocation && <span><i className="legend-you" /> Your location</span>}</div>
             </div>
-            <div className="waste-map-caption"><Navigation size={15} /><span>Boundary comes from the ward polygon stored in PostGIS.</span><button type="button" onClick={() => loadOverview({ wardId: selectedWardId, location: citizenLocation || undefined })} disabled={loadingOverview}><RefreshCw size={14} /> Refresh</button></div>
+            <div className="waste-map-caption"><Navigation size={15} /><span>{overview.ward.boundary ? 'Boundary comes from the area polygon stored in PostGIS.' : 'Area selected from the service-area directory. No boundary polygon is stored for this area.'}</span><button type="button" onClick={() => loadOverview({ wardId: selectedWardId, location: citizenLocation || undefined })} disabled={loadingOverview}><RefreshCw size={14} /> Refresh</button></div>
           </article>
 
           <aside className="waste-side-column">
             <article className="waste-fleet-card">
-              <div className="waste-card-heading"><div><p className="civic-eyebrow">Current vehicle feed</p><h3>Ward vehicles</h3></div><span className="waste-fleet-count">{overview.vehicles.length}</span></div>
+              <div className="waste-card-heading"><div><p className="civic-eyebrow">Active collection trips</p><h3>Area vehicles</h3></div><span className="waste-fleet-count">{overview.vehicles.length}</span></div>
               {overview.vehicles.length ? <>
                 <div className="waste-vehicle-list">
                   {visibleVehicles.map((vehicle) => <button key={vehicle.id} className={`waste-vehicle-row ${vehicle.id === selectedVehicle?.id ? 'is-active' : ''}`} onClick={() => setSelectedVehicleId(vehicle.id)}><span className="waste-truck-avatar"><Truck size={18} /></span><span className="waste-vehicle-copy"><strong>{vehicle.registration_number}</strong><small>{vehicle.driver_name || 'Driver not listed'} · {formatAge(vehicle.gps_age_seconds)}</small><small>{vehicle.inside_geofence == null ? 'No current GPS point' : vehicle.inside_geofence ? 'Inside ward boundary' : 'Outside ward boundary'}</small></span><span className="waste-vehicle-eta"><strong>{vehicle.is_live ? 'Live' : 'Stale'}</strong><ChevronRight size={15} /></span></button>)}
@@ -255,7 +255,7 @@ export default function WasteCollectionTracking() {
                     <button type="button" aria-label="Next vehicle page" onClick={() => setVehiclePage((page) => Math.min(vehiclePageCount - 1, page + 1))} disabled={vehiclePage >= vehiclePageCount - 1}><ChevronRight size={16} /></button>
                   </div>
                 </nav>}
-              </> : <p className="waste-no-data">No active vehicle is assigned to or currently inside this ward.</p>}
+              </> : <p className="waste-no-data">No driver has started a collection trip in this area yet. Assigned drivers remain visible to their area supervisor.</p>}
             </article>
 
             <article className="waste-arrival-card">
@@ -268,8 +268,8 @@ export default function WasteCollectionTracking() {
         </section>
 
         <section className="waste-lower-grid">
-          <article className="waste-route-card"><div className="waste-card-heading"><div><p className="civic-eyebrow">Recorded GPS trail</p><h3>{selectedVehicle?.registration_number || 'Select a vehicle'}</h3></div><span className="waste-route-status">Last 24 hours</span></div>{selectedVehicle?.route_logs.length ? <><p className="waste-route-help">{selectedVehicle.route_logs.length} recorded position{selectedVehicle.route_logs.length === 1 ? '' : 's'}, shown oldest to newest.</p><ol className="waste-route-stops">{[...selectedVehicle.route_logs].reverse().slice(0, 4).map((point) => <li key={point.id} className={point.inside_geofence ? 'is-complete' : 'is-next'}><span>{point.inside_geofence ? <Check size={12} /> : <MapPin size={12} />}</span><div><strong>{point.inside_geofence ? 'Inside ward boundary' : 'Outside ward boundary'}</strong><small>{formatTime(point.recorded_at)}</small></div></li>)}</ol></> : <p className="waste-no-data">No route points have been recorded for this vehicle in the last 24 hours.</p>}</article>
-          <article className="waste-events-card"><div className="waste-card-heading"><div><p className="civic-eyebrow">Geofence events</p><h3>Ward boundary activity</h3></div><span className="waste-audit-badge">From route log</span></div>{overview.geofence_events.length ? <ul className="waste-event-list">{overview.geofence_events.map((event) => <li key={`${event.vehicle_id}-${event.recorded_at}-${event.type}`}><span className={`waste-event-icon ${event.type === 'entered' ? 'inside' : 'done'}`}><MapPin size={15} /></span><div><strong>{event.vehicle_registration} {event.type} {event.type === 'entered' ? 'the ward' : 'the ward'}</strong><small>GPS geofence event · {formatTime(event.recorded_at)}</small></div><time>{event.type === 'entered' ? 'Entered' : 'Left'}</time></li>)}</ul> : <p className="waste-no-data">No ward entry or exit has been recorded in the last 24 hours.</p>}</article>
+          <article className="waste-route-card"><div className="waste-card-heading"><div><p className="civic-eyebrow">Recorded GPS trail</p><h3>{selectedVehicle?.registration_number || 'Select a vehicle'}</h3></div><span className="waste-route-status">Last 24 hours</span></div>{selectedVehicle?.route_logs.length ? <><p className="waste-route-help">{selectedVehicle.route_logs.length} recorded position{selectedVehicle.route_logs.length === 1 ? '' : 's'}, shown oldest to newest.</p><ol className="waste-route-stops">{[...selectedVehicle.route_logs].reverse().slice(0, 4).map((point) => <li key={point.id} className={point.inside_geofence ? 'is-complete' : 'is-next'}><span>{point.inside_geofence ? <Check size={12} /> : <MapPin size={12} />}</span><div><strong>{point.inside_geofence == null ? 'Boundary unavailable' : point.inside_geofence ? 'Inside area boundary' : 'Outside area boundary'}</strong><small>{formatTime(point.recorded_at)}</small></div></li>)}</ol></> : <p className="waste-no-data">No route points have been recorded for this vehicle in the last 24 hours.</p>}</article>
+          <article className="waste-events-card"><div className="waste-card-heading"><div><p className="civic-eyebrow">Geofence events</p><h3>Area boundary activity</h3></div><span className="waste-audit-badge">From route log</span></div>{overview.geofence_events.length ? <ul className="waste-event-list">{overview.geofence_events.map((event) => <li key={`${event.vehicle_id}-${event.recorded_at}-${event.type}`}><span className={`waste-event-icon ${event.type === 'entered' ? 'inside' : 'done'}`}><MapPin size={15} /></span><div><strong>{event.vehicle_registration} {event.type} {event.type === 'entered' ? 'the area' : 'the area'}</strong><small>GPS geofence event · {formatTime(event.recorded_at)}</small></div><time>{event.type === 'entered' ? 'Entered' : 'Left'}</time></li>)}</ul> : <p className="waste-no-data">No area boundary events were recorded in the last 24 hours.</p>}</article>
         </section>
         <p className="waste-demo-note">Arrival time is an approximate straight-line estimate from the last GPS fix, not a road-route ETA. Browser alerts check for nearby live vehicles while this page is open.</p>
       </>}

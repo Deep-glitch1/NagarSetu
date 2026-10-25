@@ -16,6 +16,8 @@ import EmployeeTasks from './employee/EmployeeTasks';
 import EmployeeTaskDetails from './employee/EmployeeTaskDetails';
 import EmployeeAssignments from './employee/EmployeeAssignments';
 import EmployeeSettings from './employee/EmployeeSettings';
+import EmployeeWasteCollection from './employee/EmployeeWasteCollection';
+import EmployeeWasteSupervisor from './employee/EmployeeWasteSupervisor';
 import './employee/EmployeePortal.css';
 
 const EmployeePortal = ({ userData, onLogout }) => {
@@ -27,6 +29,8 @@ const EmployeePortal = ({ userData, onLogout }) => {
 
   const employeeRole = userData?.employee_role;
   const isSupervisor = employeeRole === 'supervisor';
+  const isWasteDriver = employeeRole === 'waste_driver';
+  const isWasteSupervisor = employeeRole === 'waste_supervisor';
 
   const loadTasks = async () => {
     setLoading(true);
@@ -66,6 +70,8 @@ const EmployeePortal = ({ userData, onLogout }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'tasks', label: 'My tasks', icon: ClipboardList },
+    ...(isWasteDriver ? [{ id: 'waste-collection', label: 'My collection route', icon: UserCheck }] : []),
+    ...(isWasteSupervisor ? [{ id: 'waste-supervision', label: 'Area collection team', icon: UserCheck }] : []),
     ...(selectedTask ? [{ id: 'task-details', label: 'Task details', icon: ClipboardList }] : []),
     ...(isSupervisor ? [{ id: 'assignments', label: 'Assignments', icon: UserCheck }] : []),
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -125,6 +131,14 @@ const EmployeePortal = ({ userData, onLogout }) => {
               onOpenTask={openTask}
             />
           );
+        }
+
+        if (currentTab === 'waste-collection') {
+          return <EmployeeWasteCollection />;
+        }
+
+        if (currentTab === 'waste-supervision') {
+          return <EmployeeWasteSupervisor />;
         }
 
         if (currentTab === 'task-details') {

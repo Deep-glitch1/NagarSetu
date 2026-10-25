@@ -26,7 +26,7 @@ function makeVehiclePopup(vehicle) {
   return content;
 }
 
-export default function WasteCollectionMap({ overview, selectedVehicleId, citizenLocation, onSelectVehicle }) {
+export default function WasteCollectionMap({ overview, selectedVehicleId, citizenLocation, onSelectVehicle, autoCenterVehicle = false }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const fittedWardRef = useRef(null);
@@ -41,12 +41,15 @@ export default function WasteCollectionMap({ overview, selectedVehicleId, citize
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return undefined;
     const wardCoordinates = overview.ward.boundary?.coordinates?.[0] || [];
+    const firstLocatedVehicle = overview.vehicles.find((vehicle) => vehicle.longitude != null && vehicle.latitude != null);
     const center = wardCoordinates.length
       ? [
           wardCoordinates.reduce((sum, point) => sum + point[0], 0) / wardCoordinates.length,
           wardCoordinates.reduce((sum, point) => sum + point[1], 0) / wardCoordinates.length,
         ]
-      : [0, 0];
+      : firstLocatedVehicle
+        ? [firstLocatedVehicle.longitude, firstLocatedVehicle.latitude]
+        : [0, 0];
     const map = new MapLibreMap({
       container: containerRef.current,
       style: mapStyle,
@@ -224,6 +227,16 @@ export default function WasteCollectionMap({ overview, selectedVehicleId, citize
     else map.once('load', addOrUpdateLayers);
     return () => map.off('load', addOrUpdateLayers);
   }, [overview, selectedVehicleId, citizenLocation]);
+
+  useEffect(() => {
+    if (!autoCenterVehicle || !mapRef.current) return;
+    const point = citizenLocation
+      ? [citizenLocation.longitude, citizenLocation.latitude]
+      : overview.vehicles.find((vehicle) => vehicle.id === selectedVehicleId
+        && vehicle.longitude != null && vehicle.latitude != null);
+    const center = Array.isArray(point) ? point : point ? [point.longitude, point.latitude] : null;
+    if (center) mapRef.current.easeTo({ center, duration: 450 });
+  }, [autoCenterVehicle, citizenLocation, overview.vehicles, selectedVehicleId]);
 
   return (
     <div className="waste-maplibre-wrap">

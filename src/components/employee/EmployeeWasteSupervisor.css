@@ -1,0 +1,45 @@
+.employee-waste-supervisor-page { max-width:1440px; margin:0 auto; color:#20384a; }
+.employee-waste-supervisor-hero { display:flex; align-items:center; justify-content:space-between; gap:22px; padding:25px 29px; border:1px solid #dce6dc; border-radius:18px; color:#fff; background:linear-gradient(115deg,#254b4c,#315f50 58%,#547a61); box-shadow:0 12px 32px #25475516; }
+.employee-waste-supervisor-hero .civic-eyebrow { margin:0 0 7px; color:#f2c58e; font-size:10px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; }
+.employee-waste-supervisor-hero h2 { margin:0; font:650 clamp(26px,3vw,35px)/1.1 Fraunces,Georgia,serif; }
+.employee-waste-supervisor-hero p:not(.civic-eyebrow) { max-width:650px; margin:8px 0 0; color:#ffffffc9; font-size:13px; line-height:1.6; }
+.employee-waste-supervisor-hero button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:40px; flex:none; padding:0 13px; border:1px solid #f2c58e66; border-radius:10px; color:#3e5148; background:#f2c58e; font:700 12px Inter,sans-serif; cursor:pointer; }
+.employee-waste-supervisor-hero button:disabled { opacity:.55; cursor:wait; }
+.employee-waste-supervisor-message { display:flex; align-items:center; gap:9px; margin:14px 0; padding:11px 14px; border:1px solid #d5e5d6; border-radius:10px; color:#426b4c; background:#eff7ed; font-size:12px; line-height:1.5; }
+.employee-waste-supervisor-message.is-error { border-color:#f0ccc3; color:#9c493b; background:#fff0ec; }
+.employee-waste-supervisor-loading { display:flex; align-items:center; gap:9px; padding:25px 4px; color:#687d72; font-size:13px; }
+.employee-waste-supervisor-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:16px 0; }
+.employee-waste-supervisor-stats article { display:flex; align-items:center; gap:12px; min-height:75px; padding:13px 16px; border:1px solid #e5e7dd; border-radius:14px; background:#fffdf9; }
+.employee-waste-supervisor-stats article > span { display:grid; place-items:center; width:39px; height:39px; border-radius:12px; color:#416c59; background:#e6efe5; }
+.employee-waste-supervisor-stats article div { display:grid; gap:4px; }
+.employee-waste-supervisor-stats small { color:#78878d; font-size:11px; }
+.employee-waste-supervisor-stats strong { color:#20384a; font:700 22px Fraunces,Georgia,serif; }
+.employee-waste-supervisor-card { margin-top:15px; padding:18px; border:1px solid #e5e7dd; border-radius:16px; background:#fffdf9; box-shadow:0 4px 16px #263c3508; }
+.employee-waste-supervisor-heading { margin-bottom:13px; }
+.employee-waste-supervisor-heading .civic-eyebrow { margin:0 0 5px; color:#b27149; font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+.employee-waste-supervisor-heading h3 { margin:0; color:#20384a; font:650 21px Fraunces,Georgia,serif; }
+.employee-waste-supervisor-heading p:not(.civic-eyebrow) { margin:5px 0 0; color:#7b898d; font-size:12px; line-height:1.5; }
+.employee-waste-supervisor-vehicles { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px; }
+.employee-waste-supervisor-vehicles article { display:grid; align-content:start; gap:11px; padding:13px; border:1px solid #ece9e0; border-radius:12px; background:#fff; }
+.employee-waste-supervisor-vehicle-title { display:flex; align-items:center; gap:9px; }
+.employee-waste-supervisor-vehicle-title > span { display:grid; place-items:center; width:35px; height:35px; border-radius:10px; color:#416c59; background:#e6efe5; }
+.employee-waste-supervisor-vehicle-title div { display:grid; gap:4px; }
+.employee-waste-supervisor-vehicle-title strong { color:#334957; font-size:12px; }
+.employee-waste-supervisor-vehicle-title small { color:#879399; font-size:10px; }
+.employee-waste-supervisor-vehicles label { display:grid; gap:5px; color:#748188; font-size:10px; font-weight:700; }
+.employee-waste-supervisor-vehicles select,.employee-waste-supervisor-table-wrap select { min-width:0; min-height:35px; padding:0 9px; border:1px solid #ded8cb; border-radius:8px; color:#334957; background:#fff; font:11px Inter,sans-serif; }
+.employee-waste-supervisor-vehicles button { min-height:34px; border:0; border-radius:8px; color:white; background:#315f50; font:700 11px Inter,sans-serif; cursor:pointer; }
+.employee-waste-supervisor-vehicles button:disabled { opacity:.45; cursor:not-allowed; }
+.employee-waste-supervisor-table-wrap { width:100%; overflow-x:auto; }
+.employee-waste-supervisor-table-wrap table { width:100%; border-collapse:collapse; text-align:left; }
+.employee-waste-supervisor-table-wrap th { padding:10px; border-bottom:1px solid #deded5; color:#849096; font-size:10px; letter-spacing:.06em; text-transform:uppercase; }
+.employee-waste-supervisor-table-wrap td { min-width:125px; padding:11px 10px; border-bottom:1px solid #eee9e1; color:#536873; font-size:11px; vertical-align:middle; }
+.employee-waste-supervisor-table-wrap tbody tr:last-child td { border-bottom:0; }
+.employee-waste-supervisor-table-wrap td strong,.employee-waste-supervisor-table-wrap td small { display:block; }
+.employee-waste-supervisor-table-wrap td strong { color:#334957; font-size:11px; }
+.employee-waste-supervisor-table-wrap td small { margin-top:4px; color:#879399; font-size:10px; }
+.employee-waste-supervisor-status { display:inline-flex; min-height:22px; align-items:center; padding:0 8px; border-radius:99px; color:#397255; background:#eaf5eb; font-size:10px; font-weight:700; white-space:nowrap; }
+.employee-waste-supervisor-status.on_leave { color:#9b6531; background:#fff1df; }
+.employee-waste-supervisor-status.off_duty { color:#65747b; background:#f0f1ef; }
+@media(max-width:760px) { .employee-waste-supervisor-stats { grid-template-columns:1fr; } }
+@media(max-width:640px) { .employee-waste-supervisor-hero { align-items:stretch; flex-direction:column; padding:22px; } .employee-waste-supervisor-card { padding:13px; } .employee-waste-supervisor-hero button { width:100%; } }

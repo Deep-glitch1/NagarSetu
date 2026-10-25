@@ -7,6 +7,7 @@ import {
   Settings,
   Building2,
   ClipboardList,
+  Truck,
 } from 'lucide-react';
 
 import { apiFetch } from '../api/client';
@@ -19,6 +20,7 @@ import AdminAnalytics from './admin/AdminAnalytics';
 import AdminDepartments from './admin/AdminDepartments';
 import AdminUsers from './admin/AdminUsers';
 import AdminSettings from './admin/AdminSettings';
+import AdminWasteCollection from './admin/AdminWasteCollection';
 
 
 const AdminPortal = ({
@@ -28,6 +30,8 @@ const AdminPortal = ({
 
   const [activeTab, setActiveTab] =
     useState('dashboard');
+
+  const canManageWasteCollection = userData?.employee_role === 'super_admin';
 
 
   const menuItems = [
@@ -60,6 +64,12 @@ const AdminPortal = ({
       label: 'Users',
       icon: Users,
     },
+
+    ...(canManageWasteCollection ? [{
+      id: 'waste-collection',
+      label: 'Waste collection',
+      icon: Truck,
+    }] : []),
 
     {
       id: 'settings',
@@ -117,6 +127,10 @@ const AdminPortal = ({
           return (
             <AdminUsers />
           );
+        }
+
+        if (currentTab === 'waste-collection' && canManageWasteCollection) {
+          return <AdminWasteCollection />;
         }
 
         if (currentTab === 'settings') {

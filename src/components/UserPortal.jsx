@@ -67,12 +67,6 @@ const UserPortal = ({
     },
 
     {
-      id: 'waste-tracking',
-      label: 'Waste collection',
-      icon: Truck,
-    },
-
-    {
       id: 'achievements',
       label: 'My impact',
       icon: Award,
@@ -122,11 +116,11 @@ const UserPortal = ({
         ) : currentTab === 'achievements' ? (
           <MyImpact />
         ) : currentTab === 'waste-tracking' ? (
-          <WasteCollectionTracking />
+         <WasteCollectionTracking />
         ) : currentTab === 'settings' ? (
-          <AccountSettings
-            onLogout={onLogout}
-          />
+         <AccountSettings
+           onLogout={onLogout}
+         />
         ) : (
           <div className="civic-empty">
             {activeItem?.icon &&
