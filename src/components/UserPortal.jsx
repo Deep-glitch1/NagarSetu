@@ -115,11 +115,13 @@ const UserPortal = ({
           <MyComplaints />
         ) : currentTab === 'achievements' ? (
           <MyImpact />
+        ) : currentTab === 'waste-tracking' ? (
+         <WasteCollectionTracking />
         ) : currentTab === 'settings' ? (
-          <AccountSettings
-            onLogout={onLogout}
-             />
-        ) :(
+         <AccountSettings
+           onLogout={onLogout}
+         />
+        ) : (
           <div className="civic-empty">
             {activeItem?.icon &&
               React.createElement(

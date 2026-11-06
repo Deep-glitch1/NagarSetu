@@ -51,14 +51,8 @@
 
 .admin-complaints-page .admin-filters-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 190px 170px;
+  grid-template-columns: minmax(220px, 1fr) 180px 160px 170px;
   gap: 10px;
-  width: 100%;
-  min-width: 0;
-}
-
-.admin-complaints-page .admin-filters-grid > * {
-  min-width: 0;
 }
 
 .admin-complaints-page .admin-search-field {
@@ -482,5 +476,48 @@
 
   .admin-complaint-actions {
     width: 100%;
+  }
+}
+
+
+.admin-sla-summary-strip {
+  margin-top: -8px;
+}
+
+.admin-summary-sla-warning { border-left: 3px solid #c88a29; }
+.admin-summary-sla-escalation { border-left: 3px solid #8b5b96; }
+.admin-summary-sla-overdue { border-left: 3px solid #b24c3a; }
+.admin-summary-sla-critical { border-left: 3px solid #7f2e27; }
+
+.admin-sla-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.admin-sla-on-track { background: #edf7f0; color: #357050; border-color: #d6e9da; }
+.admin-sla-warning { background: #fff5e5; color: #8a6325; border-color: #f0ddba; }
+.admin-sla-supervisor-escalation { background: #f4edf7; color: #704c7c; border-color: #e5d7e9; }
+.admin-sla-overdue { background: #fff0ee; color: #9a4c41; border-color: #edd6d2; }
+.admin-sla-critical { background: #f6e6e3; color: #7f2e27; border-color: #e2c1bb; }
+
+.admin-complaint-sla-detail {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .admin-sla-summary-strip {
+    margin-top: -4px;
   }
 }

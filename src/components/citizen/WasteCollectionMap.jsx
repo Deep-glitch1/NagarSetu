@@ -26,7 +26,7 @@ function makeVehiclePopup(vehicle) {
   return content;
 }
 
-export default function WasteCollectionMap({ overview, selectedVehicleId, citizenLocation, onSelectVehicle }) {
+export default function WasteCollectionMap({ overview, selectedVehicleId, citizenLocation, onSelectVehicle, autoCenterVehicle = false }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const fittedWardRef = useRef(null);
@@ -40,13 +40,16 @@ export default function WasteCollectionMap({ overview, selectedVehicleId, citize
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return undefined;
-    const wardCoordinates = overview.ward.boundary?.coordinates?.[0] || [];
+    const wardCoordinates = wardCoordinatesForBounds(overview.ward.boundary);
+    const firstLocatedVehicle = overview.vehicles.find((vehicle) => vehicle.longitude != null && vehicle.latitude != null);
     const center = wardCoordinates.length
       ? [
           wardCoordinates.reduce((sum, point) => sum + point[0], 0) / wardCoordinates.length,
           wardCoordinates.reduce((sum, point) => sum + point[1], 0) / wardCoordinates.length,
         ]
-      : [0, 0];
+      : firstLocatedVehicle
+        ? [firstLocatedVehicle.longitude, firstLocatedVehicle.latitude]
+        : [0, 0];
     const map = new MapLibreMap({
       container: containerRef.current,
       style: mapStyle,
@@ -76,7 +79,7 @@ export default function WasteCollectionMap({ overview, selectedVehicleId, citize
       if (!map.getSource('ward-boundary')) {
         map.addSource('ward-boundary', {
           type: 'geojson',
-          data: asCollection([asFeature(overview.ward.boundary)]),
+          data: asCollection([]),
         });
         map.addLayer({
           id: 'ward-boundary-fill',
@@ -187,6 +190,13 @@ export default function WasteCollectionMap({ overview, selectedVehicleId, citize
         clusterInteractionsBoundRef.current = true;
       }
 
+      const boundarySource = map.getSource('ward-boundary');
+      if (boundarySource) {
+        boundarySource.setData(overview.ward.boundary
+          ? asCollection([asFeature(overview.ward.boundary)])
+          : asCollection([]));
+      }
+
       const route = overview.vehicles.find((vehicle) => vehicle.id === selectedVehicleId);
       const routeCoordinates = route?.route_logs
         .filter((point) => point.longitude != null && point.latitude != null)
@@ -212,9 +222,13 @@ export default function WasteCollectionMap({ overview, selectedVehicleId, citize
         ))));
 
       const bounds = wardCoordinatesForBounds(overview.ward.boundary);
-      if (bounds.length && fittedWardRef.current !== overview.ward.id) {
+      const locatedVehicleCoordinates = overview.vehicles
+        .filter((vehicle) => vehicle.longitude != null && vehicle.latitude != null)
+        .map((vehicle) => [vehicle.longitude, vehicle.latitude]);
+      const fitCoordinates = bounds.length ? bounds : locatedVehicleCoordinates;
+      if (fitCoordinates.length && fittedWardRef.current !== overview.ward.id) {
         const mapBounds = new LngLatBounds();
-        bounds.forEach((coordinate) => mapBounds.extend(coordinate));
+        fitCoordinates.forEach((coordinate) => mapBounds.extend(coordinate));
         map.fitBounds(mapBounds, { padding: 48, maxZoom: 15, duration: 500 });
         fittedWardRef.current = overview.ward.id;
       }
@@ -224,6 +238,16 @@ export default function WasteCollectionMap({ overview, selectedVehicleId, citize
     else map.once('load', addOrUpdateLayers);
     return () => map.off('load', addOrUpdateLayers);
   }, [overview, selectedVehicleId, citizenLocation]);
+
+  useEffect(() => {
+    if (!autoCenterVehicle || !mapRef.current) return;
+    const point = citizenLocation
+      ? [citizenLocation.longitude, citizenLocation.latitude]
+      : overview.vehicles.find((vehicle) => vehicle.id === selectedVehicleId
+        && vehicle.longitude != null && vehicle.latitude != null);
+    const center = Array.isArray(point) ? point : point ? [point.longitude, point.latitude] : null;
+    if (center) mapRef.current.easeTo({ center, duration: 450 });
+  }, [autoCenterVehicle, citizenLocation, overview.vehicles, selectedVehicleId]);
 
   return (
     <div className="waste-maplibre-wrap">

@@ -7,9 +7,8 @@ import {
   Settings,
   Building2,
   ClipboardList,
+  Truck,
 } from 'lucide-react';
-
-import { apiFetch } from '../api/client';
 
 import CivicShell from './CivicShell';
 
@@ -17,19 +16,33 @@ import AdminDashboard from './admin/AdminDashboard';
 import AdminComplaints from './admin/AdminComplaints';
 import AdminAnalytics from './admin/AdminAnalytics';
 import AdminDepartments from './admin/AdminDepartments';
-import AdminUsers from './admin/AdminUsers';
+import AdminEmployees from './admin/AdminEmployees';
 import AdminSettings from './admin/AdminSettings';
+import AdminWasteCollection from './admin/AdminWasteCollection';
+
+
+const MANAGEMENT_ROLES = new Set([
+  'super_admin',
+  'municipal_admin',
+]);
 
 
 const AdminPortal = ({
   userData,
   onLogout,
 }) => {
-
   const [activeTab, setActiveTab] =
     useState('dashboard');
 
 
+  // ============================================================
+  // ROLE / ACCESS
+  // ============================================================
+
+  const employeeRole = userData?.employee_role;
+  const canManageDepartmentsAndUsers = MANAGEMENT_ROLES.has(employeeRole);
+  const canManageWasteCollection = employeeRole === 'super_admin';
+ 
   const menuItems = [
     {
       id: 'dashboard',
@@ -49,17 +62,30 @@ const AdminPortal = ({
       icon: BarChart3,
     },
 
-    {
-      id: 'departments',
-      label: 'Departments',
-      icon: Building2,
-    },
+    ...(canManageDepartmentsAndUsers
+      ? [
+          {
+            id: 'departments',
+            label: 'Departments',
+            icon: Building2,
+          },
+          {
+            id: 'employees',
+            label: 'Employees',
+            icon: Users,
+          },
+        ]
+      : []),
 
-    {
-      id: 'users',
-      label: 'Users',
-      icon: Users,
-    },
+    ...(canManageWasteCollection
+      ? [
+          {
+            id: 'waste-collection',
+            label: 'Waste collection',
+            icon: Truck,
+          },
+        ]
+      : []),
 
     {
       id: 'settings',
@@ -69,10 +95,18 @@ const AdminPortal = ({
   ];
 
 
+  // ============================================================
+  // NAVIGATION
+  // ============================================================
+
   const navigate = (tabId) => {
     setActiveTab(tabId);
   };
 
+
+  // ============================================================
+  // CONTENT
+  // ============================================================
 
   return (
     <CivicShell
@@ -83,8 +117,11 @@ const AdminPortal = ({
       onTabChange={navigate}
       searchPlaceholder="Search complaints"
     >
-
       {(currentTab) => {
+
+        // ------------------------------------------------------
+        // DASHBOARD
+        // ------------------------------------------------------
 
         if (currentTab === 'dashboard') {
           return (
@@ -95,39 +132,80 @@ const AdminPortal = ({
           );
         }
 
+
+        // ------------------------------------------------------
+        // COMPLAINTS
+        // ------------------------------------------------------
+
         if (currentTab === 'complaints') {
-          return (
-            <AdminComplaints />
-          );
+          return <AdminComplaints />;
         }
+
+
+        // ------------------------------------------------------
+        // ANALYTICS
+        // ------------------------------------------------------
 
         if (currentTab === 'analytics') {
+          return <AdminAnalytics />;
+        }
+
+
+        // ------------------------------------------------------
+        // DEPARTMENTS
+        // ------------------------------------------------------
+
+        if (
+          currentTab === 'departments' &&
+          canManageDepartmentsAndUsers
+        ) {
+          return <AdminDepartments />;
+        }
+
+
+        // ------------------------------------------------------
+        // EMPLOYEES
+        // ------------------------------------------------------
+
+        if (
+          currentTab === 'employees' &&
+          canManageDepartmentsAndUsers
+        ) {
           return (
-            <AdminAnalytics />
+            <AdminEmployees
+              userData={userData}
+            />
           );
         }
 
-        if (currentTab === 'departments') {
-          return (
-            <AdminDepartments />
-          );
+
+        // ------------------------------------------------------
+        // WASTE COLLECTION
+        // ------------------------------------------------------
+
+        if (
+          currentTab === 'waste-collection' &&
+          canManageWasteCollection
+        ) {
+          return <AdminWasteCollection />;
         }
 
-        if (currentTab === 'users') {
-          return (
-            <AdminUsers />
-          );
-        }
+
+        // ------------------------------------------------------
+        // SETTINGS
+        // ------------------------------------------------------
 
         if (currentTab === 'settings') {
           return (
-            <AdminSettings />
+            <AdminSettings
+              userData={userData}
+            />
           );
         }
 
+
         return null;
       }}
-
     </CivicShell>
   );
 };

@@ -1,0 +1,44 @@
+.employee-waste-page { max-width: 1440px; margin: 0 auto; color: #20384a; }
+.employee-waste-hero { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:27px 30px; border:1px solid #dce6dc; border-radius:18px; color:#fff; background:linear-gradient(115deg,#254b4c,#315f50 58%,#547a61); box-shadow:0 12px 32px #25475516; }
+.employee-waste-hero .civic-eyebrow { margin:0 0 8px; color:#f2c58e; font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
+.employee-waste-hero h2 { margin:0; font:650 clamp(28px,3vw,36px)/1.08 Fraunces,Georgia,serif; letter-spacing:-.025em; }
+.employee-waste-hero p:not(.civic-eyebrow) { max-width:630px; margin:9px 0 0; color:#ffffffc9; font-size:13px; line-height:1.6; }
+.employee-waste-share { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; flex:none; padding:0 15px; border:1px solid #f2c58e66; border-radius:11px; color:#3e5148; background:#f2c58e; font:700 12px Inter,sans-serif; cursor:pointer; transition:background .2s,transform .2s; }
+.employee-waste-share:hover:not(:disabled) { background:#f6d5a9; transform:translateY(-1px); }
+.employee-waste-share.is-sharing { border-color:#ffffff40; color:white; background:#ffffff18; }
+.employee-waste-share:disabled { cursor:not-allowed; opacity:.62; }
+.employee-waste-message { display:flex; align-items:center; gap:9px; margin:14px 0; padding:11px 14px; border:1px solid #d5e5d6; border-radius:10px; color:#426b4c; background:#eff7ed; font-size:12px; line-height:1.5; }
+.employee-waste-message.is-error { border-color:#f0ccc3; color:#9c493b; background:#fff0ec; }
+.employee-waste-loading { display:flex; align-items:center; gap:9px; padding:25px 4px; color:#687d72; font-size:13px; }
+.employee-waste-spin { animation:employeeWasteSpin .9s linear infinite; }
+@keyframes employeeWasteSpin { to { transform:rotate(360deg); } }
+.employee-waste-vehicle-switcher { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 0; }
+.employee-waste-vehicle-switcher button { display:inline-flex; align-items:center; gap:8px; min-height:38px; padding:0 12px; border:1px solid #ded8cb; border-radius:9px; color:#526975; background:#fffdf9; font:600 12px Inter,sans-serif; cursor:pointer; }
+.employee-waste-vehicle-switcher button.is-active { border-color:#9cb79f; color:#315f50; background:#eef5ed; }
+.employee-waste-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; margin:17px 0; }
+.employee-waste-summary article { display:flex; align-items:center; gap:12px; min-width:0; min-height:90px; padding:15px 17px; border:1px solid #e5e7dd; border-radius:15px; background:#fffdf9; box-shadow:0 3px 12px #263c3508; }
+.employee-waste-summary-icon { display:grid; place-items:center; width:42px; height:42px; flex:none; border-radius:13px; color:#416c59; background:#e6efe5; }
+.employee-waste-summary-icon.area { color:#52749c; background:#eaf0f8; }
+.employee-waste-summary-icon.gps { color:#a86a37; background:#fff0dc; }
+.employee-waste-summary article > div { display:grid; min-width:0; gap:4px; }
+.employee-waste-summary small { color:#78878d; font-size:11px; }
+.employee-waste-summary strong { overflow:hidden; color:#20384a; font-size:14px; text-overflow:ellipsis; white-space:nowrap; }
+.employee-waste-summary em { color:#899399; font-size:10px; font-style:normal; text-transform:capitalize; }
+.employee-waste-live { margin-left:auto; padding:5px 8px; border-radius:99px; color:#8d7759; background:#f1eee7; font-size:10px; font-weight:700; white-space:nowrap; }
+.employee-waste-live.is-live { color:#397255; background:#e6f4eb; }
+.employee-waste-map-card { padding:19px; border:1px solid #e5e7dd; border-radius:17px; background:#fffdf9; box-shadow:0 5px 20px #263c3509; }
+.employee-waste-card-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:15px; margin-bottom:14px; }
+.employee-waste-card-heading .civic-eyebrow { margin:0 0 5px; color:#b27149; font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+.employee-waste-card-heading h3 { margin:0; color:#20384a; font:650 21px Fraunces,Georgia,serif; }
+.employee-waste-card-heading p:not(.civic-eyebrow) { margin:5px 0 0; color:#7b898d; font-size:12px; line-height:1.5; }
+.employee-waste-card-heading button { display:inline-flex; align-items:center; gap:7px; min-height:35px; padding:0 11px; border:1px solid #dce5da; border-radius:8px; color:#416c59; background:#fff; font:600 11px Inter,sans-serif; cursor:pointer; }
+.employee-waste-card-heading button:disabled { opacity:.55; cursor:wait; }
+.employee-waste-map-frame { position:relative; height:min(58vh,560px); min-height:340px; overflow:hidden; border:1px solid #dbe4d8; border-radius:14px; background:#e8eee5; }
+.employee-waste-map-hint { position:absolute; z-index:2; top:13px; left:13px; display:flex; align-items:center; gap:7px; padding:9px 11px; border:1px solid #e5e4d9; border-radius:9px; color:#647680; background:#fffffff0; box-shadow:0 2px 8px #253b3512; font-size:11px; }
+.employee-waste-privacy { display:flex; align-items:center; gap:7px; margin:12px 2px 1px; color:#6d8074; font-size:11px; line-height:1.5; }
+.employee-waste-empty { display:grid; justify-items:center; max-width:580px; margin:9vh auto 0; padding:36px 28px; border:1px solid #e5e7dd; border-radius:18px; text-align:center; background:#fffdf9; }
+.employee-waste-empty > span { display:grid; place-items:center; width:52px; height:52px; border-radius:16px; color:#52745e; background:#eaf1e8; }
+.employee-waste-empty h3 { margin:15px 0 6px; color:#20384a; font:650 22px Fraunces,Georgia,serif; }
+.employee-waste-empty p { max-width:430px; margin:0; color:#718087; font-size:13px; line-height:1.6; }
+@media (max-width:900px) { .employee-waste-summary { grid-template-columns:1fr; gap:9px; } .employee-waste-summary article { min-height:75px; } }
+@media (max-width:640px) { .employee-waste-hero { align-items:stretch; flex-direction:column; padding:23px; } .employee-waste-share { width:100%; } .employee-waste-summary article { padding:13px; } .employee-waste-map-card { padding:13px; } .employee-waste-map-frame { height:380px; min-height:300px; } .employee-waste-card-heading { flex-direction:column; } .employee-waste-card-heading button { align-self:flex-start; } }

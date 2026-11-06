@@ -4,6 +4,7 @@ Responsible for normal complaint creation flow.
 Intelligent operations are delegated to
 complaint_intelligence.py.
 """
+from sqlalchemy.exc import SQLAlchemyError
 from pathlib import Path
 from uuid import uuid4
 from fastapi import (
@@ -139,6 +140,25 @@ async def create_complaint(
     confidence = float(
         classification["confidence"]
     )
+    # ========================================================
+# ML CONFIDENCE VALIDATION
+# ========================================================
+
+    MIN_ML_CONFIDENCE = 0.80
+
+    if confidence < MIN_ML_CONFIDENCE:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "message": (
+                    "The photo could not be classified reliably."
+                    "Please capture a clearer, closer, and well-lit photo."
+                ),
+                "predicted": predicted_class,
+                "confidence": confidence,
+                "minimum_required": MIN_ML_CONFIDENCE,
+            },
+        )
     # ========================================================
     # PORTAL VALIDATION
     # ========================================================

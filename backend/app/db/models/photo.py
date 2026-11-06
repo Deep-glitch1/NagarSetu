@@ -15,7 +15,7 @@ from sqlalchemy import BigInteger, ForeignKey, String, Text, TIMESTAMP, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.database import Base
-
+from app.db.models.employee import Employee
 
 class ComplaintPhoto(Base):
     __tablename__ = "complaint_photos"

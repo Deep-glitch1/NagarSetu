@@ -1,258 +1,188 @@
-import React from 'react';
-
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ClipboardList,
-  Clock,
-  CheckCircle,
   AlertTriangle,
+  ArrowRight,
+  BarChart3,
+  CheckCircle2,
+  ClipboardList,
+  Clock3,
+  RefreshCw,
 } from 'lucide-react';
+import { apiFetch } from '../../api/client';
+import './AdminManagement.css';
 
-
-const getGreeting = () => {
-
-  const hour =
-    new Date().getHours();
-
-  if (hour < 12) {
-    return 'Good morning';
-  }
-
-  if (hour < 17) {
-    return 'Good afternoon';
-  }
-
+const greeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
   return 'Good evening';
 };
 
+const statusLabel = (value) => String(value || '')
+  .replaceAll('_', ' ')
+  .replace(/\b\w/g, (char) => char.toUpperCase());
 
-const AdminDashboard = ({
-  userData,
-  onNavigate,
-}) => {
+const dateLabel = (value) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
+};
 
-  const stats = [
-    {
-      label: 'Total complaints',
-      value: '—',
-      icon: ClipboardList,
-      accent: '#315c9d',
-      tint: '#e8f0fd',
-    },
+export default function AdminDashboard({ userData, onNavigate }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
 
-    {
-      label: 'Awaiting action',
-      value: '—',
-      icon: Clock,
-      accent: '#b86d20',
-      tint: '#fff0dc',
-    },
+  const loadDashboard = useCallback(async (refresh = false) => {
+    refresh ? setRefreshing(true) : setLoading(true);
+    setError('');
 
-    {
-      label: 'Resolved',
-      value: '—',
-      icon: CheckCircle,
-      accent: '#397255',
-      tint: '#e6f4eb',
-    },
+    try {
+      setData(await apiFetch('/admin/management/dashboard'));
+    } catch (requestError) {
+      setError(requestError.message || 'Unable to load admin dashboard.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
-    {
-      label: 'Outside SLA',
-      value: '—',
-      icon: AlertTriangle,
-      accent: '#bd553f',
-      tint: '#fbeae5',
-    },
-  ];
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
+  if (loading) {
+    return (
+      <div className="admin-management-loading">
+        <RefreshCw size={18} className="admin-management-spin" />
+        Loading dashboard…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="civic-dashboard">
+        <section className="civic-panel admin-management-error">
+          <AlertTriangle size={20} />
+          <div>
+            <h3>Dashboard unavailable</h3>
+            <p>{error}</p>
+            <button type="button" onClick={() => loadDashboard(true)}>
+              Try again
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  const stats = data?.stats || {};
 
   return (
     <div className="civic-dashboard">
-
       <section className="civic-welcome">
-
         <div>
-
-          <p className="civic-eyebrow">
-            Operations overview
-          </p>
-
-          <h2>
-            {getGreeting()},
-            {' '}
-            {userData?.name || 'Administrator'}.
-          </h2>
-
-          <p>
-            Review complaints and keep
-            every civic case moving.
-          </p>
-
+          <p className="civic-eyebrow">Operations overview</p>
+          <h2>{greeting()}, {userData?.name || 'Administrator'}.</h2>
+          <p>Live system totals from NagarSetu. No hard-coded dashboard numbers.</p>
         </div>
-
-
-        <button
-          type="button"
-          onClick={() =>
-            onNavigate('complaints')
-          }
-        >
-          Open queue
-          <ClipboardList size={17} />
+        <button type="button" onClick={() => loadDashboard(true)} disabled={refreshing}>
+          <RefreshCw size={17} className={refreshing ? 'admin-management-spin' : ''} />
+          Refresh
         </button>
-
       </section>
-
 
       <section className="civic-stat-grid">
+        <article className="civic-stat">
+          <span><ClipboardList size={20} /></span>
+          <div><small>Total complaints</small><strong>{stats.total_complaints ?? 0}</strong></div>
+        </article>
+        <article className="civic-stat">
+          <span><Clock3 size={20} /></span>
+          <div><small>Active complaints</small><strong>{stats.active_complaints ?? 0}</strong></div>
+        </article>
+        <article className="civic-stat">
+          <span><CheckCircle2 size={20} /></span>
+          <div><small>Resolved this month</small><strong>{stats.resolved_this_month ?? 0}</strong></div>
+        </article>
+        <article className="civic-stat">
+          <span><AlertTriangle size={20} /></span>
+          <div><small>Outside SLA</small><strong>{stats.overdue_complaints ?? 0}</strong></div>
+        </article>
+      </section>
 
-        {stats.map((stat) => {
+      <section className="admin-management-grid">
+        <article className="civic-panel">
+          <div className="civic-panel-title">
+            <div>
+              <p className="civic-eyebrow">Departments</p>
+              <h3>Workload by department</h3>
+            </div>
+            <button type="button" onClick={() => onNavigate('departments')}>
+              Manage <ArrowRight size={16} />
+            </button>
+          </div>
 
-          const Icon = stat.icon;
-
-          return (
-            <article
-              className="civic-stat"
-              key={stat.label}
-            >
-
-              <span
-                style={{
-                  backgroundColor:
-                    stat.tint,
-                  color:
-                    stat.accent,
-                }}
-              >
-                <Icon size={20} />
-              </span>
-
-              <div>
-
-                <small>
-                  {stat.label}
-                </small>
-
-                <strong>
-                  {stat.value}
-                </strong>
-
+          <div className="admin-management-list">
+            {(data?.departments || []).map((department) => (
+              <div className="admin-management-row" key={department.id}>
+                <div>
+                  <strong>{department.name}</strong>
+                  <small>{department.code}</small>
+                </div>
+                <div className="admin-management-row-metric">
+                  <strong>{department.complaint_count}</strong>
+                  <small>{department.resolved_count} resolved</small>
+                </div>
               </div>
-
-            </article>
-          );
-        })}
-
-      </section>
-
-
-      <section className="civic-content-grid">
-
-        <article className="civic-panel">
-
-          <div className="civic-panel-title">
-
-            <div>
-
-              <p className="civic-eyebrow">
-                Workflow
-              </p>
-
-              <h3>
-                Complaint operations
-              </h3>
-
-            </div>
-
+            ))}
+            {!data?.departments?.length && <p className="admin-management-muted">No departments found.</p>}
           </div>
-
-
-          <p
-            style={{
-              color: 'var(--muted)',
-              lineHeight: 1.7,
-            }}
-          >
-            Complaints are classified,
-            checked for duplicates, routed
-            to departments, prioritised and
-            then assigned to field officers.
-          </p>
-
-
-          <button
-            type="button"
-            className="civic-link"
-            onClick={() =>
-              onNavigate('complaints')
-            }
-          >
-            Open Complaints Queue
-            <ClipboardList size={15} />
-          </button>
-
         </article>
 
-
         <article className="civic-panel">
-
           <div className="civic-panel-title">
-
             <div>
-
-              <p className="civic-eyebrow">
-                Next modules
-              </p>
-
-              <h3>
-                Operations
-              </h3>
-
+              <p className="civic-eyebrow">Latest activity</p>
+              <h3>Recent complaints</h3>
             </div>
-
+            <button type="button" onClick={() => onNavigate('complaints')}>
+              Open queue <ArrowRight size={16} />
+            </button>
           </div>
 
-
-          <ul className="civic-list">
-
-            <li>
-              <span>
-                Officer assignment
-              </span>
-
-              <b>
-                Active
-              </b>
-            </li>
-
-            <li>
-              <span>
-                Resolution verification
-              </span>
-
-              <b>
-                Upcoming
-              </b>
-            </li>
-
-            <li>
-              <span>
-                SLA monitoring
-              </span>
-
-              <b>
-                Upcoming
-              </b>
-            </li>
-
-          </ul>
-
+          <div className="admin-management-list">
+            {(data?.recent_complaints || []).map((complaint) => (
+              <div className="admin-management-row" key={complaint.id}>
+                <div>
+                  <strong>{complaint.complaint_number}</strong>
+                  <small>{complaint.title || complaint.category_name || 'Complaint'}</small>
+                </div>
+                <div className="admin-management-row-metric">
+                  <span className={`admin-management-status status-${complaint.status}`}>
+                    {statusLabel(complaint.status)}
+                  </span>
+                  <small>{dateLabel(complaint.created_at)}</small>
+                </div>
+              </div>
+            ))}
+            {!data?.recent_complaints?.length && <p className="admin-management-muted">No complaints found.</p>}
+          </div>
         </article>
-
       </section>
 
+      <section className="civic-panel admin-management-quick-actions">
+        <div>
+          <p className="civic-eyebrow">Quick actions</p>
+          <h3>Administration</h3>
+        </div>
+        <div className="admin-management-action-group">
+          <button type="button" onClick={() => onNavigate('analytics')}><BarChart3 size={17} />Open analytics</button>
+          <button type="button" onClick={() => onNavigate('employees')}><ClipboardList size={17} />Manage employees</button>
+        </div>
+      </section>
     </div>
   );
-};
-
-
-export default AdminDashboard;
+}

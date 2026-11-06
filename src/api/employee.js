@@ -15,8 +15,9 @@ export const uploadResolution = (complaintId, file) => {
   const formData = new FormData();
   formData.append('file', file);
 
+  
   return apiFetch(
-    `/employee/complaints/${complaintId}/resolution`,
+    `/employee/complaints/${complaintId}/resolve`,
     {
       method: 'POST',
       body: formData,

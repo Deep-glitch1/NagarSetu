@@ -30,16 +30,14 @@ import {
 } from '../../utils/format';
 
 const slaStateClass = (state) =>
-  `employee-sla-${String(
-    state || 'on_track'
-  ).toLowerCase()}`;
+  `employee-sla-${String(state || 'on_track').toLowerCase()}`;
+
+const statusClass = (status) =>
+  `employee-status-${String(status || 'received').toLowerCase()}`;
 
 const PhotoCard = ({ photo }) => {
   const [failed, setFailed] = useState(false);
-
-  const src = getPhotoUrl(
-    photo.photo_url
-  );
+  const src = getPhotoUrl(photo.photo_url);
 
   return (
     <a
@@ -48,9 +46,7 @@ const PhotoCard = ({ photo }) => {
       target="_blank"
       rel="noreferrer"
       onClick={(event) => {
-        if (!src) {
-          event.preventDefault();
-        }
+        if (!src) event.preventDefault();
       }}
     >
       {!failed && src ? (
@@ -63,22 +59,13 @@ const PhotoCard = ({ photo }) => {
       ) : (
         <div className="employee-photo-fallback">
           <ImageOff size={28} />
-          <span>
-            Image unavailable
-          </span>
+          <span>Image unavailable</span>
         </div>
       )}
 
       <div className="employee-photo-caption">
-        <span>
-          {statusLabel(
-            photo.photo_type || 'evidence'
-          )}
-        </span>
-
-        <small>
-          {formatDate(photo.uploaded_at)}
-        </small>
+        <span>{statusLabel(photo.photo_type || 'evidence')}</span>
+        <small>{formatDate(photo.uploaded_at)}</small>
       </div>
     </a>
   );
@@ -93,15 +80,11 @@ const EmployeeTaskDetails = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const [actionLoading, setActionLoading] =
-    useState(false);
-  const [actionError, setActionError] =
-    useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState('');
 
-  const [resolutionFile, setResolutionFile] =
-    useState(null);
-  const [resolutionUploading, setResolutionUploading] =
-    useState(false);
+  const [resolutionFile, setResolutionFile] = useState(null);
+  const [resolutionUploading, setResolutionUploading] = useState(false);
 
   const loadDetails = async () => {
     if (!taskId) {
@@ -113,24 +96,12 @@ const EmployeeTaskDetails = ({
     setError('');
 
     try {
-      const data =
-        await getTaskDetails(taskId);
-
-      setDetails(
-        data?.task || null
-      );
+      const data = await getTaskDetails(taskId);
+      setDetails(data?.task || null);
     } catch (requestError) {
-      console.error(
-        'Task details load failed:',
-        requestError
-      );
-
+      console.error('Task details load failed:', requestError);
       setDetails(null);
-
-      setError(
-        requestError.message ||
-          'Unable to load task details.'
-      );
+      setError(requestError.message || 'Unable to load task details.');
     } finally {
       setLoading(false);
     }
@@ -142,28 +113,22 @@ const EmployeeTaskDetails = ({
 
   const handleStartWork = async () => {
     if (
-        !taskId ||
-        !['assigned', 'reopened'].includes(details?.status) ||
-        actionLoading
-      ) {
-        return;
-      }
+      !taskId ||
+      !['assigned', 'reopened'].includes(details?.status) ||
+      actionLoading
+    ) {
+      return;
+    }
 
     setActionLoading(true);
     setActionError('');
 
     try {
       await startTask(taskId);
-
       await loadDetails();
-
       onRefreshTasks?.();
     } catch (requestError) {
-      console.error(
-        'Start work failed:',
-        requestError
-      );
-
+      console.error('Start work failed:', requestError);
       setActionError(
         requestError.message ||
           'Unable to start work on this complaint.'
@@ -171,6 +136,32 @@ const EmployeeTaskDetails = ({
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleResolutionFileChange = (event) => {
+    const file = event.target.files?.[0] || null;
+    setActionError('');
+
+    if (!file) {
+      setResolutionFile(null);
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      event.target.value = '';
+      setResolutionFile(null);
+      setActionError('Please select an image file.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      event.target.value = '';
+      setResolutionFile(null);
+      setActionError('Resolution photo must be 10 MB or smaller.');
+      return;
+    }
+
+    setResolutionFile(file);
   };
 
   const handleResolutionUpload = async () => {
@@ -187,22 +178,12 @@ const EmployeeTaskDetails = ({
     setActionError('');
 
     try {
-      await uploadResolution(
-        taskId,
-        resolutionFile
-      );
-
+      await uploadResolution(taskId, resolutionFile);
       setResolutionFile(null);
-
       await loadDetails();
-
       onRefreshTasks?.();
     } catch (requestError) {
-      console.error(
-        'Resolution upload failed:',
-        requestError
-      );
-
+      console.error('Resolution upload failed:', requestError);
       setActionError(
         requestError.message ||
           'Unable to upload resolution photo.'
@@ -213,37 +194,20 @@ const EmployeeTaskDetails = ({
   };
 
   const slaProgress = useMemo(() => {
-    const percentage = Number(
-      details?.sla?.elapsed_percentage
-    );
+    const percentage = Number(details?.sla?.elapsed_percentage);
 
-    if (!Number.isFinite(percentage)) {
-      return 0;
-    }
+    if (!Number.isFinite(percentage)) return 0;
 
-    return Math.min(
-      Math.max(percentage, 0),
-      100
-    );
+    return Math.min(Math.max(percentage, 0), 100);
   }, [details]);
 
   if (!taskId) {
     return (
       <div className="civic-empty">
         <AlertTriangle size={30} />
-
-        <h2>
-          Task not selected
-        </h2>
-
-        <p>
-          Select a complaint from My Tasks.
-        </p>
-
-        <button
-          type="button"
-          onClick={onBack}
-        >
+        <h2>Task not selected</h2>
+        <p>Select a complaint from My Tasks.</p>
+        <button type="button" onClick={onBack}>
           Back to My Tasks
         </button>
       </div>
@@ -253,18 +217,9 @@ const EmployeeTaskDetails = ({
   if (loading) {
     return (
       <div className="civic-empty">
-        <RefreshCw
-          size={30}
-          className="animate-spin"
-        />
-
-        <h2>
-          Loading task details
-        </h2>
-
-        <p>
-          Please wait...
-        </p>
+        <RefreshCw size={30} className="animate-spin" />
+        <h2>Loading task details</h2>
+        <p>Please wait...</p>
       </div>
     );
   }
@@ -273,27 +228,14 @@ const EmployeeTaskDetails = ({
     return (
       <div className="civic-empty">
         <AlertTriangle size={30} />
-
-        <h2>
-          Unable to load task
-        </h2>
-
-        <p>
-          {error}
-        </p>
+        <h2>Unable to load task</h2>
+        <p>{error}</p>
 
         <div className="employee-detail-actions">
-          <button
-            type="button"
-            onClick={loadDetails}
-          >
+          <button type="button" onClick={loadDetails}>
             Try again
           </button>
-
-          <button
-            type="button"
-            onClick={onBack}
-          >
+          <button type="button" onClick={onBack}>
             Back
           </button>
         </div>
@@ -301,21 +243,20 @@ const EmployeeTaskDetails = ({
     );
   }
 
-  if (!details) {
-    return null;
-  }
+  if (!details) return null;
 
-  const initialPhotos =
-    (details.photos || []).filter(
-      (photo) =>
-        photo.photo_type === 'initial'
-    );
-
-  const otherPhotos =
-    (details.photos || []).filter(
-      (photo) =>
-        photo.photo_type !== 'initial'
-    );
+  const photos = details.photos || [];
+  const initialPhotos = photos.filter(
+    (photo) => photo.photo_type === 'initial'
+  );
+  const resolutionPhotos = photos.filter(
+    (photo) => photo.photo_type === 'resolution'
+  );
+  const otherPhotos = photos.filter(
+    (photo) =>
+      photo.photo_type !== 'initial' &&
+      photo.photo_type !== 'resolution'
+  );
 
   const hasLocation =
     details.latitude !== null &&
@@ -323,19 +264,13 @@ const EmployeeTaskDetails = ({
     details.longitude !== null &&
     details.longitude !== undefined;
 
-  const slaState =
-    details.sla?.state || 'on_track';
-
-  const slaLabel =
-    statusLabel(slaState);
+  const slaState = details.sla?.state || 'on_track';
+  const slaLabel = statusLabel(slaState);
+  const canStart = ['assigned', 'reopened'].includes(details.status);
+  const canResolve = details.status === 'in_progress';
 
   return (
     <div className="civic-dashboard">
-
-      {/* =====================================================
-          HEADER
-          ===================================================== */}
-
       <section className="civic-welcome employee-detail-hero">
         <div>
           <button
@@ -347,199 +282,95 @@ const EmployeeTaskDetails = ({
             Back to My Tasks
           </button>
 
-          <p className="civic-eyebrow">
-            Task details
-          </p>
-
+          <p className="civic-eyebrow">Task details</p>
           <h2>
-            {details.complaint_number ||
-              `Complaint #${details.id}`}
+            {details.complaint_number || `Complaint #${details.id}`}
           </h2>
-
-          <p>
-            {details.title ||
-              'Civic complaint'}
-          </p>
+          <p>{details.title || 'Civic complaint'}</p>
         </div>
 
         <span
-          className={`employee-priority ${priorityClass(
-            details.priority
-          )}`}
+          className={`employee-priority ${priorityClass(details.priority)}`}
         >
-          {String(
-            details.priority || 'low'
-          ).toUpperCase()}
+          {String(details.priority || 'low').toUpperCase()}
         </span>
       </section>
 
-      {/* =====================================================
-          SUMMARY
-          ===================================================== */}
-
       <section className="civic-stat-grid">
         <article className="civic-stat">
-          <span>
-            <Clock3 size={20} />
-          </span>
-
+          <span><Clock3 size={20} /></span>
           <div>
-            <small>
-              Status
-            </small>
+            <small>Status</small>
+            <strong>{statusLabel(details.status)}</strong>
+          </div>
+        </article>
 
+        <article className="civic-stat">
+          <span><FileImage size={20} /></span>
+          <div>
+            <small>Category</small>
             <strong>
-              {statusLabel(
-                details.status
-              )}
+              {details.category_name || details.category || 'Unknown'}
             </strong>
           </div>
         </article>
 
         <article className="civic-stat">
-          <span>
-            <FileImage size={20} />
-          </span>
-
+          <span><MapPin size={20} /></span>
           <div>
-            <small>
-              Category
-            </small>
-
-            <strong>
-              {details.category_name ||
-                details.category ||
-                'Unknown'}
-            </strong>
+            <small>Department</small>
+            <strong>{details.department_name || 'Not assigned'}</strong>
           </div>
         </article>
 
         <article className="civic-stat">
-          <span>
-            <MapPin size={20} />
-          </span>
-
+          <span><CheckCircle2 size={20} /></span>
           <div>
-            <small>
-              Department
-            </small>
-
-            <strong>
-              {details.department_name ||
-                'Not assigned'}
-            </strong>
-          </div>
-        </article>
-
-        <article className="civic-stat">
-          <span>
-            <CheckCircle2 size={20} />
-          </span>
-
-          <div>
-            <small>
-              Assigned
-            </small>
-
-            <strong>
-              {formatDate(
-                details.assignment
-                  ?.assigned_at
-              )}
-            </strong>
+            <small>Assigned</small>
+            <strong>{formatDate(details.assignment?.assigned_at)}</strong>
           </div>
         </article>
       </section>
-
-      {/* =====================================================
-          COMPLAINT + LOCATION
-          ===================================================== */}
 
       <section className="civic-content-grid">
         <article className="civic-panel">
           <div className="civic-panel-title">
             <div>
-              <p className="civic-eyebrow">
-                Complaint
-              </p>
-
-              <h3>
-                Issue information
-              </h3>
+              <p className="civic-eyebrow">Complaint</p>
+              <h3>Issue information</h3>
             </div>
           </div>
 
           <div className="employee-detail-grid">
             <div>
-              <small>
-                Title
-              </small>
-
-              <p>
-                {details.title ||
-                  'Not provided'}
-              </p>
+              <small>Title</small>
+              <p>{details.title || 'Not provided'}</p>
             </div>
-
             <div>
-              <small>
-                Category
-              </small>
-
-              <p>
-                {details.category_name ||
-                  details.category ||
-                  'Unknown'}
-              </p>
+              <small>Category</small>
+              <p>{details.category_name || details.category || 'Unknown'}</p>
             </div>
-
             <div>
-              <small>
-                Created
-              </small>
-
-              <p>
-                {formatDate(
-                  details.created_at
-                )}
-              </p>
+              <small>Created</small>
+              <p>{formatDate(details.created_at)}</p>
             </div>
-
             <div>
-              <small>
-                Last updated
-              </small>
-
-              <p>
-                {formatDate(
-                  details.updated_at
-                )}
-              </p>
+              <small>Last updated</small>
+              <p>{formatDate(details.updated_at)}</p>
             </div>
           </div>
 
           <div className="employee-description-block">
-            <small>
-              Description
-            </small>
-
-            <p>
-              {details.description ||
-                'No description was provided.'}
-            </p>
+            <small>Description</small>
+            <p>{details.description || 'No description was provided.'}</p>
           </div>
         </article>
 
         <article className="civic-panel">
           <div className="civic-panel-title">
             <div>
-              <p className="civic-eyebrow">
-                Location
-              </p>
-
-              <h3>
-                Complaint location
-              </h3>
+              <p className="civic-eyebrow">Location</p>
+              <h3>Complaint location</h3>
             </div>
           </div>
 
@@ -547,15 +378,8 @@ const EmployeeTaskDetails = ({
             <div className="employee-location-block">
               <div className="employee-coordinate">
                 <MapPin size={17} />
-
                 <span>
-                  {Number(
-                    details.latitude
-                  ).toFixed(6)}
-                  ,{' '}
-                  {Number(
-                    details.longitude
-                  ).toFixed(6)}
+                  {Number(details.latitude).toFixed(6)}, {Number(details.longitude).toFixed(6)}
                 </span>
               </div>
 
@@ -570,71 +394,58 @@ const EmployeeTaskDetails = ({
               </a>
             </div>
           ) : (
-            <p>
-              Location is not available.
-            </p>
+            <p>Location is not available.</p>
           )}
         </article>
       </section>
-
-      {/* =====================================================
-          PHOTOS + SLA
-          ===================================================== */}
 
       <section className="civic-content-grid">
         <article className="civic-panel">
           <div className="civic-panel-title">
             <div>
-              <p className="civic-eyebrow">
-                Evidence
-              </p>
-
-              <h3>
-                Complaint photos
-              </h3>
+              <p className="civic-eyebrow">Evidence</p>
+              <h3>Complaint photos</h3>
             </div>
-
-            <span>
-              {details.photos?.length || 0}
-            </span>
+            <span>{photos.length}</span>
           </div>
 
           {initialPhotos.length === 0 &&
+          resolutionPhotos.length === 0 &&
           otherPhotos.length === 0 ? (
             <div className="employee-empty-block">
-              No complaint photos are
-              available.
+              No complaint photos are available.
             </div>
           ) : (
             <>
               {initialPhotos.length > 0 && (
-                <div className="employee-photo-grid">
-                  {initialPhotos.map(
-                    (photo) => (
-                      <PhotoCard
-                        key={photo.id}
-                        photo={photo}
-                      />
-                    )
-                  )}
-                </div>
+                <>
+                  <p className="civic-eyebrow employee-subheading">Initial evidence</p>
+                  <div className="employee-photo-grid">
+                    {initialPhotos.map((photo) => (
+                      <PhotoCard key={photo.id} photo={photo} />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {resolutionPhotos.length > 0 && (
+                <>
+                  <p className="civic-eyebrow employee-subheading">Resolution evidence</p>
+                  <div className="employee-photo-grid">
+                    {resolutionPhotos.map((photo) => (
+                      <PhotoCard key={photo.id} photo={photo} />
+                    ))}
+                  </div>
+                </>
               )}
 
               {otherPhotos.length > 0 && (
                 <>
-                  <p className="civic-eyebrow employee-subheading">
-                    Additional evidence
-                  </p>
-
+                  <p className="civic-eyebrow employee-subheading">Additional evidence</p>
                   <div className="employee-photo-grid">
-                    {otherPhotos.map(
-                      (photo) => (
-                        <PhotoCard
-                          key={photo.id}
-                          photo={photo}
-                        />
-                      )
-                    )}
+                    {otherPhotos.map((photo) => (
+                      <PhotoCard key={photo.id} photo={photo} />
+                    ))}
                   </div>
                 </>
               )}
@@ -645,97 +456,49 @@ const EmployeeTaskDetails = ({
         <article className="civic-panel">
           <div className="civic-panel-title">
             <div>
-              <p className="civic-eyebrow">
-                Service level
-              </p>
-
-              <h3>
-                SLA status
-              </h3>
+              <p className="civic-eyebrow">Service level</p>
+              <h3>SLA status</h3>
             </div>
-
-            <span
-              className={`employee-sla-badge ${slaStateClass(
-                slaState
-              )}`}
-            >
+            <span className={`employee-sla-badge ${slaStateClass(slaState)}`}>
               {slaLabel}
             </span>
           </div>
 
-          <div
-            className={`employee-sla-wrap ${slaStateClass(
-              slaState
-            )}`}
-          >
+          <div className={`employee-sla-wrap ${slaStateClass(slaState)}`}>
             <div className="employee-sla-track">
-              <div
-                style={{
-                  width: `${slaProgress}%`,
-                }}
-              />
+              <div style={{ width: `${slaProgress}%` }} />
             </div>
 
             <div className="employee-sla-summary">
               <strong>
-                {formatNumber(
-                  details.sla
-                    ?.elapsed_percentage
-                )}
-                %
+                {formatNumber(details.sla?.elapsed_percentage)}%
               </strong>
-
-              <span>
-                of target elapsed
-              </span>
+              <span>of target elapsed</span>
             </div>
           </div>
 
           <div className="employee-detail-grid employee-sla-grid">
             <div>
-              <small>
-                Target
-              </small>
-
+              <small>Target</small>
               <p>
-                {details.sla
-                  ?.target_hours != null
-                  ? `${formatNumber(
-                      details.sla
-                        .target_hours
-                    )} hours`
+                {details.sla?.target_hours != null
+                  ? `${formatNumber(details.sla.target_hours)} hours`
                   : 'Not available'}
               </p>
             </div>
-
             <div>
-              <small>
-                Elapsed
-              </small>
-
+              <small>Elapsed</small>
               <p>
-                {details.sla
-                  ?.elapsed_hours != null
-                  ? `${formatNumber(
-                      details.sla
-                        .elapsed_hours
-                    )} hours`
+                {details.sla?.elapsed_hours != null
+                  ? `${formatNumber(details.sla.elapsed_hours)} hours`
                   : 'Not available'}
               </p>
             </div>
-
             <div>
-              <small>
-                Progress
-              </small>
-
+              <small>Progress</small>
               <p>
-                {details.sla
-                  ?.elapsed_percentage != null
-                  ? `${formatNumber(
-                      details.sla
-                        .elapsed_percentage
-                    )}%`
+                {details.sla?.elapsed_percentage != null
+                  ? `${formatNumber(details.sla.elapsed_percentage)}%`
                   : 'Not available'}
               </p>
             </div>
@@ -743,198 +506,101 @@ const EmployeeTaskDetails = ({
         </article>
       </section>
 
-      {/* =====================================================
-          ASSIGNMENT
-          ===================================================== */}
-
       <section className="civic-panel">
         <div className="civic-panel-title">
           <div>
-            <p className="civic-eyebrow">
-              Assignment
-            </p>
-
-            <h3>
-              Current assignment
-            </h3>
+            <p className="civic-eyebrow">Assignment</p>
+            <h3>Current assignment</h3>
           </div>
         </div>
 
         <div className="employee-detail-grid">
           <div>
-            <small>
-              Officer
-            </small>
-
-            <p>
-              {details.assignment
-                ?.officer_name ||
-                'Not available'}
-            </p>
+            <small>Officer</small>
+            <p>{details.assignment?.officer_name || 'Not available'}</p>
           </div>
-
           <div>
-            <small>
-              Employee ID
-            </small>
-
-            <p>
-              {details.assignment
-                ?.employee_id ||
-                'Not available'}
-            </p>
+            <small>Employee ID</small>
+            <p>{details.assignment?.employee_id || 'Not available'}</p>
           </div>
-
           <div>
-            <small>
-              Assigned by
-            </small>
-
-            <p>
-              {details.assignment
-                ?.assigned_by_name ||
-                'Not available'}
-            </p>
+            <small>Assigned by</small>
+            <p>{details.assignment?.assigned_by_name || 'Not available'}</p>
           </div>
-
           <div>
-            <small>
-              Assigned at
-            </small>
-
-            <p>
-              {formatDate(
-                details.assignment
-                  ?.assigned_at
-              )}
-            </p>
+            <small>Assigned at</small>
+            <p>{formatDate(details.assignment?.assigned_at)}</p>
           </div>
         </div>
       </section>
 
-      {/* =====================================================
-          STATUS HISTORY
-          ===================================================== */}
-
       <section className="civic-panel">
         <div className="civic-panel-title">
           <div>
-            <p className="civic-eyebrow">
-              Timeline
-            </p>
-
-            <h3>
-              Status history
-            </h3>
+            <p className="civic-eyebrow">Timeline</p>
+            <h3>Status history</h3>
           </div>
         </div>
 
         {details.status_history?.length ? (
           <div className="employee-status-history">
-            {details.status_history.map(
-              (item) => (
-                <div
-                  className="employee-history-item"
-                  key={item.id}
-                >
-                  <span>
-                    <CheckCircle2
-                      size={17}
-                    />
-                  </span>
-
-                  <div>
-                    <strong>
-                      {statusLabel(
-                        item.new_status
-                      )}
-                    </strong>
-
-                    <p>
-                      {item.old_status
-                        ? `${statusLabel(
-                            item.old_status
-                          )} → `
-                        : ''}
-                      {statusLabel(
-                        item.new_status
-                      )}
-                    </p>
-
-                    {item.remarks && (
-                      <p>
-                        {item.remarks}
-                      </p>
-                    )}
-
-                    <small>
-                      {item.changed_by_name ||
-                        'System'}
-                      {' · '}
-                      {formatDate(
-                        item.changed_at
-                      )}
-                    </small>
-                  </div>
+            {details.status_history.map((item) => (
+              <div className="employee-history-item" key={item.id}>
+                <span><CheckCircle2 size={17} /></span>
+                <div>
+                  <strong className={statusClass(item.new_status)}>
+                    {statusLabel(item.new_status)}
+                  </strong>
+                  <p>
+                    {item.old_status
+                      ? `${statusLabel(item.old_status)} → `
+                      : ''}
+                    {statusLabel(item.new_status)}
+                  </p>
+                  {item.remarks && <p>{item.remarks}</p>}
+                  <small>
+                    {item.changed_by_name || 'System'} · {formatDate(item.changed_at)}
+                  </small>
                 </div>
-              )
-            )}
+              </div>
+            ))}
           </div>
         ) : (
-          <p>
-            No status history is available.
-          </p>
+          <p>No status history is available.</p>
         )}
       </section>
 
-      {/* =====================================================
-          RESOLUTION UPLOAD
-          ===================================================== */}
-
-      {details.status === 'in_progress' && (
+      {canResolve && (
         <section className="civic-panel">
           <div className="civic-panel-title">
             <div>
-              <p className="civic-eyebrow">
-                Resolution
-              </p>
-
-              <h3>
-                Upload resolution photo
-              </h3>
+              <p className="civic-eyebrow">Resolution</p>
+              <h3>Upload resolution photo</h3>
             </div>
           </div>
 
+          <p className="employee-resolution-help">
+            Upload a clear photo showing the completed work. Maximum size: 10 MB.
+          </p>
+
           <div className="employee-resolution-upload">
             <input
-            className="employee-resolution-file"
+              className="employee-resolution-file"
               type="file"
               accept="image/*"
               capture="environment"
-              onChange={(event) => {
-                setResolutionFile(
-                  event.target.files?.[0] ||
-                    null
-                );
-              }}
+              onChange={handleResolutionFileChange}
               disabled={resolutionUploading}
             />
 
             <button
               type="button"
               onClick={handleResolutionUpload}
-              disabled={
-                !resolutionFile ||
-                resolutionUploading ||
-                loading
-              }
+              disabled={!resolutionFile || resolutionUploading || loading}
             >
               {resolutionUploading ? (
                 <>
-                  <RefreshCw
-                    size={16}
-                    className="animate-spin"
-                  />
+                  <RefreshCw size={16} className="animate-spin" />
                   Uploading...
                 </>
               ) : (
@@ -948,61 +614,52 @@ const EmployeeTaskDetails = ({
 
           {resolutionFile && (
             <p>
-              Selected:{' '}
-              {resolutionFile.name}
+              Selected: <strong>{resolutionFile.name}</strong>
             </p>
           )}
         </section>
       )}
 
-      {/* =====================================================
-          ACTIONS
-          ===================================================== */}
+      {canStart && (
+        <section className="civic-panel">
+          <div className="civic-panel-title">
+            <div>
+              <p className="civic-eyebrow">Next action</p>
+              <h3>Work can be started</h3>
+            </div>
+          </div>
+          <p>
+            This task is currently <strong>{statusLabel(details.status)}</strong>.
+            Start work to move it into In Progress.
+          </p>
+        </section>
+      )}
 
       <div className="employee-detail-actions">
-        {['assigned', 'reopened'].includes(details.status) && (
+        {canStart && (
           <button
             type="button"
             onClick={handleStartWork}
-            disabled={
-              actionLoading ||
-              loading ||
-              resolutionUploading
-            }
+            disabled={actionLoading || loading || resolutionUploading}
           >
             {actionLoading ? (
-              <RefreshCw
-                size={16}
-                className="animate-spin"
-              />
+              <RefreshCw size={16} className="animate-spin" />
             ) : (
               <CheckCircle2 size={16} />
             )}
-
-            {actionLoading
-              ? 'Starting...'
-              : 'Start Work'}
+            {actionLoading ? 'Starting...' : 'Start Work'}
           </button>
         )}
 
         <button
           type="button"
           onClick={loadDetails}
-          disabled={
-            loading ||
-            actionLoading ||
-            resolutionUploading
-          }
+          disabled={loading || actionLoading || resolutionUploading}
         >
           <RefreshCw
             size={16}
-            className={
-              loading
-                ? 'animate-spin'
-                : ''
-            }
+            className={loading ? 'animate-spin' : ''}
           />
-
           Refresh details
         </button>
 
@@ -1012,19 +669,14 @@ const EmployeeTaskDetails = ({
             onRefreshTasks?.();
             onBack();
           }}
-          disabled={
-            actionLoading ||
-            resolutionUploading
-          }
+          disabled={actionLoading || resolutionUploading}
         >
           Back to My Tasks
         </button>
       </div>
 
       {actionError && (
-        <p className="employee-form-error">
-          {actionError}
-        </p>
+        <p className="employee-form-error">{actionError}</p>
       )}
     </div>
   );

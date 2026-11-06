@@ -27,9 +27,6 @@ from app.db.models.complaint import (
 from app.db.models.photo import (
     ComplaintPhoto,
 )
-from app.db.models.status_history import (
-    StatusHistory,
-)
 from app.routers.auth import (
     get_current_identity,
 )
@@ -448,42 +445,250 @@ def get_my_complaint_detail(
     complaint, category, category_name = result
 
     # --------------------------------------------------------
-    # PHOTOS
+    # PHOTOS + UPLOADER
     # --------------------------------------------------------
 
-    photos = db.execute(
-        select(
-            ComplaintPhoto
-        )
-
-        .where(
-            ComplaintPhoto.complaint_id
-            == complaint.id
-        )
-
-        .order_by(
-            ComplaintPhoto.uploaded_at.asc()
-        )
-    ).scalars().all()
+    photo_rows = db.execute(
+        text(
+            """
+            SELECT
+                cp.id,
+                cp.photo_url,
+                cp.photo_type,
+                cp.uploaded_by,
+                cp.uploaded_at,
+                e.name AS uploaded_by_name
+            FROM complaint_photos cp
+            LEFT JOIN employees e
+                ON e.id = cp.uploaded_by
+            WHERE cp.complaint_id = :complaint_id
+            ORDER BY cp.uploaded_at ASC
+            """
+        ),
+        {
+            "complaint_id": complaint.id,
+        },
+    ).mappings().all()
 
     # --------------------------------------------------------
-    # STATUS HISTORY
+    # STATUS HISTORY + ACTOR
     # --------------------------------------------------------
 
-    history = db.execute(
-        select(
-            StatusHistory
+    status_rows = db.execute(
+        text(
+            """
+            SELECT
+                sh.id,
+                sh.old_status,
+                sh.new_status,
+                sh.changed_by,
+                e.name AS changed_by_name,
+                sh.remarks,
+                sh.changed_at
+            FROM status_history sh
+            LEFT JOIN employees e
+                ON e.id = sh.changed_by
+            WHERE sh.complaint_id = :complaint_id
+            ORDER BY sh.changed_at ASC
+            """
+        ),
+        {
+            "complaint_id": complaint.id,
+        },
+    ).mappings().all()
+
+    # --------------------------------------------------------
+    # ASSIGNMENT HISTORY
+    # --------------------------------------------------------
+
+    assignment_rows = db.execute(
+        text(
+            """
+            SELECT
+                ca.id,
+                ca.officer_id,
+                officer.employee_id AS officer_employee_id,
+                officer.name AS officer_name,
+                ca.assigned_by,
+                assigner.name AS assigned_by_name,
+                ca.assigned_at,
+                ca.unassigned_at
+            FROM complaint_assignments ca
+            JOIN employees officer
+                ON officer.id = ca.officer_id
+            LEFT JOIN employees assigner
+                ON assigner.id = ca.assigned_by
+            WHERE ca.complaint_id = :complaint_id
+            ORDER BY ca.assigned_at ASC
+            """
+        ),
+        {
+            "complaint_id": complaint.id,
+        },
+    ).mappings().all()
+
+    # --------------------------------------------------------
+    # SLA ESCALATIONS
+    # --------------------------------------------------------
+
+    escalation_rows = db.execute(
+        text(
+            """
+            SELECT
+                ce.id,
+                ce.escalation_level,
+                ce.escalation_percentage,
+                ce.escalated_to,
+                e.name AS escalated_to_name,
+                ce.reason,
+                ce.escalated_at
+            FROM complaint_escalations ce
+            LEFT JOIN employees e
+                ON e.id = ce.escalated_to
+            WHERE ce.complaint_id = :complaint_id
+            ORDER BY ce.escalated_at ASC
+            """
+        ),
+        {
+            "complaint_id": complaint.id,
+        },
+    ).mappings().all()
+
+    # --------------------------------------------------------
+    # CITIZEN RESPONSE
+    # --------------------------------------------------------
+
+    citizen_response = db.execute(
+        text(
+            """
+            SELECT
+                response,
+                rating,
+                review,
+                responded_at
+            FROM complaint_citizen_responses
+            WHERE complaint_id = :complaint_id
+            LIMIT 1
+            """
+        ),
+        {
+            "complaint_id": complaint.id,
+        },
+    ).mappings().first()
+
+    # --------------------------------------------------------
+    # UNIFIED TIMELINE
+    # --------------------------------------------------------
+
+    timeline = [
+        {
+            "id": f"created-{complaint.id}",
+            "event_type": "created",
+            "timestamp": complaint.created_at,
+            "title": "Complaint submitted",
+            "actor_name": "Citizen",
+        }
+    ]
+
+    for item in status_rows:
+        timeline.append(
+            {
+                "id": f"status-{item['id']}",
+                "event_type": "status",
+                "timestamp": item["changed_at"],
+                "title": "Status updated",
+                "old_status": item["old_status"],
+                "new_status": item["new_status"],
+                "remarks": item["remarks"],
+                "actor_name": item["changed_by_name"] or "System",
+            }
         )
 
-        .where(
-            StatusHistory.complaint_id
-            == complaint.id
+    for item in assignment_rows:
+        timeline.append(
+            {
+                "id": f"assignment-{item['id']}",
+                "event_type": "assignment",
+                "timestamp": item["assigned_at"],
+                "title": "Complaint assigned",
+                "description": (
+                    f"Assigned to {item['officer_name']}"
+                ),
+                "actor_name": item["assigned_by_name"] or "System",
+                "officer_name": item["officer_name"],
+                "officer_employee_id": item["officer_employee_id"],
+            }
         )
 
-        .order_by(
-            StatusHistory.changed_at.asc()
+        if item["unassigned_at"] is not None:
+            timeline.append(
+                {
+                    "id": f"assignment-end-{item['id']}",
+                    "event_type": "assignment_ended",
+                    "timestamp": item["unassigned_at"],
+                    "title": "Officer assignment ended",
+                    "description": (
+                        f"Assignment to {item['officer_name']} ended"
+                    ),
+                    "actor_name": "System",
+                    "officer_name": item["officer_name"],
+                }
+            )
+
+    for item in photo_rows:
+        if item["photo_type"] == "resolution":
+            timeline.append(
+                {
+                    "id": f"photo-{item['id']}",
+                    "event_type": "resolution",
+                    "timestamp": item["uploaded_at"],
+                    "title": "Resolution evidence uploaded",
+                    "description": "An officer submitted resolution evidence for verification.",
+                    "actor_name": item["uploaded_by_name"] or "Officer",
+                    "photo_url": item["photo_url"],
+                }
+            )
+
+    for item in escalation_rows:
+        timeline.append(
+            {
+                "id": f"escalation-{item['id']}",
+                "event_type": "escalation",
+                "timestamp": item["escalated_at"],
+                "title": (
+                    f"SLA escalation — Level {item['escalation_level']}"
+                ),
+                "description": item["reason"],
+                "actor_name": "SLA system",
+                "escalation_level": item["escalation_level"],
+                "escalation_percentage": item["escalation_percentage"],
+                "escalated_to_name": item["escalated_to_name"],
+            }
         )
-    ).scalars().all()
+
+    if citizen_response is not None:
+        response_label = (
+            "Citizen confirmed resolution"
+            if citizen_response["response"] == "satisfied"
+            else "Citizen reopened the complaint"
+        )
+
+        timeline.append(
+            {
+                "id": f"response-{complaint.id}",
+                "event_type": "citizen_response",
+                "timestamp": citizen_response["responded_at"],
+                "title": response_label,
+                "actor_name": "Citizen",
+                "response": citizen_response["response"],
+                "rating": citizen_response["rating"],
+                "review": citizen_response["review"],
+            }
+        )
+
+    timeline.sort(
+        key=lambda event: event["timestamp"]
+    )
 
     # --------------------------------------------------------
     # RESPONSE
@@ -546,48 +751,93 @@ def get_my_complaint_detail(
 
             "photos": [
                 {
-                    "id": photo.id,
-
-                    "photo_url": (
-                        photo.photo_url
+                    "id": int(photo["id"]),
+                    "photo_url": photo["photo_url"],
+                    "photo_type": photo["photo_type"],
+                    "uploaded_by": (
+                        int(photo["uploaded_by"])
+                        if photo["uploaded_by"] is not None
+                        else None
                     ),
-
-                    "photo_type": (
-                        photo.photo_type
-                    ),
-
-                    "uploaded_at": (
-                        photo.uploaded_at
-                    ),
+                    "uploaded_by_name": photo["uploaded_by_name"],
+                    "uploaded_at": photo["uploaded_at"],
                 }
-
-                for photo in photos
+                for photo in photo_rows
             ],
         },
 
         "status_history": [
             {
-                "id": item.id,
-
-                "old_status": (
-                    item.old_status
+                "id": int(item["id"]),
+                "old_status": item["old_status"],
+                "new_status": item["new_status"],
+                "remarks": item["remarks"],
+                "changed_by": (
+                    int(item["changed_by"])
+                    if item["changed_by"] is not None
+                    else None
                 ),
-
-                "new_status": (
-                    item.new_status
-                ),
-
-                "remarks": (
-                    item.remarks
-                ),
-
-                "changed_at": (
-                    item.changed_at
-                ),
+                "changed_by_name": item["changed_by_name"],
+                "changed_at": item["changed_at"],
             }
-
-            for item in history
+            for item in status_rows
         ],
+
+        "assignment_history": [
+            {
+                "id": int(item["id"]),
+                "officer_id": int(item["officer_id"]),
+                "officer_employee_id": item["officer_employee_id"],
+                "officer_name": item["officer_name"],
+                "assigned_by": (
+                    int(item["assigned_by"])
+                    if item["assigned_by"] is not None
+                    else None
+                ),
+                "assigned_by_name": item["assigned_by_name"],
+                "assigned_at": item["assigned_at"],
+                "unassigned_at": item["unassigned_at"],
+            }
+            for item in assignment_rows
+        ],
+
+        "escalations": [
+            {
+                "id": int(item["id"]),
+                "escalation_level": int(item["escalation_level"]),
+                "escalation_percentage": (
+                    int(item["escalation_percentage"])
+                    if item["escalation_percentage"] is not None
+                    else None
+                ),
+                "escalated_to": (
+                    int(item["escalated_to"])
+                    if item["escalated_to"] is not None
+                    else None
+                ),
+                "escalated_to_name": item["escalated_to_name"],
+                "reason": item["reason"],
+                "escalated_at": item["escalated_at"],
+            }
+            for item in escalation_rows
+        ],
+
+        "citizen_response": (
+            {
+                "response": citizen_response["response"],
+                "rating": (
+                    int(citizen_response["rating"])
+                    if citizen_response["rating"] is not None
+                    else None
+                ),
+                "review": citizen_response["review"],
+                "responded_at": citizen_response["responded_at"],
+            }
+            if citizen_response is not None
+            else None
+        ),
+
+        "timeline": timeline,
     }
 
 

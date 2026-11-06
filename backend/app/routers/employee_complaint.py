@@ -5,13 +5,19 @@ This router is intentionally separate from the citizen complaint router.
 It handles employee task visibility, supervisor assignment, and task detail.
 """
 
+
 from fastapi import (
     APIRouter,
     Depends,
     Form,
+    File,
+    UploadFile,
     HTTPException,
     status,
 )
+
+from pathlib import Path
+from uuid import uuid4
 
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -249,7 +255,12 @@ def get_employee_complaints(
                 c.updated_at,
                 ca.officer_id,
                 officer.employee_id AS officer_employee_id,
-                officer.name AS officer_name
+                officer.name AS officer_name,
+                sla.target_hours,
+                sla.warning_percentage,
+                sla.supervisor_percentage,
+                sla.overdue_percentage,
+                sla.critical_backlog_percentage
             FROM complaints c
             JOIN complaint_categories cc
                 ON cc.id = c.category_id
@@ -260,6 +271,8 @@ def get_employee_complaints(
                AND ca.unassigned_at IS NULL
             LEFT JOIN employees officer
                 ON officer.id = ca.officer_id
+            LEFT JOIN complaint_sla sla
+                ON sla.category_id = c.category_id
             {where_clause}
             ORDER BY
                 CASE c.priority
@@ -274,8 +287,55 @@ def get_employee_complaints(
         params,
     ).mappings().all()
 
-    complaints = [
-        {
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc)
+    final_statuses = {"verified", "closed", "rejected"}
+
+    complaints = []
+    for row in rows:
+        sla_state = None
+        elapsed_hours = None
+        elapsed_percentage = None
+        target_hours = row["target_hours"]
+
+        if row["created_at"] is not None:
+            created_at = row["created_at"]
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            elapsed_hours = max(
+                0.0,
+                (now - created_at).total_seconds() / 3600.0,
+            )
+
+        if (
+            row["status"] not in final_statuses
+            and target_hours is not None
+            and float(target_hours) > 0
+        ):
+            elapsed_percentage = (
+                elapsed_hours / float(target_hours)
+            ) * 100.0
+
+            warning_percentage = float(row["warning_percentage"] or 50)
+            supervisor_percentage = float(row["supervisor_percentage"] or 80)
+            overdue_percentage = float(row["overdue_percentage"] or 100)
+            critical_percentage = float(
+                row["critical_backlog_percentage"] or 300
+            )
+
+            if elapsed_percentage >= critical_percentage:
+                sla_state = "critical"
+            elif elapsed_percentage >= overdue_percentage:
+                sla_state = "overdue"
+            elif elapsed_percentage >= supervisor_percentage:
+                sla_state = "supervisor_escalation"
+            elif elapsed_percentage >= warning_percentage:
+                sla_state = "warning"
+            else:
+                sla_state = "on_track"
+
+        complaints.append({
             "id": int(row["id"]),
             "complaint_number": row["complaint_number"],
             "category": row["category"],
@@ -301,9 +361,17 @@ def get_employee_complaints(
                 if row["officer_id"] is not None
                 else None
             ),
-        }
-        for row in rows
-    ]
+            "sla": {
+                "target_hours": (
+                    float(target_hours)
+                    if target_hours is not None
+                    else None
+                ),
+                "elapsed_hours": elapsed_hours,
+                "elapsed_percentage": elapsed_percentage,
+                "state": sla_state,
+            },
+        })
 
     return {
         "success": True,
@@ -944,6 +1012,170 @@ def get_my_task_details(
         },
     }
 
+
+
+# ============================================================
+# UPLOAD RESOLUTION
+# POST /employee/complaints/{complaint_id}/resolve
+# ============================================================
+
+@employee_router.post("/{complaint_id}/resolve")
+async def upload_complaint_resolution(
+    complaint_id: int,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_identity),
+    db: Session = Depends(get_db),
+):
+    require_employee(current_user)
+
+    employee_id = int(current_user["id"])
+
+    require_employee_permission(
+        db=db,
+        employee_id=employee_id,
+        permission_code="COMPLAINT_UPDATE_STATUS",
+    )
+
+    # Check active assignment + status
+    complaint = db.execute(
+        text(
+            """
+            SELECT c.status
+            FROM complaints c
+            JOIN complaint_assignments ca
+                ON ca.complaint_id = c.id
+               AND ca.unassigned_at IS NULL
+            WHERE c.id = :complaint_id
+              AND ca.officer_id = :employee_id
+            LIMIT 1
+            """
+        ),
+        {
+            "complaint_id": complaint_id,
+            "employee_id": employee_id,
+        },
+    ).mappings().first()
+
+    if complaint is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Complaint not found or not assigned to you.",
+        )
+
+    if complaint["status"] != "in_progress":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Resolution can be uploaded only when the complaint "
+                f"is in_progress. Current status: '{complaint['status']}'."
+            ),
+        )
+
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No file selected.",
+        )
+
+    # --------------------------------------------------------
+    # SAVE FILE
+    # --------------------------------------------------------
+
+    uploads_dir = (
+        Path(__file__).resolve().parents[2]
+        / "uploads"
+        / "resolutions"
+    )
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+
+    extension = Path(file.filename).suffix.lower()
+
+    if extension not in {".jpg", ".jpeg", ".png", ".webp"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only JPG, JPEG, PNG and WEBP files are allowed.",
+        )
+
+    filename = f"{uuid4().hex}{extension}"
+    file_path = uploads_dir / filename
+
+    try:
+        content = await file.read()
+        file_path.write_bytes(content)
+
+        photo_url = f"/uploads/resolutions/{filename}"
+
+        # ----------------------------------------------------
+        # STORE RESOLUTION PHOTO
+        # ----------------------------------------------------
+
+        db.execute(
+            text(
+                """
+                INSERT INTO complaint_photos (
+                    complaint_id,
+                    photo_url,
+                    photo_type,
+                    uploaded_by
+                )
+                VALUES (
+                    :complaint_id,
+                    :photo_url,
+                    'resolution',
+                    :uploaded_by
+                )
+                """
+            ),
+            {
+                "complaint_id": complaint_id,
+                "photo_url": photo_url,
+                "uploaded_by": employee_id,
+            },
+        )
+
+        # ----------------------------------------------------
+        # MOVE TO PENDING VERIFICATION
+        # ----------------------------------------------------
+
+        db.execute(
+            text(
+                """
+                CALL sp_update_complaint_status(
+                    :complaint_id,
+                    :new_status,
+                    :employee_id,
+                    :remarks
+                )
+                """
+            ),
+            {
+                "complaint_id": complaint_id,
+                "new_status": "pending_verification",
+                "employee_id": employee_id,
+                "remarks": "Field resolution uploaded by employee.",
+            },
+        )
+
+        db.commit()
+
+    except Exception as request_error:
+        db.rollback()
+
+        if file_path.exists():
+            file_path.unlink()
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(request_error),
+        ) from request_error
+
+    return {
+        "success": True,
+        "complaint_id": complaint_id,
+        "status": "pending_verification",
+        "photo_url": photo_url,
+        "message": "Resolution uploaded successfully.",
+    }
 
 # ============================================================
 # VERIFY RESOLUTION

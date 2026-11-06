@@ -397,3 +397,108 @@
     font-size: 19px;
   }
 }
+
+
+/* ============================================================
+   CITIZEN COMPLAINT TIMELINE
+   ============================================================ */
+.citizen-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.citizen-timeline-item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  column-gap: 14px;
+  min-width: 0;
+}
+
+.citizen-timeline-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.citizen-timeline-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 50%;
+}
+
+.citizen-timeline-line {
+  width: 2px;
+  flex: 1;
+  min-height: 42px;
+  margin: 5px 0;
+  background: #e4e7ec;
+}
+
+.citizen-timeline-content {
+  min-width: 0;
+  padding: 0 0 24px;
+}
+
+.citizen-timeline-item:last-child
+  .citizen-timeline-content {
+  padding-bottom: 0;
+}
+
+.citizen-timeline-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.citizen-timeline-head strong {
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.citizen-timeline-head small {
+  flex: none;
+  color: #98a2b3;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.citizen-timeline-description {
+  margin: 6px 0 0;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.citizen-timeline-actor {
+  display: block;
+  margin-top: 6px;
+  color: #8a97a5;
+  font-size: 12px;
+}
+
+.citizen-timeline-photo {
+  display: block;
+  width: min(100%, 320px);
+  max-height: 220px;
+  margin-top: 12px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
+@media (max-width: 640px) {
+  .citizen-timeline-head {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .citizen-timeline-head small {
+    white-space: normal;
+  }
+}

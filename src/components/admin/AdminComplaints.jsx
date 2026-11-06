@@ -30,6 +30,22 @@ const statusClass = (status) =>
     status || 'unknown'
   ).replace(/_/g, '-')}`;
 
+const slaClass = (state) =>
+  `admin-sla-badge admin-sla-${String(
+    state || 'unknown'
+  ).replace(/_/g, '-')}`;
+
+const slaLabel = (state) => {
+  switch (state) {
+    case 'on_track': return 'On track';
+    case 'warning': return 'SLA warning';
+    case 'supervisor_escalation': return 'Escalation';
+    case 'overdue': return 'Overdue';
+    case 'critical': return 'Critical';
+    default: return 'No SLA';
+  }
+};
+
 const AdminComplaints = () => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -37,6 +53,7 @@ const AdminComplaints = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+  const [slaFilter, setSlaFilter] = useState('all');
 
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [officers, setOfficers] = useState([]);
@@ -114,10 +131,15 @@ const AdminComplaints = () => {
         priorityFilter === 'all' ||
         complaint.priority === priorityFilter;
 
+      const matchesSla =
+        slaFilter === 'all' ||
+        complaint.sla?.state === slaFilter;
+
       return (
         matchesSearch &&
         matchesStatus &&
-        matchesPriority
+        matchesPriority &&
+        matchesSla
       );
     });
   }, [
@@ -125,6 +147,7 @@ const AdminComplaints = () => {
     search,
     statusFilter,
     priorityFilter,
+    slaFilter,
   ]);
 
   const statusCounts = useMemo(
@@ -139,6 +162,16 @@ const AdminComplaints = () => {
       closed: complaints.filter(
         (item) => item.status === 'closed'
       ).length,
+    }),
+    [complaints]
+  );
+
+  const slaCounts = useMemo(
+    () => ({
+      warning: complaints.filter((item) => item.sla?.state === 'warning').length,
+      escalation: complaints.filter((item) => item.sla?.state === 'supervisor_escalation').length,
+      overdue: complaints.filter((item) => item.sla?.state === 'overdue').length,
+      critical: complaints.filter((item) => item.sla?.state === 'critical').length,
     }),
     [complaints]
   );
@@ -435,6 +468,21 @@ const AdminComplaints = () => {
             <option value="medium">Medium</option>
             <option value="low">Low</option>
           </select>
+
+          <select
+            className="admin-filter-select"
+            value={slaFilter}
+            onChange={(e) =>
+              setSlaFilter(e.target.value)
+            }
+          >
+            <option value="all">All SLA states</option>
+            <option value="on_track">On track</option>
+            <option value="warning">SLA warning</option>
+            <option value="supervisor_escalation">Escalation</option>
+            <option value="overdue">Overdue</option>
+            <option value="critical">Critical</option>
+          </select>
         </div>
       </div>
 
@@ -460,6 +508,28 @@ const AdminComplaints = () => {
         <div className="admin-summary-card admin-summary-closed">
           <span>Closed</span>
           <strong>{statusCounts.closed}</strong>
+        </div>
+      </div>
+
+      <div className="admin-summary-strip admin-sla-summary-strip">
+        <div className="admin-summary-card admin-summary-sla-warning">
+          <span>SLA warning</span>
+          <strong>{slaCounts.warning}</strong>
+        </div>
+
+        <div className="admin-summary-card admin-summary-sla-escalation">
+          <span>Supervisor escalation</span>
+          <strong>{slaCounts.escalation}</strong>
+        </div>
+
+        <div className="admin-summary-card admin-summary-sla-overdue">
+          <span>Overdue</span>
+          <strong>{slaCounts.overdue}</strong>
+        </div>
+
+        <div className="admin-summary-card admin-summary-sla-critical">
+          <span>Critical backlog</span>
+          <strong>{slaCounts.critical}</strong>
         </div>
       </div>
 
@@ -555,6 +625,12 @@ const AdminComplaints = () => {
                         complaint.status
                       )}
                     </span>
+
+                    {complaint.sla?.state && (
+                      <span className={slaClass(complaint.sla.state)}>
+                        {slaLabel(complaint.sla.state)}
+                      </span>
+                    )}
                   </div>
 
                   <h4 className="admin-complaint-title">
@@ -576,6 +652,12 @@ const AdminComplaints = () => {
                       ? `Officer: ${complaint.assignment.name}`
                       : 'Officer: Not assigned'}
                   </p>
+
+                  {complaint.sla?.state && complaint.sla?.elapsed_percentage != null && (
+                    <p className="admin-complaint-sla-detail">
+                      SLA: {slaLabel(complaint.sla.state)} · {complaint.sla.elapsed_percentage.toFixed(0)}% of {complaint.sla.target_hours ?? '—'}h target
+                    </p>
+                  )}
                 </div>
 
                 <div className="admin-complaint-actions">

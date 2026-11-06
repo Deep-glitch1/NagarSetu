@@ -8,7 +8,11 @@ EfficientNetV2-S model with 4 classes:
 - ROAD_DAMAGED
 """
 
+from io import BytesIO
 from typing import TypedDict
+
+import torch
+from PIL import Image, UnidentifiedImageError
 
 from app.ml.predict import (
     model,
@@ -17,58 +21,33 @@ from app.ml.predict import (
     CLASS_NAMES,
 )
 
-import torch
-from PIL import Image
-import io
-
-
-# ============================================================
-# RESULT TYPE
-# ============================================================
 
 class ClassificationResult(TypedDict):
     category_code: str
     confidence: float
 
 
-# ============================================================
-# CLASSIFICATION
-# ============================================================
-
-def classify_photo(photo_bytes: bytes) -> ClassificationResult:
-    """
-    Classify a citizen-submitted complaint photo.
-
-    Args:
-        photo_bytes: Raw image bytes.
-
-    Returns:
-        {
-            "category_code": "ROAD_DAMAGED",
-            "confidence": 0.95
-        }
-    """
+def classify_photo( photo_bytes: bytes, ) -> ClassificationResult:
 
     if not photo_bytes:
-        raise ValueError("photo_bytes cannot be empty")
+        raise ValueError(
+            "photo_bytes cannot be empty"
+        )
 
-    # Convert bytes -> PIL Image
-    image = Image.open(
-        io.BytesIO(photo_bytes)
-    ).convert("RGB")
+    try:
+        image = Image.open(
+            BytesIO(photo_bytes)
+        ).convert("RGB")
+    except (UnidentifiedImageError, OSError) as exc:
+        raise ValueError(
+            "Uploaded file is not a valid image."
+        ) from exc
 
-    # Same preprocessing used during training
     image_tensor = transform(image)
-
-    # Add batch dimension
     image_tensor = image_tensor.unsqueeze(0)
-
-    # Move to CPU/GPU
     image_tensor = image_tensor.to(device)
 
-    # Prediction
     with torch.no_grad():
-
         output = model(image_tensor)
 
         probabilities = torch.softmax(
@@ -82,9 +61,20 @@ def classify_photo(photo_bytes: bytes) -> ClassificationResult:
         )
 
     predicted_index = predicted_index.item()
-    confidence = confidence.item()
+    confidence = float(
+        confidence.item()
+    )
+
+    if not 0 <= predicted_index < len(
+        CLASS_NAMES
+    ):
+        raise RuntimeError(
+            "Model returned an invalid class index."
+        )
 
     return {
-        "category_code": CLASS_NAMES[predicted_index],
-        "confidence": float(confidence),
+        "category_code":
+            CLASS_NAMES[predicted_index],
+        "confidence":
+            confidence,
     }

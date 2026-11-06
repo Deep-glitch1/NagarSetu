@@ -26,7 +26,7 @@ const ComplaintDetails = ({
 }) => {
   const [complaint, setComplaint] =
     useState(null);
-  const [history, setHistory] =
+  const [timeline, setTimeline] =
     useState([]);
   const [loading, setLoading] =
     useState(true);
@@ -62,8 +62,10 @@ const ComplaintDetails = ({
       setComplaint(
         data?.complaint || null
       );
-      setHistory(
-        data?.status_history || []
+      setTimeline(
+        Array.isArray(data?.timeline)
+          ? data.timeline
+          : []
       );
     } catch (err) {
       setError(
@@ -767,7 +769,7 @@ const ComplaintDetails = ({
       )}
 
       {/* =====================================================
-          STATUS HISTORY
+          COMPLAINT TIMELINE
       ===================================================== */}
       <section
         className="civic-panel"
@@ -784,170 +786,144 @@ const ComplaintDetails = ({
             marginBottom: '24px',
           }}
         >
-          Status history
+          Complaint timeline
         </h3>
-        {history.length === 0 ? (
+
+        {timeline.length === 0 ? (
           <p
             style={{
               color: '#667085',
             }}
           >
-            No status updates recorded yet.
+            No timeline events recorded yet.
           </p>
         ) : (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {history.map(
-              (item, index) => {
-                const isLast =
-                  index ===
-                  history.length - 1;
-                const status =
-                  STATUS_META[
-                    item.new_status
-                  ] ||
-                  STATUS_META.received;
-                const HistoryIcon =
-                  status.icon;
-                return (
-                  <div
-                    key={item.id}
-                    style={{
-                      display: 'flex',
-                      gap: '15px',
-                    }}
-                  >
-                    {/* TIMELINE */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection:
-                          'column',
-                        alignItems:
-                          'center',
-                        width: '28px',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: '30px',
-                          height: '30px',
-                          borderRadius:
-                            '50%',
-                          display: 'flex',
-                          alignItems:
-                            'center',
-                          justifyContent:
-                            'center',
-                          background:
-                            status.bg,
-                          color:
-                            status.color,
-                        }}
-                      >
-                        <HistoryIcon
-                          size={15}
-                        />
-                      </span>
-                      {!isLast && (
-                        <span
-                          style={{
-                            width: '2px',
-                            flex: 1,
-                            minHeight:
-                              '44px',
-                            background:
-                              '#e4e7ec',
-                            margin:
-                              '5px 0',
-                          }}
-                        />
-                      )}
-                    </div>
-                    {/* EVENT */}
-                    <div
-                      style={{
-                        paddingBottom:
-                          isLast
-                            ? '0'
-                            : '24px',
-                        flex: 1,
-                      }}
-                    >
-                      <div
-                        style={{
-                          display:
-                            'flex',
-                          justifyContent:
-                            'space-between',
-                          gap: '12px',
-                          alignItems:
-                            'flex-start',
-                        }}
-                      >
-                        <strong>
-                          {
-                            STATUS_META[status]?.label  ||
-                            item.new_status
-                          }
-                        </strong>
-                        <small
-                          style={{
-                            color:
-                              '#98a2b3',
-                            whiteSpace:
-                              'nowrap',
-                          }}
-                        >
-                          {formatDateTime(
-                            item.changed_at
-                          )}
-                        </small>
-                      </div>
-                      {item.old_status && (
-                        <p
-                          style={{
-                            margin:
-                              '5px 0 0',
-                            color:
-                              '#667085',
-                            fontSize:
-                              '13px',
-                          }}
-                        >
-                          From{' '}
-                          {
-                            STATUS_META[
-                              item.old_status
-                            ]?.label ||
-                            item.old_status
-                          }
-                        </p>
-                      )}
-                      {item.remarks && (
-                        <p
-                          style={{
-                            margin:
-                              '7px 0 0',
-                            color:
-                              '#667085',
-                            lineHeight:
-                              1.5,
-                          }}
-                        >
-                          {item.remarks}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
+          <div className="citizen-timeline">
+            {timeline.map((event, index) => {
+              const isLast =
+                index === timeline.length - 1;
+
+              const statusMeta =
+                event.event_type === 'status'
+                  ? STATUS_META[event.new_status] || STATUS_META.received
+                  : null;
+
+              const EventIcon =
+                statusMeta?.icon || Clock3;
+
+              let title = event.title;
+              let description = event.description || '';
+
+              if (event.event_type === 'status') {
+                title =
+                  statusMeta?.label ||
+                  event.new_status ||
+                  'Status updated';
+
+                if (event.old_status) {
+                  description = `From ${
+                    STATUS_META[event.old_status]?.label ||
+                    event.old_status
+                  }`;
+                }
+              } else if (
+                event.event_type === 'assignment' &&
+                event.actor_name
+              ) {
+                description = `${
+                  event.description || ''
+                } · Assigned by ${event.actor_name}`;
+              } else if (
+                event.event_type === 'escalation' &&
+                event.escalated_to_name
+              ) {
+                description = `${
+                  description ||
+                  'SLA escalation triggered.'
+                } · Escalated to ${event.escalated_to_name}`;
+              } else if (
+                event.event_type === 'citizen_response'
+              ) {
+                const review = event.review?.trim();
+                const rating = event.rating
+                  ? `Rating: ${event.rating}/5`
+                  : '';
+                description = [
+                  rating,
+                  review,
+                ]
+                  .filter(Boolean)
+                  .join(' · ');
               }
-            )}
+
+              return (
+                <div
+                  key={event.id}
+                  className="citizen-timeline-item"
+                >
+                  <div
+                    className="citizen-timeline-rail"
+                  >
+                    <span
+                      className="citizen-timeline-icon"
+                      style={{
+                        background:
+                          statusMeta?.bg || '#eef2f5',
+                        color:
+                          statusMeta?.color || '#667085',
+                      }}
+                    >
+                      <EventIcon size={15} />
+                    </span>
+                    {!isLast && (
+                      <span className="citizen-timeline-line" />
+                    )}
+                  </div>
+
+                  <div
+                    className="citizen-timeline-content"
+                  >
+                    <div
+                      className="citizen-timeline-head"
+                    >
+                      <strong>
+                        {title}
+                      </strong>
+                      <small>
+                        {formatDateTime(
+                          event.timestamp
+                        )}
+                      </small>
+                    </div>
+
+                    {description && (
+                      <p className="citizen-timeline-description">
+                        {description}
+                      </p>
+                    )}
+
+                    {event.actor_name &&
+                      event.event_type !== 'created' &&
+                      event.event_type !== 'status' && (
+                        <small className="citizen-timeline-actor">
+                          {event.actor_name}
+                        </small>
+                      )}
+
+                    {event.event_type === 'resolution' &&
+                      event.photo_url && (
+                        <img
+                          className="citizen-timeline-photo"
+                          src={getPhotoUrl(
+                            event.photo_url
+                          )}
+                          alt="Resolution evidence"
+                        />
+                      )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

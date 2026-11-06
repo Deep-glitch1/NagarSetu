@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  AlertTriangle,
   ClipboardList,
   RefreshCw,
   Search,
   UserCheck,
   X,
-  AlertTriangle,
 } from 'lucide-react';
 
 import {
@@ -14,13 +14,71 @@ import {
   assignComplaint,
 } from '../../api/employee';
 
-import { statusLabel } from '../../utils/format'; 
+import { statusLabel } from '../../utils/format';
+
+const STATUS_OPTIONS = [
+  'received',
+  'assigned',
+  'in_progress',
+  'pending_verification',
+  'pending_citizen_response',
+  'verified',
+  'closed',
+  'reopened',
+  'rejected',
+];
+
+const PRIORITY_OPTIONS = ['critical', 'high', 'medium', 'low'];
+const SLA_OPTIONS = [
+  'on_track',
+  'warning',
+  'supervisor_escalation',
+  'overdue',
+  'critical',
+];
+
+const slaLabel = (state) => {
+  if (!state) return '—';
+
+  const labels = {
+    on_track: 'On track',
+    warning: 'Warning',
+    supervisor_escalation: 'Escalated',
+    overdue: 'Overdue',
+    critical: 'Critical',
+  };
+
+  return labels[state] || statusLabel(state);
+};
+
+const slaClass = (state) =>
+  `employee-sla-${String(state || 'unknown').toLowerCase()}`;
+
+const priorityClass = (priority) =>
+  `priority-${String(priority || 'low').toLowerCase()}`;
+
+const formatDate = (value) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
+};
+
+const formatSlaPercentage = (value) => {
+  if (value === null || value === undefined) return '—';
+  const number = Number(value);
+  if (!Number.isFinite(number)) return '—';
+  return `${number.toFixed(0)}%`;
+};
 
 const EmployeeAssignments = () => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [slaFilter, setSlaFilter] = useState('all');
 
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [officers, setOfficers] = useState([]);
@@ -54,22 +112,34 @@ const EmployeeAssignments = () => {
     const query = search.trim().toLowerCase();
 
     return complaints.filter((item) => {
-      if (!query) return true;
+      const matchesSearch =
+        !query ||
+        [
+          item.complaint_number,
+          item.title,
+          item.description,
+          item.category_name,
+          item.department_name,
+          item.assignment?.name,
+          item.assignment?.employee_id,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+          .includes(query);
 
-      return [
-        item.complaint_number,
-        item.title,
-        item.description,
-        item.category_name,
-        item.department_name,
-        item.assignment?.name,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
-        .includes(query);
+      const matchesStatus =
+        statusFilter === 'all' || item.status === statusFilter;
+
+      const matchesPriority =
+        priorityFilter === 'all' || item.priority === priorityFilter;
+
+      const matchesSla =
+        slaFilter === 'all' || item.sla?.state === slaFilter;
+
+      return matchesSearch && matchesStatus && matchesPriority && matchesSla;
     });
-  }, [complaints, search]);
+  }, [complaints, search, statusFilter, priorityFilter, slaFilter]);
 
   const openAssignment = async (complaint) => {
     setSelectedComplaint(complaint);
@@ -92,6 +162,7 @@ const EmployeeAssignments = () => {
 
   const closeModal = () => {
     if (assigning) return;
+
     setSelectedComplaint(null);
     setSelectedOfficer('');
     setOfficers([]);
@@ -110,12 +181,47 @@ const EmployeeAssignments = () => {
     setAssignSuccess('');
 
     try {
-      await assignComplaint(
+      const data = await assignComplaint(
         selectedComplaint.id,
-        selectedOfficer
+        selectedOfficer,
       );
 
-      setAssignSuccess('Complaint assigned successfully.');
+      const updatedComplaint = data?.complaint;
+      const updatedAssignment = data?.assignment;
+
+      const nextAssignment = updatedAssignment
+        ? {
+            officer_id: updatedAssignment.officer_id,
+            employee_id: updatedAssignment.employee_id,
+            name: updatedAssignment.officer_name,
+            assigned_at: updatedAssignment.assigned_at,
+          }
+        : selectedComplaint.assignment;
+
+      const updateItem = (item) =>
+        item.id === selectedComplaint.id
+          ? {
+              ...item,
+              status: updatedComplaint?.status || 'assigned',
+              assignment: nextAssignment,
+            }
+          : item;
+
+      setComplaints((current) => current.map(updateItem));
+      setSelectedComplaint((current) =>
+        current
+          ? {
+              ...current,
+              status: updatedComplaint?.status || 'assigned',
+              assignment: nextAssignment,
+            }
+          : current,
+      );
+
+      setAssignSuccess(
+        data?.message || 'Complaint assigned successfully.',
+      );
+
       await loadQueue();
     } catch (err) {
       console.error('Complaint assignment failed:', err);
@@ -125,13 +231,28 @@ const EmployeeAssignments = () => {
     }
   };
 
+  const clearFilters = () => {
+    setSearch('');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setSlaFilter('all');
+  };
+
+  const activeFilterCount = [
+    statusFilter !== 'all',
+    priorityFilter !== 'all',
+    slaFilter !== 'all',
+  ].filter(Boolean).length;
+
   return (
-    <div>
+    <div className="civic-dashboard">
       <section className="civic-page-header">
         <div>
           <p className="civic-eyebrow">Supervisor workspace</p>
           <h2>Assignments</h2>
-          <p>Assign complaints to active departmental officers.</p>
+          <p>
+            Assign and reassign complaints to active officers in your permitted scope.
+          </p>
         </div>
 
         <button type="button" onClick={loadQueue} disabled={loading}>
@@ -143,15 +264,123 @@ const EmployeeAssignments = () => {
         </button>
       </section>
 
+      <section className="civic-stat-grid">
+        <article className="civic-stat">
+          <span><ClipboardList size={20} /></span>
+          <div>
+            <small>Visible complaints</small>
+            <strong>{complaints.length}</strong>
+          </div>
+        </article>
+
+        <article className="civic-stat">
+          <span><UserCheck size={20} /></span>
+          <div>
+            <small>Unassigned</small>
+            <strong>{complaints.filter((item) => !item.assignment).length}</strong>
+          </div>
+        </article>
+
+        <article className="civic-stat">
+          <span><AlertTriangle size={20} /></span>
+          <div>
+            <small>SLA warnings</small>
+            <strong>
+              {complaints.filter((item) =>
+                ['warning', 'supervisor_escalation', 'overdue', 'critical'].includes(
+                  item.sla?.state,
+                ),
+              ).length}
+            </strong>
+          </div>
+        </article>
+
+        <article className="civic-stat">
+          <span><RefreshCw size={20} /></span>
+          <div>
+            <small>Filtered results</small>
+            <strong>{filtered.length}</strong>
+          </div>
+        </article>
+      </section>
+
       <section className="civic-panel employee-task-controls">
-        <label>
-          <Search size={17} />
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search complaints"
-          />
-        </label>
+        <div style={{ display: 'grid', gap: '12px', width: '100%' }}>
+          <label>
+            <Search size={17} />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search complaint, category, officer..."
+            />
+          </label>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr)) auto',
+              gap: '10px',
+            }}
+          >
+            <label>
+              <span>Status</span>
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <option value="all">All statuses</option>
+                {STATUS_OPTIONS.map((value) => (
+                  <option key={value} value={value}>
+                    {statusLabel(value)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Priority</span>
+              <select
+                value={priorityFilter}
+                onChange={(event) => setPriorityFilter(event.target.value)}
+              >
+                <option value="all">All priorities</option>
+                {PRIORITY_OPTIONS.map((value) => (
+                  <option key={value} value={value}>
+                    {statusLabel(value)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>SLA</span>
+              <select
+                value={slaFilter}
+                onChange={(event) => setSlaFilter(event.target.value)}
+              >
+                <option value="all">All SLA states</option>
+                {SLA_OPTIONS.map((value) => (
+                  <option key={value} value={value}>
+                    {slaLabel(value)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <button
+              type="button"
+              onClick={clearFilters}
+              disabled={
+                !search &&
+                statusFilter === 'all' &&
+                priorityFilter === 'all' &&
+                slaFilter === 'all'
+              }
+            >
+              Clear{activeFilterCount ? ` (${activeFilterCount})` : ''}
+            </button>
+          </div>
+        </div>
       </section>
 
       {loading ? (
@@ -172,7 +401,10 @@ const EmployeeAssignments = () => {
         <div className="civic-empty">
           <ClipboardList size={30} />
           <h3>No complaints</h3>
-          <p>No complaints match your search.</p>
+          <p>No complaints match the current search and filters.</p>
+          <button type="button" onClick={clearFilters}>
+            Clear filters
+          </button>
         </div>
       ) : (
         <section className="civic-panel">
@@ -180,7 +412,9 @@ const EmployeeAssignments = () => {
             <div className="employee-assignment-row employee-assignment-head">
               <span>Complaint</span>
               <span>Department</span>
+              <span>Priority</span>
               <span>Status</span>
+              <span>SLA</span>
               <span>Officer</span>
               <span>Action</span>
             </div>
@@ -192,17 +426,38 @@ const EmployeeAssignments = () => {
               >
                 <div>
                   <strong>{complaint.complaint_number}</strong>
-                  <span>{complaint.title}</span>
+                  <span>{complaint.title || 'Civic complaint'}</span>
+                  <small>{complaint.category_name || complaint.category || '—'}</small>
                 </div>
+
                 <span>{complaint.department_name || '—'}</span>
+
+                <span>
+                  <span className={priorityClass(complaint.priority)}>
+                    {String(complaint.priority || 'low').toUpperCase()}
+                  </span>
+                </span>
+
                 <span>{statusLabel(complaint.status)}</span>
-                <span>{complaint.assignment?.name || 'Unassigned'}</span>
+
+                <span className={slaClass(complaint.sla?.state)}>
+                  <strong>{slaLabel(complaint.sla?.state)}</strong>
+                  <small>{formatSlaPercentage(complaint.sla?.elapsed_percentage)}</small>
+                </span>
+
+                <span>
+                  {complaint.assignment?.name || 'Unassigned'}
+                  {complaint.assignment?.employee_id && (
+                    <small>{complaint.assignment.employee_id}</small>
+                  )}
+                </span>
+
                 <button
                   type="button"
                   onClick={() => openAssignment(complaint)}
                 >
                   <UserCheck size={16} />
-                  Assign
+                  {complaint.assignment ? 'Reassign' : 'Assign'}
                 </button>
               </div>
             ))}
@@ -216,11 +471,13 @@ const EmployeeAssignments = () => {
             className="employee-modal"
             role="dialog"
             aria-modal="true"
-            aria-label="Assign complaint"
+            aria-label={`${selectedComplaint.assignment ? 'Reassign' : 'Assign'} complaint`}
           >
             <div className="employee-modal-header">
               <div>
-                <p className="civic-eyebrow">Assign complaint</p>
+                <p className="civic-eyebrow">
+                  {selectedComplaint.assignment ? 'Reassign complaint' : 'Assign complaint'}
+                </p>
                 <h3>{selectedComplaint.complaint_number}</h3>
               </div>
 
@@ -234,42 +491,90 @@ const EmployeeAssignments = () => {
               </button>
             </div>
 
-            <p>
-              {selectedComplaint.title || 'Complaint'}
-            </p>
+            <div style={{ display: 'grid', gap: '12px' }}>
+              <div>
+                <strong>{selectedComplaint.title || 'Civic complaint'}</strong>
+                <p>{selectedComplaint.description || 'No description provided.'}</p>
+              </div>
 
-            {officersLoading ? (
-              <div className="civic-empty">
-                <RefreshCw size={24} className="animate-spin" />
-                <p>Loading officers...</p>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gap: '10px',
+                }}
+              >
+                <div>
+                  <small>Category</small>
+                  <p>{selectedComplaint.category_name || selectedComplaint.category || '—'}</p>
+                </div>
+                <div>
+                  <small>Department</small>
+                  <p>{selectedComplaint.department_name || '—'}</p>
+                </div>
+                <div>
+                  <small>Priority</small>
+                  <p>{statusLabel(selectedComplaint.priority)}</p>
+                </div>
+                <div>
+                  <small>Status</small>
+                  <p>{statusLabel(selectedComplaint.status)}</p>
+                </div>
+                <div>
+                  <small>SLA</small>
+                  <p>
+                    {slaLabel(selectedComplaint.sla?.state)} ·{' '}
+                    {formatSlaPercentage(selectedComplaint.sla?.elapsed_percentage)}
+                  </p>
+                </div>
+                <div>
+                  <small>Created</small>
+                  <p>{formatDate(selectedComplaint.created_at)}</p>
+                </div>
+                <div>
+                  <small>Current officer</small>
+                  <p>{selectedComplaint.assignment?.name || 'Unassigned'}</p>
+                </div>
+                <div>
+                  <small>Location</small>
+                  <p>
+                    {selectedComplaint.latitude != null && selectedComplaint.longitude != null
+                      ? `${selectedComplaint.latitude}, ${selectedComplaint.longitude}`
+                      : 'Not available'}
+                  </p>
+                </div>
               </div>
-            ) : officers.length === 0 ? (
-              <div className="civic-empty">
-                <AlertTriangle size={24} />
-                <p>No active officers are available for this department.</p>
-              </div>
-            ) : (
-              <label className="employee-modal-field">
-                <span>Select officer</span>
-                <select
-                  value={selectedOfficer}
-                  onChange={(event) =>
-                    setSelectedOfficer(event.target.value)
-                  }
-                  disabled={assigning}
-                >
-                  <option value="">Select an officer</option>
-                  {officers.map((officer) => (
-                    <option
-                      key={officer.id}
-                      value={officer.id}
-                    >
-                      {officer.name} ({officer.employee_id})
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
+
+              {officersLoading ? (
+                <div className="civic-empty">
+                  <RefreshCw size={24} className="animate-spin" />
+                  <p>Loading officers...</p>
+                </div>
+              ) : officers.length === 0 ? (
+                <div className="civic-empty">
+                  <AlertTriangle size={24} />
+                  <p>No active officers are available for this department.</p>
+                </div>
+              ) : (
+                <label className="employee-modal-field">
+                  <span>
+                    {selectedComplaint.assignment ? 'Select replacement officer' : 'Select officer'}
+                  </span>
+                  <select
+                    value={selectedOfficer}
+                    onChange={(event) => setSelectedOfficer(event.target.value)}
+                    disabled={assigning}
+                  >
+                    <option value="">Select an officer</option>
+                    {officers.map((officer) => (
+                      <option key={officer.id} value={officer.id}>
+                        {officer.name} ({officer.employee_id}) — {officer.active_assignments} active
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </div>
 
             {assignError && (
               <p className="employee-form-error">{assignError}</p>
@@ -291,9 +596,18 @@ const EmployeeAssignments = () => {
               <button
                 type="button"
                 onClick={handleAssign}
-                disabled={assigning || !selectedOfficer}
+                disabled={
+                  assigning ||
+                  officersLoading ||
+                  !selectedOfficer ||
+                  officers.length === 0
+                }
               >
-                {assigning ? 'Assigning...' : 'Assign complaint'}
+                {assigning
+                  ? 'Saving...'
+                  : selectedComplaint.assignment
+                    ? 'Reassign complaint'
+                    : 'Assign complaint'}
               </button>
             </div>
           </div>

@@ -49,8 +49,14 @@ async def classify_image(
             "confidence": result["confidence"],
         }
 
-    except Exception as e:
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    except Exception:
         raise HTTPException(
             status_code=500,
-            detail=f"Image classification failed: {str(e)}"
+            detail="Image classification failed.",
         )
