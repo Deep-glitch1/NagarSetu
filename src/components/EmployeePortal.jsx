@@ -7,6 +7,7 @@ import {
   Clock3,
   CircleCheck,
   AlertTriangle,
+  ShieldAlert,
 } from 'lucide-react';
 
 import CivicShell from './CivicShell';
@@ -167,7 +168,13 @@ const EmployeePortal = ({ userData, onLogout }) => {
           return <EmployeeSettings userData={userData} />;
         }
 
-        return null;
+        return (
+        <div className="civic-empty">
+          <ShieldAlert size={30} />
+          <h2>Not authorized</h2>
+          <p>Your role does not have access to this section.</p>
+        </div>
+      );
       }}
     </CivicShell>
   );

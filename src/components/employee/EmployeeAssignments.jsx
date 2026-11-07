@@ -14,7 +14,7 @@ import {
   assignComplaint,
 } from '../../api/employee';
 
-import { statusLabel } from '../../utils/format';
+import { priorityClass, statusLabel } from '../../utils/format';
 
 const STATUS_OPTIONS = [
   'received',
@@ -53,9 +53,6 @@ const slaLabel = (state) => {
 
 const slaClass = (state) =>
   `employee-sla-${String(state || 'unknown').toLowerCase()}`;
-
-const priorityClass = (priority) =>
-  `priority-${String(priority || 'low').toLowerCase()}`;
 
 const formatDate = (value) => {
   if (!value) return '—';
@@ -305,7 +302,7 @@ const EmployeeAssignments = () => {
       </section>
 
       <section className="civic-panel employee-task-controls">
-        <div style={{ display: 'grid', gap: '12px', width: '100%' }}>
+        <div className="grid w-full gap-3">
           <label>
             <Search size={17} />
             <input
@@ -315,13 +312,7 @@ const EmployeeAssignments = () => {
             />
           </label>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, minmax(0, 1fr)) auto',
-              gap: '10px',
-            }}
-          >
+          <div className="grid grid-cols-[repeat(3,minmax(0,1fr))_auto] gap-2.5 max-[720px]:grid-cols-1">
             <label>
               <span>Status</span>
               <select
@@ -491,19 +482,13 @@ const EmployeeAssignments = () => {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gap: '12px' }}>
+            <div className="grid gap-3">
               <div>
                 <strong>{selectedComplaint.title || 'Civic complaint'}</strong>
                 <p>{selectedComplaint.description || 'No description provided.'}</p>
               </div>
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                  gap: '10px',
-                }}
-              >
+              <div className="grid grid-cols-2 gap-2.5 max-[720px]:grid-cols-1">
                 <div>
                   <small>Category</small>
                   <p>{selectedComplaint.category_name || selectedComplaint.category || '—'}</p>

@@ -768,15 +768,15 @@ def get_admin_profile(
                 d.name AS department_name,
                 au.id AS area_id,
                 au.name AS area_name,
-                COALESCE(
-                    (
-                        SELECT string_agg(r.name, ', ' ORDER BY r.name)
-                        FROM employee_roles er
-                        JOIN roles r ON r.id = er.role_id
-                        WHERE er.employee_id = e.id
-                    ),
-                    'Unassigned'
-                ) AS roles
+                (
+                    SELECT r.name
+                    FROM employee_roles er
+                    JOIN roles r
+                        ON r.id = er.role_id
+                    WHERE er.employee_id = e.id
+                    ORDER BY r.id
+                    LIMIT 1
+                ) AS employee_role
             FROM employees e
             LEFT JOIN departments d ON d.id = e.department_id
             LEFT JOIN administrative_units au ON au.id = e.administrative_unit_id

@@ -1,4 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+
+import {
+  AnimatePresence,
+  motion,
+} from 'framer-motion';
 
 import {
   Bell,
@@ -9,6 +14,8 @@ import {
   User,
   X,
 } from 'lucide-react';
+
+import { motionTiming } from '../ui/motion';
 
 const CivicShell = ({
   userData,
@@ -22,8 +29,46 @@ const CivicShell = ({
   const [menuOpen, setMenuOpen] = useState(false);
 
   const activeItem =
-    menuItems.find((item) => item.id === activeTab) ||
-    menuItems[0];
+    menuItems.find(
+      (item) => item.id === activeTab
+    ) || menuItems[0];
+
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+      }
+    };
+
+    if (menuOpen) {
+      document.addEventListener(
+        'keydown',
+        handleEscape
+      );
+    }
+
+    return () => {
+      document.removeEventListener(
+        'keydown',
+        handleEscape
+      );
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (
+      menuOpen &&
+      window.innerWidth <= 900
+    ) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
 
   const handleTabChange = (tabId) => {
     onTabChange(tabId);
@@ -33,13 +78,20 @@ const CivicShell = ({
   return (
     <div className="civic-shell">
       {/* MOBILE BACKDROP */}
-      {menuOpen && (
-        <button
-          className="civic-backdrop"
-          aria-label="Close menu"
-          onClick={() => setMenuOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.button
+            type="button"
+            className="civic-backdrop"
+            aria-label="Close menu"
+            onClick={() => setMenuOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={motionTiming.fast}
+          />
+        )}
+      </AnimatePresence>
 
       {/* SIDEBAR */}
       <aside
@@ -58,6 +110,7 @@ const CivicShell = ({
           </span>
 
           <button
+            type="button"
             className="civic-close"
             onClick={() => setMenuOpen(false)}
             aria-label="Close menu"
@@ -85,52 +138,70 @@ const CivicShell = ({
         </div>
 
         {/* NAVIGATION */}
-        <nav className="civic-nav">
+        <nav
+          className="civic-nav"
+          aria-label="Primary navigation"
+        >
           {menuItems.map((item) => {
             const Icon = item.icon;
+            const isActive =
+              activeTab === item.id;
 
             return (
-              <button
+              <motion.button
+                type="button"
                 key={item.id}
                 className={
-                  activeTab === item.id
+                  isActive
                     ? 'is-active'
                     : ''
                 }
                 onClick={() =>
                   handleTabChange(item.id)
                 }
+                whileTap={{ scale: 0.98 }}
               >
+                {isActive && (
+                  <motion.span
+                    layoutId="civic-active-nav"
+                    className="civic-nav-indicator"
+                    transition={motionTiming.fast}
+                  />
+                )}
+
                 <Icon size={18} />
 
                 <span>{item.label}</span>
-              </button>
+              </motion.button>
             );
           })}
         </nav>
 
         {/* LOGOUT */}
-        <button
+        <motion.button
+          type="button"
           className="civic-logout"
           onClick={onLogout}
+          whileTap={{ scale: 0.98 }}
         >
           <LogOut size={18} />
-
-          Sign out
-        </button>
+          <span>Sign out</span>
+        </motion.button>
       </aside>
 
       {/* WORKSPACE */}
       <section className="civic-workspace">
         {/* TOPBAR */}
         <header className="civic-topbar">
-          <button
+          <motion.button
+            type="button"
             className="civic-menu"
             onClick={() => setMenuOpen(true)}
             aria-label="Open menu"
+            whileTap={{ scale: 0.96 }}
           >
             <Menu size={21} />
-          </button>
+          </motion.button>
 
           <div>
             <p className="civic-eyebrow">
@@ -148,15 +219,19 @@ const CivicShell = ({
 
               <input
                 placeholder={searchPlaceholder}
+                aria-label={searchPlaceholder}
               />
             </label>
 
-            <button
-              className="civic-bell" aria-label="Notifications">
+            <motion.button
+              type="button"
+              className="civic-bell"
+              aria-label="Notifications"
+              whileTap={{ scale: 0.96 }}
+            >
               <Bell size={19} />
-
               <i />
-            </button>
+            </motion.button>
           </div>
         </header>
 

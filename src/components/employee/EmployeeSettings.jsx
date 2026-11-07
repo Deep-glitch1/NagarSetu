@@ -88,7 +88,7 @@ const EmployeeSettings = ({ userData }) => {
   };
 
   const currentProfile = profile || userData || {};
-  const role = currentProfile.roles || currentProfile.employee_role || userData?.employee_role;
+  const role = currentProfile.employee_role || userData?.employee_role;
 
   return (
     <div>

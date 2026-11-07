@@ -134,9 +134,9 @@ async def create_complaint(
                 "Unable to classify the uploaded image."
             ),
         )
-    predicted_class = (
+    predicted_class = str(
         classification["category_code"]
-    )
+    ).strip().upper()
     confidence = float(
         classification["confidence"]
     )

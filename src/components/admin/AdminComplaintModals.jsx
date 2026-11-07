@@ -103,19 +103,14 @@ const AdminComplaintModals = ({
             </div>
 
             <p
-              style={{
-                color: 'var(--muted)',
-              }}
+              className="admin-modal-muted"
             >
               {selectedComplaint.title}
             </p>
 
             {officersLoading ? (
               <div
-                style={{
-                  textAlign: 'center',
-                  padding: '30px',
-                }}
+                className="admin-modal-loading"
               >
                 <Loader2
                   size={26}
@@ -124,9 +119,7 @@ const AdminComplaintModals = ({
               </div>
             ) : officersError ? (
               <p
-                style={{
-                  color: '#a94435',
-                }}
+                className="admin-modal-error-text"
               >
                 {officersError}
               </p>
@@ -134,14 +127,7 @@ const AdminComplaintModals = ({
               <>
                 {officers.length === 0 ? (
                   <div
-                    style={{
-                      marginTop: '15px',
-                      padding: '14px',
-                      border:
-                        '1px solid var(--line)',
-                      borderRadius: '10px',
-                      color: 'var(--muted)',
-                    }}
+                    className="admin-modal-empty"
                   >
                     No officers available for
                     this department.
@@ -171,11 +157,7 @@ const AdminComplaintModals = ({
                           </strong>
 
                           <small
-                            style={{
-                              display: 'block',
-                              color:
-                                'var(--muted)',
-                            }}
+                            className="admin-officer-id"
                           >
                             {officer.employee_id}
                           </small>
@@ -195,9 +177,7 @@ const AdminComplaintModals = ({
 
             {assignError && (
               <p
-                style={{
-                  color: '#a94435',
-                }}
+                className="admin-modal-error-text"
               >
                 {assignError}
               </p>
@@ -205,22 +185,14 @@ const AdminComplaintModals = ({
 
             {assignSuccess && (
               <p
-                style={{
-                  color: '#397255',
-                }}
+                className="admin-modal-success-text"
               >
                 {assignSuccess}
               </p>
             )}
 
             <div
-              style={{
-                display: 'flex',
-                justifyContent:
-                  'flex-end',
-                gap: '10px',
-                marginTop: '20px',
-              }}
+              className="admin-modal-actions"
             >
               <button
                 className="admin-secondary-btn"
@@ -295,10 +267,7 @@ const AdminComplaintModals = ({
 
             {reportLoading ? (
               <div
-                style={{
-                  padding: '50px 10px',
-                  textAlign: 'center',
-                }}
+                className="admin-report-loading"
               >
                 <Loader2
                   size={30}
@@ -306,35 +275,21 @@ const AdminComplaintModals = ({
                 />
 
                 <p
-                  style={{
-                    color: 'var(--muted)',
-                  }}
+                  className="admin-modal-muted"
                 >
                   Loading complaint report...
                 </p>
               </div>
             ) : reportError ? (
               <div
-                style={{
-                  padding: '16px',
-                  border:
-                    '1px solid #ecc7c2',
-                  borderRadius: '12px',
-                  color: '#a94435',
-                  background: '#fff8f7',
-                }}
+                className="admin-report-error"
               >
                 {reportError}
               </div>
             ) : reportComplaint ? (
               <div className="admin-report-content">
                 <div
-                  style={{
-                    display: 'flex',
-                    gap: '8px',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                  }}
+                  className="admin-report-badges"
                 >
                   <span
                     className={statusClass(
@@ -365,26 +320,19 @@ const AdminComplaintModals = ({
                 </div>
 
                 <section
-                  style={{
-                    display: 'grid',
-                    gap: '6px',
-                  }}
+                  className="admin-report-intro"
                 >
                   <p className="civic-eyebrow">
                     Complaint
                   </p>
 
-                  <h2 style={{ margin: 0 }}>
+                  <h2 className="admin-report-title">
                     {reportComplaint.title ||
                       'Untitled complaint'}
                   </h2>
 
                   <p
-                    style={{
-                      margin: 0,
-                      color: 'var(--muted)',
-                      lineHeight: 1.6,
-                    }}
+                    className="admin-report-description"
                   >
                     {reportComplaint.description ||
                       'No description provided.'}
@@ -392,12 +340,7 @@ const AdminComplaintModals = ({
                 </section>
 
                 <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns:
-                      'repeat(auto-fit, minmax(180px, 1fr))',
-                    gap: '10px',
-                  }}
+                  className="admin-report-meta-grid"
                 >
                   {[
                     [
@@ -437,19 +380,10 @@ const AdminComplaintModals = ({
                   ].map(([label, value]) => (
                     <div
                       key={label}
-                      style={{
-                        padding: '12px',
-                        border:
-                          '1px solid var(--line)',
-                        borderRadius: '12px',
-                      }}
+                      className="admin-report-meta-card"
                     >
                       <small
-                        style={{
-                          display: 'block',
-                          color: 'var(--muted)',
-                          marginBottom: '4px',
-                        }}
+                        className="admin-report-meta-label"
                       >
                         {label}
                       </small>
@@ -470,9 +404,7 @@ const AdminComplaintModals = ({
                       </p>
 
                       <h4
-                        style={{
-                          margin: 0,
-                        }}
+                        className="admin-report-location-title"
                       >
                         Complaint location
                       </h4>
@@ -490,10 +422,7 @@ const AdminComplaintModals = ({
                   reportComplaint.longitude !==
                     undefined ? (
                     <p
-                      style={{
-                        margin: 0,
-                        color: 'var(--muted)',
-                      }}
+                      className="admin-report-location-note"
                     >
                       Latitude:{' '}
                       {reportComplaint.latitude}
@@ -503,10 +432,7 @@ const AdminComplaintModals = ({
                     </p>
                   ) : (
                     <p
-                      style={{
-                        margin: 0,
-                        color: 'var(--muted)',
-                      }}
+                      className="admin-report-location-note"
                     >
                       Location not available.
                     </p>
@@ -521,9 +447,7 @@ const AdminComplaintModals = ({
                       </p>
 
                       <h4
-                        style={{
-                          margin: 0,
-                        }}
+                        className="admin-report-section-title"
                       >
                         Complaint and resolution
                         photos
@@ -559,27 +483,11 @@ const AdminComplaintModals = ({
                                 <img
                                   src={src}
                                   alt={`${photo.photo_type || 'Evidence'} complaint`}
-                                  style={{
-                                    width: '100%',
-                                    height: '180px',
-                                    objectFit:
-                                      'cover',
-                                    display:
-                                      'block',
-                                  }}
+                                  className="admin-report-photo"
                                 />
                               ) : (
                                 <div
-                                  style={{
-                                    height:
-                                      '180px',
-                                    display:
-                                      'grid',
-                                    placeItems:
-                                      'center',
-                                    color:
-                                      'var(--muted)',
-                                  }}
+                                  className="admin-report-photo-empty"
                                 >
                                   <ImageOff
                                     size={28}
@@ -588,17 +496,7 @@ const AdminComplaintModals = ({
                               )}
 
                               <div
-                                style={{
-                                  padding:
-                                    '0 10px 10px',
-                                  display:
-                                    'flex',
-                                  alignItems:
-                                    'center',
-                                  justifyContent:
-                                    'space-between',
-                                  gap: '8px',
-                                }}
+                                className="admin-report-photo-caption"
                               >
                                 <span>
                                   {statusLabel(
@@ -618,9 +516,7 @@ const AdminComplaintModals = ({
                     </div>
                   ) : (
                     <p
-                      style={{
-                        color: 'var(--muted)',
-                      }}
+                      className="admin-modal-muted"
                     >
                       No photos available.
                     </p>
@@ -634,7 +530,7 @@ const AdminComplaintModals = ({
                         Citizen response
                       </p>
 
-                      <h4 style={{ margin: 0 }}>
+                      <h4 className="admin-report-response-title">
                         Resolution feedback
                       </h4>
                     </div>
@@ -709,9 +605,7 @@ const AdminComplaintModals = ({
                       </p>
 
                       <h4
-                        style={{
-                          margin: 0,
-                        }}
+                        className="admin-report-timeline-title"
                       >
                         Complaint timeline
                       </h4>
@@ -721,22 +615,13 @@ const AdminComplaintModals = ({
                   {reportComplaint.status_history
                     ?.length ? (
                     <div
-                      style={{
-                        display: 'grid',
-                        gap: '10px',
-                      }}
+                      className="admin-report-history-list"
                     >
                       {reportComplaint.status_history.map(
                         (item) => (
                           <div
                             key={item.id}
-                            style={{
-                              padding: '12px',
-                              border:
-                                '1px solid var(--line)',
-                              borderRadius:
-                                '12px',
-                            }}
+                            className="admin-report-history-item"
                           >
                             <strong>
                               {statusLabel(
@@ -749,14 +634,7 @@ const AdminComplaintModals = ({
                             </strong>
 
                             <p
-                              style={{
-                                margin:
-                                  '5px 0 0',
-                                color:
-                                  'var(--muted)',
-                                fontSize:
-                                  '13px',
-                              }}
+                              className="admin-report-history-meta"
                             >
                               {item.remarks ||
                                 'No remarks'}
@@ -768,10 +646,7 @@ const AdminComplaintModals = ({
 
                             {item.changed_by_name && (
                               <small
-                                style={{
-                                  color:
-                                    'var(--muted)',
-                                }}
+                                className="admin-report-history-by"
                               >
                                 By{' '}
                                 {
@@ -785,9 +660,7 @@ const AdminComplaintModals = ({
                     </div>
                   ) : (
                     <p
-                      style={{
-                        color: 'var(--muted)',
-                      }}
+                      className="admin-modal-muted"
                     >
                       No status history available.
                     </p>
@@ -802,9 +675,7 @@ const AdminComplaintModals = ({
                       </p>
 
                       <h4
-                        style={{
-                          margin: 0,
-                        }}
+                        className="admin-report-sla-title"
                       >
                         Service level
                       </h4>
@@ -822,10 +693,7 @@ const AdminComplaintModals = ({
                   </div>
 
                   <p
-                    style={{
-                      margin: 0,
-                      color: 'var(--muted)',
-                    }}
+                    className="admin-report-sla-note"
                   >
                     Target:{' '}
                     {reportComplaint.sla
@@ -843,13 +711,7 @@ const AdminComplaintModals = ({
                 </section>
 
                 <div
-                  style={{
-                    display: 'flex',
-                    justifyContent:
-                      'flex-end',
-                    gap: '10px',
-                    flexWrap: 'wrap',
-                  }}
+                  className="admin-report-actions"
                 >
                   {reportComplaint.status ===
                     'pending_verification' && (

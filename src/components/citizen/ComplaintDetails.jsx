@@ -26,7 +26,7 @@ const ComplaintDetails = ({
 }) => {
   const [complaint, setComplaint] =
     useState(null);
-  const [timeline, setTimeline] =
+  const [history, setHistory] =
     useState([]);
   const [loading, setLoading] =
     useState(true);
@@ -62,10 +62,8 @@ const ComplaintDetails = ({
       setComplaint(
         data?.complaint || null
       );
-      setTimeline(
-        Array.isArray(data?.timeline)
-          ? data.timeline
-          : []
+      setHistory(
+        data?.status_history || []
       );
     } catch (err) {
       setError(
@@ -131,21 +129,11 @@ const ComplaintDetails = ({
   if (loading) {
     return (
       <div
-        className="civic-dashboard"
-        style={{
-          minHeight: '420px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        className="civic-dashboard citizen-complaint-loading"
+        
       >
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            color: '#667085',
-          }}
+          className="citizen-complaint-loading-content"
         >
           <Loader2
             size={20}
@@ -160,27 +148,18 @@ const ComplaintDetails = ({
     return (
       <div className="civic-dashboard">
         <section
-          className="civic-panel"
-          style={{
-            padding: '40px',
-            textAlign: 'center',
-          }}
+          className="civic-panel citizen-complaint-error-state"
+          
         >
           <AlertCircle
             size={38}
-            style={{
-              color: '#b94a48',
-              marginBottom: '14px',
-            }}
+            className="citizen-complaint-error-icon"
           />
           <h3>
             Could not load complaint
           </h3>
           <p
-            style={{
-              color: '#667085',
-              margin: '10px 0 20px',
-            }}
+            className="citizen-complaint-error-copy"
           >
             {error ||
               'Complaint details not found.'}
@@ -188,18 +167,7 @@ const ComplaintDetails = ({
           <button
             type="button"
             onClick={loadComplaint}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 16px',
-              borderRadius: '10px',
-              border:
-                '1px solid #d7dee8',
-              background: '#fff',
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
+            className="citizen-complaint-retry"
           >
             <RefreshCw size={16} />
             Try again
@@ -235,19 +203,7 @@ const ComplaintDetails = ({
       <button
         type="button"
         onClick={onBack}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          border: 'none',
-          background: 'transparent',
-          padding: '4px 0',
-          marginBottom: '18px',
-          color: '#315c9d',
-          fontWeight: 700,
-          cursor: 'pointer',
-          fontSize: '14px',
-        }}
+        className="citizen-complaint-back"
       >
         <ArrowLeft size={17} />
         Back to My complaints
@@ -268,20 +224,7 @@ const ComplaintDetails = ({
           </p>
         </div>
         <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '7px',
-            padding: '9px 13px',
-            borderRadius: '999px',
-            background:
-              currentStatus.bg,
-            color:
-              currentStatus.color,
-            fontSize: '14px',
-            fontWeight: 700,
-            whiteSpace: 'nowrap',
-          }}
+          className={`citizen-complaint-status citizen-complaint-status-${String(complaint.status || 'received').replace(/_/g, '-')}`}
         >
           <StatusIcon size={16} />
           {currentStatus.label}
@@ -291,10 +234,8 @@ const ComplaintDetails = ({
           PHOTO + BASIC INFO
       ===================================================== */}
       <section
-        className="civic-content-grid"
-        style={{
-          marginTop: '24px',
-        }}
+        className="civic-content-grid citizen-complaint-detail-grid"
+        
       >
         {/* PHOTO */}
         <article className="civic-panel">
@@ -302,25 +243,11 @@ const ComplaintDetails = ({
             <img
               src={photoUrl}
               alt={complaint.title}
-              style={{
-                width: '100%',
-                maxHeight: '380px',
-                objectFit: 'cover',
-                borderRadius: '12px',
-                display: 'block',
-              }}
+              className="citizen-complaint-photo"
             />
           ) : (
             <div
-              style={{
-                minHeight: '260px',
-                borderRadius: '12px',
-                background: '#f2f4f7',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#98a2b3',
-              }}
+              className="citizen-complaint-photo-empty"
             >
               <CategoryIcon size={54} />
             </div>
@@ -328,27 +255,19 @@ const ComplaintDetails = ({
         </article>
         {/* SUMMARY */}
         <article
-          className="civic-panel"
-          style={{
-            padding: '24px',
-          }}
+          className="civic-panel citizen-complaint-panel"
+          
         >
           <p className="civic-eyebrow">
             Report summary
           </p>
           <h3
-            style={{
-              marginBottom: '20px',
-            }}
+            className="citizen-complaint-section-title"
           >
             Complaint information
           </h3>
           <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '17px',
-            }}
+            className="citizen-complaint-info-list"
           >
             <InfoRow
               icon={<CategoryIcon size={17} />}
@@ -389,21 +308,14 @@ const ComplaintDetails = ({
       ===================================================== */}
       {complaint.description && (
         <section
-          className="civic-panel"
-          style={{
-            marginTop: '16px',
-            padding: '24px',
-          }}
+          className="civic-panel citizen-complaint-panel citizen-complaint-description-panel"
+          
         >
           <p className="civic-eyebrow">
             Description
           </p>
           <p
-            style={{
-              margin: 0,
-              color: '#475467',
-              lineHeight: 1.7,
-            }}
+            className="citizen-complaint-description"
           >
             {complaint.description}
           </p>
@@ -413,20 +325,11 @@ const ComplaintDetails = ({
           LOCATION
       ===================================================== */}
       <section
-        className="civic-panel"
-        style={{
-          marginTop: '16px',
-          padding: '24px',
-        }}
+        className="civic-panel citizen-complaint-panel citizen-complaint-location-panel"
+        
       >
         <div
-          style={{
-            display: 'flex',
-            justifyContent:
-              'space-between',
-            alignItems: 'center',
-            gap: '16px',
-          }}
+          className="citizen-complaint-location-header"
         >
           <div>
             <p className="civic-eyebrow">
@@ -436,10 +339,7 @@ const ComplaintDetails = ({
               GPS location
             </h3>
             <p
-              style={{
-                marginTop: '8px',
-                color: '#667085',
-              }}
+              className="citizen-complaint-location-note"
             >
               {complaint.latitude},{' '}
               {complaint.longitude}
@@ -449,18 +349,7 @@ const ComplaintDetails = ({
             href={mapsUrl}
             target="_blank"
             rel="noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 15px',
-              borderRadius: '10px',
-              background: '#f5f8fc',
-              color: '#315c9d',
-              textDecoration: 'none',
-              fontWeight: 700,
-              fontSize: '14px',
-            }}
+            className="citizen-complaint-map-link"
           >
             <MapPin size={16} />
             Open in Maps
@@ -476,30 +365,21 @@ const ComplaintDetails = ({
         'pending_citizen_response',
       ].includes(complaint.status) && (
         <section
-          className="civic-panel"
-          style={{
-            marginTop: '16px',
-            padding: '24px',
-          }}
+          className="civic-panel citizen-complaint-panel citizen-complaint-response-panel"
+          
         >
           <p className="civic-eyebrow">
             Resolution feedback
           </p>
 
           <h3
-            style={{
-              marginBottom: '8px',
-            }}
+            className="citizen-complaint-response-title"
           >
             How was the resolution?
           </h3>
 
           <p
-            style={{
-              marginTop: 0,
-              color: '#667085',
-              lineHeight: 1.6,
-            }}
+            className="citizen-complaint-response-note"
           >
             Confirm whether the issue was resolved
             satisfactorily, or reopen the complaint if
@@ -508,14 +388,7 @@ const ComplaintDetails = ({
 
           {responseError && (
             <div
-              style={{
-                padding: '12px 14px',
-                borderRadius: '10px',
-                marginTop: '16px',
-                background: '#fbeae5',
-                color: '#a43f2d',
-                fontSize: '14px',
-              }}
+              className="citizen-complaint-response-error"
             >
               {responseError}
             </div>
@@ -523,27 +396,14 @@ const ComplaintDetails = ({
 
           {responseSuccess && (
             <div
-              style={{
-                padding: '12px 14px',
-                borderRadius: '10px',
-                marginTop: '16px',
-                background: '#e6f4eb',
-                color: '#397255',
-                fontSize: '14px',
-              }}
+              className="citizen-complaint-response-success"
             >
               {responseSuccess}
             </div>
           )}
 
           <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns:
-                'repeat(2, minmax(0, 1fr))',
-              gap: '12px',
-              marginTop: '20px',
-            }}
+            className="citizen-complaint-response-choices"
           >
             <button
               type="button"
@@ -551,36 +411,15 @@ const ComplaintDetails = ({
                 setResponseChoice('satisfied')
               }
               disabled={responseSubmitting}
-              style={{
-                padding: '15px 16px',
-                borderRadius: '12px',
-                border:
-                  responseChoice === 'satisfied'
-                    ? '2px solid #397255'
-                    : '1px solid #d7dee8',
-                background:
-                  responseChoice === 'satisfied'
-                    ? '#eef8f1'
-                    : '#fff',
-                cursor: responseSubmitting
-                  ? 'not-allowed'
-                  : 'pointer',
-                textAlign: 'left',
-              }}
+              className={`citizen-complaint-choice citizen-complaint-choice-satisfied ${responseChoice === 'satisfied' ? 'is-selected' : ''} ${responseSubmitting ? 'is-disabled' : ''}`}
             >
               <strong
-                style={{
-                  display: 'block',
-                  marginBottom: '4px',
-                }}
+                className="citizen-complaint-choice-title"
               >
                 Resolution is satisfactory
               </strong>
               <span
-                style={{
-                  color: '#667085',
-                  fontSize: '13px',
-                }}
+                className="citizen-complaint-choice-copy"
               >
                 The issue has been fixed.
               </span>
@@ -592,36 +431,15 @@ const ComplaintDetails = ({
                 setResponseChoice('reopen')
               }
               disabled={responseSubmitting}
-              style={{
-                padding: '15px 16px',
-                borderRadius: '12px',
-                border:
-                  responseChoice === 'reopen'
-                    ? '2px solid #b94a48'
-                    : '1px solid #d7dee8',
-                background:
-                  responseChoice === 'reopen'
-                    ? '#fdf0ee'
-                    : '#fff',
-                cursor: responseSubmitting
-                  ? 'not-allowed'
-                  : 'pointer',
-                textAlign: 'left',
-              }}
+              className={`citizen-complaint-choice citizen-complaint-choice-reopen ${responseChoice === 'reopen' ? 'is-selected' : ''} ${responseSubmitting ? 'is-disabled' : ''}`}
             >
               <strong
-                style={{
-                  display: 'block',
-                  marginBottom: '4px',
-                }}
+                className="citizen-complaint-choice-title"
               >
                 Reopen complaint
               </strong>
               <span
-                style={{
-                  color: '#667085',
-                  fontSize: '13px',
-                }}
+                className="citizen-complaint-choice-copy"
               >
                 The issue is not fully resolved.
               </span>
@@ -630,26 +448,16 @@ const ComplaintDetails = ({
 
           {responseChoice === 'satisfied' && (
             <div
-              style={{
-                marginTop: '20px',
-              }}
+              className="citizen-complaint-rating"
             >
               <label
-                style={{
-                  display: 'block',
-                  fontWeight: 700,
-                  marginBottom: '9px',
-                }}
+                className="citizen-complaint-field-label"
               >
                 Rating
               </label>
 
               <div
-                style={{
-                  display: 'flex',
-                  gap: '6px',
-                  alignItems: 'center',
-                }}
+                className="citizen-complaint-rating-group"
               >
                 {[1, 2, 3, 4, 5].map(
                   (value) => (
@@ -663,20 +471,7 @@ const ComplaintDetails = ({
                         responseSubmitting
                       }
                       aria-label={`Rate ${value} out of 5`}
-                      style={{
-                        border: 'none',
-                        background:
-                          'transparent',
-                        padding: '2px',
-                        cursor:
-                          responseSubmitting
-                            ? 'not-allowed'
-                            : 'pointer',
-                        color:
-                          value <= responseRating
-                            ? '#d9a441'
-                            : '#c8ced8',
-                      }}
+                      className={`citizen-complaint-rating-star ${value <= responseRating ? 'is-active' : ''} ${responseSubmitting ? 'is-disabled' : ''}`}
                     >
                       <Star
                         size={28}
@@ -694,16 +489,10 @@ const ComplaintDetails = ({
           )}
 
           <div
-            style={{
-              marginTop: '20px',
-            }}
+            className="citizen-complaint-review"
           >
             <label
-              style={{
-                display: 'block',
-                fontWeight: 700,
-                marginBottom: '9px',
-              }}
+              className="citizen-complaint-field-label"
             >
               Review
             </label>
@@ -722,10 +511,7 @@ const ComplaintDetails = ({
                   : 'Share your feedback...'
               }
               rows={4}
-              style={{
-                width: '100%',
-                resize: 'vertical',
-              }}
+              className="citizen-complaint-review-input"
             />
           </div>
 
@@ -736,21 +522,7 @@ const ComplaintDetails = ({
               responseSubmitting ||
               !responseChoice
             }
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginTop: '18px',
-              padding: '11px 16px',
-              borderRadius: '10px',
-              border: 'none',
-              cursor:
-                responseSubmitting ||
-                !responseChoice
-                  ? 'not-allowed'
-                  : 'pointer',
-              fontWeight: 700,
-            }}
+            className={`citizen-complaint-submit ${responseSubmitting || !responseChoice ? 'is-disabled' : ''}`}
           >
             {responseSubmitting ? (
               <Loader2
@@ -769,161 +541,110 @@ const ComplaintDetails = ({
       )}
 
       {/* =====================================================
-          COMPLAINT TIMELINE
+          STATUS HISTORY
       ===================================================== */}
       <section
-        className="civic-panel"
-        style={{
-          marginTop: '16px',
-          padding: '24px',
-        }}
+        className="civic-panel citizen-complaint-panel citizen-complaint-history-panel"
+        
       >
         <p className="civic-eyebrow">
           Progress
         </p>
         <h3
-          style={{
-            marginBottom: '24px',
-          }}
+          className="citizen-complaint-history-title"
         >
-          Complaint timeline
+          Status history
         </h3>
-
-        {timeline.length === 0 ? (
+        {history.length === 0 ? (
           <p
-            style={{
-              color: '#667085',
-            }}
+            className="citizen-complaint-history-note"
           >
-            No timeline events recorded yet.
+            No status updates recorded yet.
           </p>
         ) : (
-          <div className="citizen-timeline">
-            {timeline.map((event, index) => {
-              const isLast =
-                index === timeline.length - 1;
-
-              const statusMeta =
-                event.event_type === 'status'
-                  ? STATUS_META[event.new_status] || STATUS_META.received
-                  : null;
-
-              const EventIcon =
-                statusMeta?.icon || Clock3;
-
-              let title = event.title;
-              let description = event.description || '';
-
-              if (event.event_type === 'status') {
-                title =
-                  statusMeta?.label ||
-                  event.new_status ||
-                  'Status updated';
-
-                if (event.old_status) {
-                  description = `From ${
-                    STATUS_META[event.old_status]?.label ||
-                    event.old_status
-                  }`;
-                }
-              } else if (
-                event.event_type === 'assignment' &&
-                event.actor_name
-              ) {
-                description = `${
-                  event.description || ''
-                } · Assigned by ${event.actor_name}`;
-              } else if (
-                event.event_type === 'escalation' &&
-                event.escalated_to_name
-              ) {
-                description = `${
-                  description ||
-                  'SLA escalation triggered.'
-                } · Escalated to ${event.escalated_to_name}`;
-              } else if (
-                event.event_type === 'citizen_response'
-              ) {
-                const review = event.review?.trim();
-                const rating = event.rating
-                  ? `Rating: ${event.rating}/5`
-                  : '';
-                description = [
-                  rating,
-                  review,
-                ]
-                  .filter(Boolean)
-                  .join(' · ');
-              }
-
-              return (
-                <div
-                  key={event.id}
-                  className="citizen-timeline-item"
-                >
+          <div
+            className="citizen-complaint-history-list"
+          >
+            {history.map(
+              (item, index) => {
+                const isLast =
+                  index ===
+                  history.length - 1;
+                const status =
+                  STATUS_META[
+                    item.new_status
+                  ] ||
+                  STATUS_META.received;
+                const HistoryIcon =
+                  status.icon;
+                return (
                   <div
-                    className="citizen-timeline-rail"
+                    key={item.id}
+                    className={`citizen-complaint-history-item ${isLast ? 'is-last' : ''}`}
                   >
-                    <span
-                      className="citizen-timeline-icon"
-                      style={{
-                        background:
-                          statusMeta?.bg || '#eef2f5',
-                        color:
-                          statusMeta?.color || '#667085',
-                      }}
-                    >
-                      <EventIcon size={15} />
-                    </span>
-                    {!isLast && (
-                      <span className="citizen-timeline-line" />
-                    )}
-                  </div>
-
-                  <div
-                    className="citizen-timeline-content"
-                  >
+                    {/* TIMELINE */}
                     <div
-                      className="citizen-timeline-head"
+                      className="citizen-complaint-history-rail"
                     >
-                      <strong>
-                        {title}
-                      </strong>
-                      <small>
-                        {formatDateTime(
-                          event.timestamp
-                        )}
-                      </small>
-                    </div>
-
-                    {description && (
-                      <p className="citizen-timeline-description">
-                        {description}
-                      </p>
-                    )}
-
-                    {event.actor_name &&
-                      event.event_type !== 'created' &&
-                      event.event_type !== 'status' && (
-                        <small className="citizen-timeline-actor">
-                          {event.actor_name}
-                        </small>
-                      )}
-
-                    {event.event_type === 'resolution' &&
-                      event.photo_url && (
-                        <img
-                          className="citizen-timeline-photo"
-                          src={getPhotoUrl(
-                            event.photo_url
-                          )}
-                          alt="Resolution evidence"
+                      <span
+                        className={`citizen-complaint-history-icon citizen-complaint-history-icon-${String(item.new_status || 'received').replace(/_/g, '-')}`}
+                      >
+                        <HistoryIcon
+                          size={15}
+                        />
+                      </span>
+                      {!isLast && (
+                        <span
+                          className="citizen-complaint-history-connector"
                         />
                       )}
+                    </div>
+                    {/* EVENT */}
+                    <div
+                      className="citizen-complaint-history-event"
+                    >
+                      <div
+                        className="citizen-complaint-history-event-head"
+                      >
+                        <strong>
+                          {
+                            STATUS_META[status]?.label  ||
+                            item.new_status
+                          }
+                        </strong>
+                        <small
+                          className="citizen-complaint-history-time"
+                        >
+                          {formatDateTime(
+                            item.changed_at
+                          )}
+                        </small>
+                      </div>
+                      {item.old_status && (
+                        <p
+                          className="citizen-complaint-history-from"
+                        >
+                          From{' '}
+                          {
+                            STATUS_META[
+                              item.old_status
+                            ]?.label ||
+                            item.old_status
+                          }
+                        </p>
+                      )}
+                      {item.remarks && (
+                        <p
+                          className="citizen-complaint-history-remarks"
+                        >
+                          {item.remarks}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              }
+            )}
           </div>
         )}
       </section>
@@ -937,34 +658,16 @@ const InfoRow = ({
 }) => {
   return (
     <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-      }}
+      className="citizen-complaint-info-row"
     >
       <span
-        style={{
-          width: '34px',
-          height: '34px',
-          borderRadius: '9px',
-          background: '#f3f6fa',
-          color: '#315c9d',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
+        className="citizen-complaint-info-icon"
       >
         {icon}
       </span>
       <div>
         <small
-          style={{
-            display: 'block',
-            color: '#98a2b3',
-            marginBottom: '2px',
-          }}
+          className="citizen-complaint-info-label"
         >
           {label}
         </small>

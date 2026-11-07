@@ -5,12 +5,21 @@ export async function apiFetch(path, options = {}) {
     typeof FormData !== 'undefined' &&
     options.body instanceof FormData;
 
+  let body = options.body;
+
+  if (
+    body &&
+    !isFormData &&
+    typeof body !== 'string'
+  ) {
+    body = JSON.stringify(body);
+  }
+
   const headers = new Headers(
     options.headers || {}
   );
 
-  // FormData ke case mein Content-Type manually mat lagao.
-  // Browser khud multipart boundary ke saath set karega.
+  // Browser sets multipart boundary automatically.
   if (isFormData) {
     headers.delete('Content-Type');
   } else if (!headers.has('Content-Type')) {
@@ -23,11 +32,17 @@ export async function apiFetch(path, options = {}) {
   const response = await fetch(
     `${API_BASE_URL}${path}`,
     {
-      credentials: 'include',
       ...options,
+      credentials: 'include',
       headers,
+      body,
     }
   );
+
+  // No response body.
+  if (response.status === 204) {
+    return null;
+  }
 
   let data = {};
 
@@ -37,14 +52,22 @@ export async function apiFetch(path, options = {}) {
     data = {};
   }
 
- // Session expired
+  const isAuthEndpoint =
+    path.startsWith('/auth/');
+
+  // Authentication/session errors.
   if (response.status === 401) {
-    window.dispatchEvent(
-      new CustomEvent('nagarsetu:unauthorized')
-    );
+    if (!isAuthEndpoint) {
+      window.dispatchEvent(
+        new CustomEvent('nagarsetu:unauthorized')
+      );
+    }
 
     const error = new Error(
-      'Session expired'
+      isAuthEndpoint &&
+      typeof data?.detail === 'string'
+        ? data.detail
+        : 'Session expired'
     );
 
     error.status = 401;
@@ -52,13 +75,35 @@ export async function apiFetch(path, options = {}) {
 
     throw error;
   }
-  // Other API errors
+
+  // Other API errors.
   if (!response.ok) {
     let message =
       `Request failed: ${response.status}`;
 
     if (typeof data?.detail === 'string') {
       message = data.detail;
+    } else if (
+      Array.isArray(data?.detail)
+    ) {
+      const validationMessages = data.detail
+        .map((item) => {
+          const location =
+            Array.isArray(item?.loc)
+              ? item.loc.join('.')
+              : 'field';
+
+          const fieldMessage =
+            item?.msg || 'Invalid value';
+
+          return `${location}: ${fieldMessage}`;
+        })
+        .filter(Boolean);
+
+      if (validationMessages.length) {
+        message =
+          validationMessages.join(' | ');
+      }
     } else if (
       data?.detail &&
       typeof data.detail === 'object' &&

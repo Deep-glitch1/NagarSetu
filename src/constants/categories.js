@@ -1,4 +1,5 @@
 import {
+  CircleDot,
   Construction,
   Trash2,
   MapPin,

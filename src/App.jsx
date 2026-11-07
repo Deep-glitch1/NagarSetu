@@ -19,6 +19,7 @@ const ADMIN_ROLES = [
   'district_officer',
   'municipal_admin',
   'super_admin',
+  'supervisor',
 ];
 
 

@@ -8,6 +8,7 @@ import {
   Building2,
   ClipboardList,
   Truck,
+  ShieldAlert,
 } from 'lucide-react';
 
 import CivicShell from './CivicShell';
@@ -204,7 +205,13 @@ const AdminPortal = ({
         }
 
 
-        return null;
+        return (
+          <div className="civic-empty">
+            <ShieldAlert size={30} />
+            <h2>Not authorized</h2>
+            <p>Your role does not have access to this section.</p>
+          </div>
+        );
       }}
     </CivicShell>
   );

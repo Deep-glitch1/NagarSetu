@@ -15,7 +15,10 @@ import {
 } from 'lucide-react';
 
 import { apiFetch } from '../../api/client';
-import { verifyComplaint } from '../../api/employee';
+import {
+  assignComplaint,
+  verifyComplaint,
+} from '../../api/employee';
 
 import {
   priorityClass,
@@ -37,12 +40,18 @@ const slaClass = (state) =>
 
 const slaLabel = (state) => {
   switch (state) {
-    case 'on_track': return 'On track';
-    case 'warning': return 'SLA warning';
-    case 'supervisor_escalation': return 'Escalation';
-    case 'overdue': return 'Overdue';
-    case 'critical': return 'Critical';
-    default: return 'No SLA';
+    case 'on_track':
+      return 'On track';
+    case 'warning':
+      return 'SLA warning';
+    case 'supervisor_escalation':
+      return 'Escalation';
+    case 'overdue':
+      return 'Overdue';
+    case 'critical':
+      return 'Critical';
+    default:
+      return 'No SLA';
   }
 };
 
@@ -55,28 +64,41 @@ const AdminComplaints = () => {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [slaFilter, setSlaFilter] = useState('all');
 
-  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [selectedComplaint, setSelectedComplaint] =
+    useState(null);
   const [officers, setOfficers] = useState([]);
-  const [officersLoading, setOfficersLoading] = useState(false);
-  const [officersError, setOfficersError] = useState('');
-  const [selectedOfficer, setSelectedOfficer] = useState('');
+  const [officersLoading, setOfficersLoading] =
+    useState(false);
+  const [officersError, setOfficersError] =
+    useState('');
+  const [selectedOfficer, setSelectedOfficer] =
+    useState('');
   const [assigning, setAssigning] = useState(false);
-  const [assignError, setAssignError] = useState('');
-  const [assignSuccess, setAssignSuccess] = useState('');
+  const [assignError, setAssignError] =
+    useState('');
+  const [assignSuccess, setAssignSuccess] =
+    useState('');
 
-  const [verifyingComplaintId, setVerifyingComplaintId] = useState(null);
-  const [verifyError, setVerifyError] = useState('');
+  const [verifyingComplaintId, setVerifyingComplaintId] =
+    useState(null);
+  const [verifyError, setVerifyError] =
+    useState('');
 
-  const [reportComplaint, setReportComplaint] = useState(null);
-  const [reportLoading, setReportLoading] = useState(false);
-  const [reportError, setReportError] = useState('');
+  const [reportComplaint, setReportComplaint] =
+    useState(null);
+  const [reportLoading, setReportLoading] =
+    useState(false);
+  const [reportError, setReportError] =
+    useState('');
 
   const loadComplaints = async () => {
     setLoading(true);
     setError('');
 
     try {
-      const data = await apiFetch('/employee/complaints');
+      const data = await apiFetch(
+        '/employee/complaints'
+      );
 
       setComplaints(
         Array.isArray(data?.complaints)
@@ -84,11 +106,14 @@ const AdminComplaints = () => {
           : []
       );
     } catch (err) {
-      console.error('Complaint queue load failed:', err);
+      console.error(
+        'Complaint queue load failed:',
+        err
+      );
 
       setError(
         err.message ||
-        'Unable to load complaints.'
+          'Unable to load complaints.'
       );
     } finally {
       setLoading(false);
@@ -117,8 +142,8 @@ const AdminComplaints = () => {
           .includes(query) ||
         String(
           complaint.category_name ||
-          complaint.category ||
-          ''
+            complaint.category ||
+            ''
         )
           .toLowerCase()
           .includes(query);
@@ -153,14 +178,19 @@ const AdminComplaints = () => {
   const statusCounts = useMemo(
     () => ({
       total: complaints.length,
-      pendingVerification: complaints.filter(
-        (item) => item.status === 'pending_verification'
-      ).length,
+      pendingVerification:
+        complaints.filter(
+          (item) =>
+            item.status ===
+            'pending_verification'
+        ).length,
       reopened: complaints.filter(
-        (item) => item.status === 'reopened'
+        (item) =>
+          item.status === 'reopened'
       ).length,
       closed: complaints.filter(
-        (item) => item.status === 'closed'
+        (item) =>
+          item.status === 'closed'
       ).length,
     }),
     [complaints]
@@ -168,15 +198,30 @@ const AdminComplaints = () => {
 
   const slaCounts = useMemo(
     () => ({
-      warning: complaints.filter((item) => item.sla?.state === 'warning').length,
-      escalation: complaints.filter((item) => item.sla?.state === 'supervisor_escalation').length,
-      overdue: complaints.filter((item) => item.sla?.state === 'overdue').length,
-      critical: complaints.filter((item) => item.sla?.state === 'critical').length,
+      warning: complaints.filter(
+        (item) =>
+          item.sla?.state === 'warning'
+      ).length,
+      escalation: complaints.filter(
+        (item) =>
+          item.sla?.state ===
+          'supervisor_escalation'
+      ).length,
+      overdue: complaints.filter(
+        (item) =>
+          item.sla?.state === 'overdue'
+      ).length,
+      critical: complaints.filter(
+        (item) =>
+          item.sla?.state === 'critical'
+      ).length,
     }),
     [complaints]
   );
 
-  const openAssignment = async (complaint) => {
+  const openAssignment = async (
+    complaint
+  ) => {
     setSelectedComplaint(complaint);
     setOfficers([]);
     setSelectedOfficer('');
@@ -190,8 +235,6 @@ const AdminComplaints = () => {
         `/employee/complaints/${complaint.id}/officers`
       );
 
-      console.log('OFFICER API RESPONSE:', data);
-
       const officerList = Array.isArray(data)
         ? data
         : Array.isArray(data?.officers)
@@ -200,18 +243,22 @@ const AdminComplaints = () => {
             ? data.employees
             : Array.isArray(data?.data)
               ? data.data
-              : Array.isArray(data?.data?.officers)
+              : Array.isArray(
+                    data?.data?.officers
+                  )
                 ? data.data.officers
                 : [];
 
       setOfficers(officerList);
-      console.log('OFFICERS SET:', officerList);
     } catch (err) {
-      console.error('Officer list load failed:', err);
+      console.error(
+        'Officer list load failed:',
+        err
+      );
 
       setOfficersError(
         err.message ||
-        'Unable to load officers.'
+          'Unable to load officers.'
       );
     } finally {
       setOfficersLoading(false);
@@ -236,7 +283,9 @@ const AdminComplaints = () => {
       !selectedComplaint ||
       !selectedOfficer
     ) {
-      setAssignError('Please select an officer.');
+      setAssignError(
+        'Please select an officer.'
+      );
       return;
     }
 
@@ -245,19 +294,9 @@ const AdminComplaints = () => {
     setAssignSuccess('');
 
     try {
-      const formData = new FormData();
-
-      formData.append(
-        'officer_id',
+      const data = await assignComplaint(
+        selectedComplaint.id,
         selectedOfficer
-      );
-
-      const data = await apiFetch(
-        `/employee/complaints/${selectedComplaint.id}/assign`,
-        {
-          method: 'POST',
-          body: formData,
-        }
       );
 
       const assignment = data?.assignment;
@@ -270,17 +309,16 @@ const AdminComplaints = () => {
                 status:
                   data?.complaint?.status ||
                   'assigned',
-                assignment:
-                  assignment
-                    ? {
-                        officer_id:
-                          assignment.officer_id,
-                        employee_id:
-                          assignment.employee_id,
-                        name:
-                          assignment.officer_name,
-                      }
-                    : item.assignment,
+                assignment: assignment
+                  ? {
+                      officer_id:
+                        assignment.officer_id,
+                      employee_id:
+                        assignment.employee_id,
+                      name:
+                        assignment.officer_name,
+                    }
+                  : item.assignment,
               }
             : item
         )
@@ -288,7 +326,7 @@ const AdminComplaints = () => {
 
       setAssignSuccess(
         data?.message ||
-        'Complaint assigned successfully.'
+          'Complaint assigned successfully.'
       );
     } catch (err) {
       console.error(
@@ -298,15 +336,20 @@ const AdminComplaints = () => {
 
       setAssignError(
         err.message ||
-        'Unable to assign complaint.'
+          'Unable to assign complaint.'
       );
     } finally {
       setAssigning(false);
     }
   };
 
-  const openReport = async (complaintId) => {
-    if (!complaintId || reportLoading) {
+  const openReport = async (
+    complaintId
+  ) => {
+    if (
+      !complaintId ||
+      reportLoading
+    ) {
       return;
     }
 
@@ -330,7 +373,7 @@ const AdminComplaints = () => {
 
       setReportError(
         err.message ||
-        'Unable to load complaint report.'
+          'Unable to load complaint report.'
       );
     } finally {
       setReportLoading(false);
@@ -346,7 +389,9 @@ const AdminComplaints = () => {
     setReportError('');
   };
 
-  const handleVerify = async (complaintId) => {
+  const handleVerify = async (
+    complaintId
+  ) => {
     if (
       !complaintId ||
       verifyingComplaintId
@@ -354,16 +399,25 @@ const AdminComplaints = () => {
       return;
     }
 
-    setVerifyingComplaintId(complaintId);
+    setVerifyingComplaintId(
+      complaintId
+    );
     setVerifyError('');
 
     try {
-      await verifyComplaint(complaintId);
+      await verifyComplaint(
+        complaintId
+      );
 
       await loadComplaints();
 
-      if (reportComplaint?.id === complaintId) {
-        await openReport(complaintId);
+      if (
+        reportComplaint?.id ===
+        complaintId
+      ) {
+        await openReport(
+          complaintId
+        );
       }
     } catch (err) {
       console.error(
@@ -373,7 +427,7 @@ const AdminComplaints = () => {
 
       setVerifyError(
         err.message ||
-        'Unable to verify complaint resolution.'
+          'Unable to verify complaint resolution.'
       );
     } finally {
       setVerifyingComplaintId(null);
@@ -389,12 +443,11 @@ const AdminComplaints = () => {
             Complaint management
           </p>
 
-          <h2>
-            Complaints Queue
-          </h2>
+          <h2>Complaints Queue</h2>
 
           <p>
-            Review routed complaints and assign them to officers.
+            Review routed complaints and assign
+            them to officers.
           </p>
         </div>
 
@@ -418,8 +471,8 @@ const AdminComplaints = () => {
 
       {/* FILTERS */}
       <div className="civic-panel admin-filters-panel">
-        <div className="admin-filters-grid">
-          <label className="admin-search-field">
+        <div className="grid grid-cols-1 min-[601px]:grid-cols-2 min-[901px]:grid-cols-[minmax(220px,1fr)_180px_160px_170px] gap-2.5">
+          <label className="admin-search-field col-span-full min-[901px]:col-auto">
             <Search
               className="admin-search-icon"
               size={17}
@@ -442,31 +495,59 @@ const AdminComplaints = () => {
               setStatusFilter(e.target.value)
             }
           >
-            <option value="all">All statuses</option>
-            <option value="received">Received</option>
-            <option value="assigned">Assigned</option>
-            <option value="in_progress">In progress</option>
-            <option value="reopened">Reopened</option>
+            <option value="all">
+              All statuses
+            </option>
+            <option value="received">
+              Received
+            </option>
+            <option value="assigned">
+              Assigned
+            </option>
+            <option value="in_progress">
+              In progress
+            </option>
+            <option value="reopened">
+              Reopened
+            </option>
             <option value="pending_verification">
               Pending verification
             </option>
-            <option value="verified">Verified</option>
-            <option value="closed">Closed</option>
-            <option value="rejected">Rejected</option>
+            <option value="verified">
+              Verified
+            </option>
+            <option value="closed">
+              Closed
+            </option>
+            <option value="rejected">
+              Rejected
+            </option>
           </select>
 
           <select
             className="admin-filter-select"
             value={priorityFilter}
             onChange={(e) =>
-              setPriorityFilter(e.target.value)
+              setPriorityFilter(
+                e.target.value
+              )
             }
           >
-            <option value="all">All priorities</option>
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
+            <option value="all">
+              All priorities
+            </option>
+            <option value="critical">
+              Critical
+            </option>
+            <option value="high">
+              High
+            </option>
+            <option value="medium">
+              Medium
+            </option>
+            <option value="low">
+              Low
+            </option>
           </select>
 
           <select
@@ -476,12 +557,24 @@ const AdminComplaints = () => {
               setSlaFilter(e.target.value)
             }
           >
-            <option value="all">All SLA states</option>
-            <option value="on_track">On track</option>
-            <option value="warning">SLA warning</option>
-            <option value="supervisor_escalation">Escalation</option>
-            <option value="overdue">Overdue</option>
-            <option value="critical">Critical</option>
+            <option value="all">
+              All SLA states
+            </option>
+            <option value="on_track">
+              On track
+            </option>
+            <option value="warning">
+              SLA warning
+            </option>
+            <option value="supervisor_escalation">
+              Escalation
+            </option>
+            <option value="overdue">
+              Overdue
+            </option>
+            <option value="critical">
+              Critical
+            </option>
           </select>
         </div>
       </div>
@@ -490,11 +583,15 @@ const AdminComplaints = () => {
       <div className="admin-summary-strip">
         <div className="admin-summary-card">
           <span>Total complaints</span>
-          <strong>{statusCounts.total}</strong>
+          <strong>
+            {statusCounts.total}
+          </strong>
         </div>
 
         <div className="admin-summary-card admin-summary-warning">
-          <span>Awaiting verification</span>
+          <span>
+            Awaiting verification
+          </span>
           <strong>
             {statusCounts.pendingVerification}
           </strong>
@@ -502,34 +599,50 @@ const AdminComplaints = () => {
 
         <div className="admin-summary-card admin-summary-reopened">
           <span>Reopened</span>
-          <strong>{statusCounts.reopened}</strong>
+          <strong>
+            {statusCounts.reopened}
+          </strong>
         </div>
 
         <div className="admin-summary-card admin-summary-closed">
           <span>Closed</span>
-          <strong>{statusCounts.closed}</strong>
+          <strong>
+            {statusCounts.closed}
+          </strong>
         </div>
       </div>
 
       <div className="admin-summary-strip admin-sla-summary-strip">
         <div className="admin-summary-card admin-summary-sla-warning">
           <span>SLA warning</span>
-          <strong>{slaCounts.warning}</strong>
+          <strong>
+            {slaCounts.warning}
+          </strong>
         </div>
 
         <div className="admin-summary-card admin-summary-sla-escalation">
-          <span>Supervisor escalation</span>
-          <strong>{slaCounts.escalation}</strong>
+          <span>
+            Supervisor escalation
+          </span>
+          <strong>
+            {slaCounts.escalation}
+          </strong>
         </div>
 
         <div className="admin-summary-card admin-summary-sla-overdue">
           <span>Overdue</span>
-          <strong>{slaCounts.overdue}</strong>
+          <strong>
+            {slaCounts.overdue}
+          </strong>
         </div>
 
         <div className="admin-summary-card admin-summary-sla-critical">
-          <span>Critical backlog</span>
-          <strong>{slaCounts.critical}</strong>
+          <span>
+            Critical backlog
+          </span>
+          <strong>
+            {slaCounts.critical}
+          </strong>
         </div>
       </div>
 
@@ -554,9 +667,7 @@ const AdminComplaints = () => {
               {filteredComplaints.length} shown
             </p>
 
-            <h3>
-              Complaints
-            </h3>
+            <h3>Complaints</h3>
           </div>
 
           <span>
@@ -565,197 +676,247 @@ const AdminComplaints = () => {
         </div>
 
         {loading ? (
-          <div className="admin-empty-state">
+          <div className="py-12 px-2 text-center text-(--muted)">
             <Loader2
               size={28}
-              className="animate-spin"
+              className="animate-spin mb-1.5"
             />
 
-            <p style={{ color: 'var(--muted)' }}>
+            <p className="text-(--muted)">
               Loading complaints...
             </p>
           </div>
-        ) : filteredComplaints.length === 0 ? (
-          <div className="admin-empty-state">
-            <ClipboardList size={30} />
+        ) : filteredComplaints.length ===
+          0 ? (
+          <div className="py-12 px-2 text-center text-(--muted)">
+            <ClipboardList
+              size={30}
+              className="mb-1.5"
+            />
 
-            <p style={{ color: 'var(--muted)' }}>
+            <p className="text-(--muted)">
               No complaints found.
             </p>
           </div>
         ) : (
-          <div className="admin-complaint-list">
-            {filteredComplaints.map((complaint) => (
-              <article
-                key={complaint.id}
-                className={`admin-complaint-card ${
-                  complaint.status === 'closed' ||
-                  complaint.status === 'verified'
-                    ? 'admin-complaint-card-final'
-                    : ''
-                }`}
-              >
-                <div>
-                  <div className="admin-complaint-meta">
-                    <strong>
-                      {complaint.complaint_number}
-                    </strong>
+          <div className="grid gap-2.5">
+            {filteredComplaints.map(
+              (complaint) => (
+                <article
+                  key={complaint.id}
+                  className={`admin-complaint-card ${
+                    complaint.status ===
+                      'closed' ||
+                    complaint.status ===
+                      'verified'
+                      ? 'admin-complaint-card-final'
+                      : ''
+                  }`}
+                >
+                  <div>
+                    <div className="flex flex-wrap items-center gap-[7px]">
+                      <strong>
+                        {
+                          complaint.complaint_number
+                        }
+                      </strong>
 
-                    <span
-                      className={
-                        priorityClass(
+                      <span
+                        className={priorityClass(
                           complaint.priority
-                        )
-                      }
-                    >
-                      {String(
-                        complaint.priority ||
-                        'low'
-                      ).toUpperCase()}
-                    </span>
-
-                    <span
-                      className={
-                        statusClass(
-                          complaint.status
-                        )
-                      }
-                    >
-                      {statusLabel(
-                        complaint.status
-                      )}
-                    </span>
-
-                    {complaint.sla?.state && (
-                      <span className={slaClass(complaint.sla.state)}>
-                        {slaLabel(complaint.sla.state)}
+                        )}
+                      >
+                        {String(
+                          complaint.priority ||
+                            'low'
+                        ).toUpperCase()}
                       </span>
-                    )}
+
+                      <span
+                        className={statusClass(
+                          complaint.status
+                        )}
+                      >
+                        {statusLabel(
+                          complaint.status
+                        )}
+                      </span>
+
+                      {complaint.sla?.state && (
+                        <span
+                          className={slaClass(
+                            complaint.sla
+                              .state
+                          )}
+                        >
+                          {slaLabel(
+                            complaint.sla
+                              .state
+                          )}
+                        </span>
+                      )}
+                    </div>
+
+                    <h4 className="admin-complaint-title">
+                      {complaint.title ||
+                        'Untitled complaint'}
+                    </h4>
+
+                    <p className="admin-complaint-subtitle">
+                      {complaint.category_name ||
+                        complaint.category ||
+                        'Unknown'}
+                      {' · '}
+                      {complaint.department_name ||
+                        'Department'}
+                    </p>
+
+                    <p className="admin-complaint-assignment">
+                      {complaint.assignment
+                        ? `Officer: ${complaint.assignment.name}`
+                        : 'Officer: Not assigned'}
+                    </p>
+
+                    {complaint.sla?.state &&
+                      complaint.sla
+                        ?.elapsed_percentage !=
+                        null && (
+                        <p className="admin-complaint-sla-detail">
+                          SLA:{' '}
+                          {slaLabel(
+                            complaint.sla
+                              .state
+                          )}{' '}
+                          ·{' '}
+                          {complaint.sla.elapsed_percentage.toFixed(
+                            0
+                          )}
+                          % of{' '}
+                          {complaint.sla
+                            .target_hours ??
+                            '—'}
+                          h target
+                        </p>
+                      )}
                   </div>
 
-                  <h4 className="admin-complaint-title">
-                    {complaint.title ||
-                      'Untitled complaint'}
-                  </h4>
-
-                  <p className="admin-complaint-subtitle">
-                    {complaint.category_name ||
-                      complaint.category ||
-                      'Unknown'}
-                    {' · '}
-                    {complaint.department_name ||
-                      'Department'}
-                  </p>
-
-                  <p className="admin-complaint-assignment">
-                    {complaint.assignment
-                      ? `Officer: ${complaint.assignment.name}`
-                      : 'Officer: Not assigned'}
-                  </p>
-
-                  {complaint.sla?.state && complaint.sla?.elapsed_percentage != null && (
-                    <p className="admin-complaint-sla-detail">
-                      SLA: {slaLabel(complaint.sla.state)} · {complaint.sla.elapsed_percentage.toFixed(0)}% of {complaint.sla.target_hours ?? '—'}h target
-                    </p>
-                  )}
-                </div>
-
-                <div className="admin-complaint-actions">
-                  <button
-                    className="admin-action-btn admin-view-btn"
-                    type="button"
-                    onClick={() =>
-                      openReport(
-                        complaint.id
-                      )
-                    }
-                    disabled={reportLoading}
-                  >
-                    <Eye size={16} />
-                    View Report
-                  </button>
-
-                  {complaint.status ===
-                    'pending_verification' && (
+                  <div className="flex w-full flex-wrap items-center justify-start gap-2 min-[901px]:justify-end">
                     <button
-                      className="admin-action-btn admin-verify-btn"
+                      className="admin-action-btn admin-view-btn w-full min-[601px]:w-auto"
                       type="button"
                       onClick={() =>
-                        handleVerify(
+                        openReport(
                           complaint.id
                         )
                       }
-                      disabled={
-                        verifyingComplaintId ===
-                        complaint.id
-                      }
+                      disabled={reportLoading}
                     >
-                      {verifyingComplaintId ===
-                      complaint.id ? (
-                        <>
-                          <Loader2
-                            size={16}
-                            className="animate-spin"
-                          />
-                          Verifying...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle size={16} />
-                          Verify Resolution
-                        </>
-                      )}
+                      <Eye size={16} />
+                      View Report
                     </button>
-                  )}
 
-                  {[
-                    'received',
-                    'reopened',
-                  ].includes(
-                    complaint.status
-                  ) && (
-                    <button
-                      className="admin-action-btn admin-assign-btn"
-                      type="button"
-                      onClick={() =>
-                        openAssignment(
-                          complaint
-                        )
-                      }
-                      disabled={assigning}
-                    >
-                      <UserRound size={16} />
-                      {complaint.assignment
-                        ? 'Reassign'
-                        : 'Assign officer'}
-                    </button>
-                  )}
-                </div>
-              </article>
-            ))}
+                    {complaint.status ===
+                      'pending_verification' && (
+                      <button
+                        className="admin-action-btn admin-verify-btn w-full min-[601px]:w-auto"
+                        type="button"
+                        onClick={() =>
+                          handleVerify(
+                            complaint.id
+                          )
+                        }
+                        disabled={
+                          verifyingComplaintId ===
+                          complaint.id
+                        }
+                      >
+                        {verifyingComplaintId ===
+                        complaint.id ? (
+                          <>
+                            <Loader2
+                              size={16}
+                              className="animate-spin"
+                            />
+                            Verifying...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle
+                              size={16}
+                            />
+                            Verify Resolution
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {[
+                      'received',
+                      'reopened',
+                    ].includes(
+                      complaint.status
+                    ) && (
+                      <button
+                        className="admin-action-btn admin-assign-btn w-full min-[601px]:w-auto"
+                        type="button"
+                        onClick={() =>
+                          openAssignment(
+                            complaint
+                          )
+                        }
+                        disabled={assigning}
+                      >
+                        <UserRound
+                          size={16}
+                        />
+                        {complaint.assignment
+                          ? 'Reassign'
+                          : 'Assign officer'}
+                      </button>
+                    )}
+                  </div>
+                </article>
+              )
+            )}
           </div>
         )}
       </div>
 
       <AdminComplaintModals
-        selectedComplaint={selectedComplaint}
+        selectedComplaint={
+          selectedComplaint
+        }
         officers={officers}
-        officersLoading={officersLoading}
+        officersLoading={
+          officersLoading
+        }
         officersError={officersError}
-        selectedOfficer={selectedOfficer}
+        selectedOfficer={
+          selectedOfficer
+        }
         assigning={assigning}
         assignError={assignError}
         assignSuccess={assignSuccess}
-        reportComplaint={reportComplaint}
-        reportLoading={reportLoading}
+        reportComplaint={
+          reportComplaint
+        }
+        reportLoading={
+          reportLoading
+        }
         reportError={reportError}
         verifyingComplaintId={
           verifyingComplaintId
         }
-        onSelectOfficer={setSelectedOfficer}
-        onCloseAssignment={closeAssignment}
+        onSelectOfficer={
+          setSelectedOfficer
+        }
+        onCloseAssignment={
+          closeAssignment
+        }
         onAssign={handleAssign}
-        onCloseReport={closeReport}
+        onCloseReport={
+          closeReport
+        }
         onVerify={handleVerify}
       />
     </div>

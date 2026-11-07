@@ -1,504 +1,208 @@
 /* ============================================================
-   CITIZEN PORTAL
-   Citizen-specific styles. Shared CivicShell stays in index.css.
-   ============================================================ */
-/* ============================================================
    CITIZEN PROFILE
    ============================================================ */
-.civic-profile-page {
-  max-width: 1180px;
-  margin: 0 auto;
-}
-.civic-profile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 30px 32px;
-  margin-bottom: 20px;
-  border-radius: 20px;
-  color: #fff;
-  background: linear-gradient(
-    112deg,
-    #254755,
-    #315e63
-  );
-}
-.civic-profile-header h2 {
-  margin: 0;
-  font: 650 32px/1.1 Fraunces, Georgia, serif;
-}
-.civic-profile-header p:not(.civic-eyebrow) {
-  margin-top: 8px;
-  color: #d6e2e0;
-  font-size: 14px;
-  line-height: 1.6;
-}
-.civic-profile-header .civic-eyebrow {
-  color: #f3c183;
-}
-.civic-profile-avatar {
-  display: grid;
-  place-items: center;
-  width: 66px;
-  height: 66px;
-  flex: none;
-  border-radius: 18px;
-  color: #f5cc95;
-  background: #ffffff14;
-  border: 1px solid #ffffff1e;
-}
-.civic-profile-message {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 12px 14px;
-  margin-bottom: 18px;
-  border-radius: 10px;
-  font-size: 13px;
-}
-.civic-profile-error {
-  color: #a84333;
-  background: #fce9e5;
-  border: 1px solid #f2cbc4;
-}
-.civic-profile-success {
-  color: #397255;
-  background: #e6f4eb;
-  border: 1px solid #c9e4d3;
-}
-.civic-profile-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr);
-  gap: 18px;
-}
-.civic-profile-card {
-  padding: 25px;
-}
-.civic-profile-fields {
-  display: grid;
-  gap: 19px;
-  margin-top: 22px;
-}
-.civic-profile-field {
-  display: grid;
-  gap: 7px;
-}
-.civic-profile-field > span {
-  color: #4d616e;
-  font-size: 12px;
-  font-weight: 700;
-}
-.civic-profile-field > small {
-  color: #7b8a91;
-  font-size: 11px;
-  line-height: 1.5;
-}
-.civic-profile-input {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 48px;
-  padding: 0 13px;
-  color: #84939a;
-  border: 1px solid #dcd6ca;
-  border-radius: 10px;
-  background: #fff;
-}
-.civic-profile-input:focus-within {
-  border-color: #6f957f;
-  box-shadow: 0 0 0 3px #6f957f20;
-}
-.civic-profile-input input {
-  min-width: 0;
-  flex: 1;
-  border: 0;
-  outline: 0;
-  color: #1f3346;
-  background: transparent;
-  font: 14px Inter, sans-serif;
-}
-.civic-profile-readonly {
-  background: #f4f2ed;
-}
-.civic-profile-readonly input {
-  color: #647680;
-  cursor: not-allowed;
-}
-.civic-verified {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex: none;
-  padding: 4px 7px;
-  border-radius: 99px;
-  color: #397255;
-  background: #e6f4eb;
-  font-size: 10px;
-  font-weight: 700;
-}
-.civic-profile-save {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 47px;
-  margin-top: 3px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: 10px;
-  color: #fff;
-  background: #254755;
-  font: 700 14px Inter, sans-serif;
-  cursor: pointer;
-}
-.civic-profile-save:hover {
-  background: #1f3346;
-}
-.civic-profile-save:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-.civic-profile-side {
-  display: grid;
-  align-content: start;
-  gap: 18px;
-}
-.civic-profile-status {
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-  margin-top: 18px;
-  color: #397255;
-}
-.civic-profile-status > div {
-  display: grid;
-  gap: 4px;
-}
-.civic-profile-status strong {
-  color: #1f3346;
-  font-size: 14px;
-}
-.civic-profile-status span {
-  color: #718087;
-  font-size: 12px;
-  line-height: 1.5;
-}
-.civic-profile-trust {
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-  margin-top: 13px;
-}
-.civic-profile-trust strong {
-  color: #c65e45;
-  font: 700 43px Fraunces, Georgia, serif;
-}
-.civic-profile-trust span {
-  color: #6d7d88;
-  font-size: 12px;
-}
-.civic-profile-note {
-  margin-top: 9px;
-  color: #718087;
-  font-size: 12px;
-  line-height: 1.6;
-}
-.civic-profile-meta {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 13px 0;
-  color: #6f957f;
-  border-bottom: 1px solid var(--line);
-}
-.civic-profile-meta:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-.civic-profile-meta > div {
-  display: grid;
-  gap: 3px;
-}
-.civic-profile-meta span {
-  color: #7a8990;
-  font-size: 11px;
-}
-.civic-profile-meta strong {
-  color: #1f3346;
-  font-size: 13px;
-}
-.civic-profile-retry {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 18px;
-  padding: 10px 16px;
-  border: 0;
-  border-radius: 9px;
-  color: #fff;
-  background: #254755;
-  font: 700 13px Inter, sans-serif;
-  cursor: pointer;
-}
+.civic-profile-page { max-width: 1180px; margin: 0 auto; }
+.civic-profile-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 30px 32px; margin-bottom: 20px; border-radius: 20px; color: #fff; background: linear-gradient( 112deg, #254755, #315e63 ); }
+.civic-profile-header h2 { margin: 0; font: 650 32px/1.1 Fraunces, Georgia, serif; }
+.civic-profile-header p:not(.civic-eyebrow) { margin-top: 8px; color: #d6e2e0; font-size: 14px; line-height: 1.6; }
+.civic-profile-header .civic-eyebrow { color: #f3c183; }
+.civic-profile-avatar { display: grid; place-items: center; width: 66px; height: 66px; flex: none; border-radius: 18px; color: #f5cc95; background: #ffffff14; border: 1px solid #ffffff1e; }
+.civic-profile-message { display: flex; align-items: center; gap: 9px; padding: 12px 14px; margin-bottom: 18px; border-radius: 10px; font-size: 13px; }
+.civic-profile-error { color: #a84333; background: #fce9e5; border: 1px solid #f2cbc4; }
+.civic-profile-success { color: #397255; background: #e6f4eb; border: 1px solid #c9e4d3; }
+.civic-profile-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr); gap: 18px; }
+.civic-profile-card { padding: 25px; }
+.civic-profile-fields { display: grid; gap: 19px; margin-top: 22px; }
+.civic-profile-field { display: grid; gap: 7px; }
+.civic-profile-field > span { color: #4d616e; font-size: 12px; font-weight: 700; }
+.civic-profile-field > small { color: #7b8a91; font-size: 11px; line-height: 1.5; }
+.civic-profile-input { display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 0 13px; color: #84939a; border: 1px solid #dcd6ca; border-radius: 10px; background: #fff; }
+.civic-profile-input:focus-within { border-color: #6f957f; box-shadow: 0 0 0 3px #6f957f20; }
+.civic-profile-input input { min-width: 0; flex: 1; border: 0; outline: 0; color: #1f3346; background: transparent; font: 14px Inter, sans-serif; }
+.civic-profile-readonly { background: #f4f2ed; }
+.civic-profile-readonly input { color: #647680; cursor: not-allowed; }
+.civic-verified { display: inline-flex; align-items: center; gap: 4px; flex: none; padding: 4px 7px; border-radius: 99px; color: #397255; background: #e6f4eb; font-size: 10px; font-weight: 700; }
+.civic-profile-save { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 47px; margin-top: 3px; padding: 0 18px; border: 0; border-radius: 10px; color: #fff; background: #254755; font: 700 14px Inter, sans-serif; cursor: pointer; }
+.civic-profile-save:hover { background: #1f3346; }
+.civic-profile-save:disabled { opacity: 0.65; cursor: not-allowed; }
+.civic-profile-side { display: grid; align-content: start; gap: 18px; }
+.civic-profile-status { display: flex; align-items: flex-start; gap: 11px; margin-top: 18px; color: #397255; }
+.civic-profile-status > div { display: grid; gap: 4px; }
+.civic-profile-status strong { color: #1f3346; font-size: 14px; }
+.civic-profile-status span { color: #718087; font-size: 12px; line-height: 1.5; }
+.civic-profile-trust { display: flex; align-items: baseline; gap: 9px; margin-top: 13px; }
+.civic-profile-trust strong { color: #c65e45; font: 700 43px Fraunces, Georgia, serif; }
+.civic-profile-trust span { color: #6d7d88; font-size: 12px; }
+.civic-profile-note { margin-top: 9px; color: #718087; font-size: 12px; line-height: 1.6; }
+.civic-profile-meta { display: flex; align-items: center; gap: 11px; padding: 13px 0; color: #6f957f; border-bottom: 1px solid var(--line); }
+.civic-profile-meta:last-child { border-bottom: 0; padding-bottom: 0; }
+.civic-profile-meta > div { display: grid; gap: 3px; }
+.civic-profile-meta span { color: #7a8990; font-size: 11px; }
+.civic-profile-meta strong { color: #1f3346; font-size: 13px; }
+.civic-profile-retry { display: inline-flex; align-items: center; justify-content: center; margin-top: 18px; padding: 10px 16px; border: 0; border-radius: 9px; color: #fff; background: #254755; font: 700 13px Inter, sans-serif; cursor: pointer; }
 @media (max-width: 900px) {
-  .civic-profile-grid {
-    grid-template-columns: 1fr;
-  }
+  .civic-profile-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .civic-profile-header {
-    align-items: flex-start;
-    padding: 24px;
-  }
-  .civic-profile-header h2 {
-    font-size: 27px;
-  }
-  .civic-profile-avatar {
-    width: 52px;
-    height: 52px;
-  }
-  .civic-profile-card {
-    padding: 19px;
-  }
-  .civic-profile-input {
-    min-height: 46px;
-  }
-  .civic-profile-save {
-    width: 100%;
-  }
+  .civic-profile-header { align-items: flex-start; padding: 24px; }
+  .civic-profile-header h2 { font-size: 27px; }
+  .civic-profile-avatar { width: 52px; height: 52px; }
+  .civic-profile-card { padding: 19px; }
+  .civic-profile-input { min-height: 46px; }
+  .civic-profile-save { width: 100%; }
 }
-.report-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 18px;
-  width: 100%;
-  padding: 26px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: #fffdf9;
-  color: var(--ink);
-  text-align: left;
-  cursor: pointer;
-}
-.report-card-icon {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  border-radius: 14px;
-}
-.report-card-icon-road {
-  color: #a94d38;
-  background: #f9e9e4;
-}
-.report-card-icon-garbage {
-  color: #397255;
-  background: #e8f3eb;
-}
-.report-card-label {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-.report-card-label-road {
-  color: #a94d38;
-}
-.report-card-label-garbage {
-  color: #397255;
-}
-.report-card-title {
-  margin: 7px 0;
-  font-family: Fraunces, Georgia, serif;
-  font-size: 22px;
-}
-.report-card-description {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.6;
-}
-.report-card-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 18px;
-  font-size: 13px;
-  font-weight: 700;
-}
-.report-card-action-road {
-  color: #a94d38;
-}
-.report-card-action-garbage {
-  color: #397255;
-}
+.report-card { display: flex; align-items: flex-start; gap: 18px; width: 100%; padding: 26px; border: 1px solid var(--line); border-radius: 16px; background: #fffdf9; color: var(--ink); text-align: left; cursor: pointer; }
+.report-card-icon { display: grid; place-items: center; width: 56px; height: 56px; flex-shrink: 0; border-radius: 14px; }
+.report-card-icon-road { color: #a94d38; background: #f9e9e4; }
+.report-card-icon-garbage { color: #397255; background: #e8f3eb; }
+.report-card-label { font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+.report-card-label-road { color: #a94d38; }
+.report-card-label-garbage { color: #397255; }
+.report-card-title { margin: 7px 0; font-family: Fraunces, Georgia, serif; font-size: 22px; }
+.report-card-description { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.report-card-action { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; font-size: 13px; font-weight: 700; }
+.report-card-action-road { color: #a94d38; }
+.report-card-action-garbage { color: #397255; }
 /* ============================================================
    CITIZEN RESPONSIVE REFINEMENTS
    ============================================================ */
 @media (max-width: 720px) {
-  .civic-profile-header {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 23px 20px;
-  }
-  .civic-profile-header > div:first-child {
-    min-width: 0;
-  }
-  .civic-profile-header h2 {
-    font-size: 27px;
-  }
-  .civic-profile-avatar {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-  }
-  .civic-profile-grid {
-    grid-template-columns: 1fr;
-  }
-  .civic-profile-card {
-    padding: 19px;
-  }
-  .civic-profile-save {
-    width: 100%;
-  }
-  .report-card {
-    padding: 20px;
-    gap: 14px;
-  }
-  .report-card-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-  }
-  .report-card-title {
-    font-size: 20px;
-  }
+  .civic-profile-header { flex-direction: column; align-items: flex-start; padding: 23px 20px; }
+  .civic-profile-header > div:first-child { min-width: 0; }
+  .civic-profile-header h2 { font-size: 27px; }
+  .civic-profile-avatar { width: 52px; height: 52px; border-radius: 14px; }
+  .civic-profile-grid { grid-template-columns: 1fr; }
+  .civic-profile-card { padding: 19px; }
+  .civic-profile-save { width: 100%; }
+  .report-card { padding: 20px; gap: 14px; }
+  .report-card-icon { width: 48px; height: 48px; border-radius: 12px; }
+  .report-card-title { font-size: 20px; }
 }
 @media (max-width: 480px) {
-  .civic-profile-header {
-    padding: 20px 17px;
-  }
-  .civic-profile-card {
-    padding: 16px;
-  }
-  .civic-profile-input {
-    min-height: 46px;
-  }
-  .report-card {
-    padding: 17px;
-    gap: 12px;
-  }
-  .report-card-icon {
-    width: 44px;
-    height: 44px;
-  }
-  .report-card-title {
-    font-size: 19px;
-  }
+  .civic-profile-header { padding: 20px 17px; }
+  .civic-profile-card { padding: 16px; }
+  .civic-profile-input { min-height: 46px; }
+  .report-card { padding: 17px; gap: 12px; }
+  .report-card-icon { width: 44px; height: 44px; }
+  .report-card-title { font-size: 19px; }
 }
-
-
 /* ============================================================
-   CITIZEN COMPLAINT TIMELINE
+   COMPLAINT DETAILS + REPORT CAMERA
    ============================================================ */
-.citizen-timeline {
-  display: flex;
-  flex-direction: column;
-}
-
-.citizen-timeline-item {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
-  column-gap: 14px;
-  min-width: 0;
-}
-
-.citizen-timeline-rail {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-}
-
-.citizen-timeline-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
-  border-radius: 50%;
-}
-
-.citizen-timeline-line {
-  width: 2px;
-  flex: 1;
-  min-height: 42px;
-  margin: 5px 0;
-  background: #e4e7ec;
-}
-
-.citizen-timeline-content {
-  min-width: 0;
-  padding: 0 0 24px;
-}
-
-.citizen-timeline-item:last-child
-  .citizen-timeline-content {
-  padding-bottom: 0;
-}
-
-.citizen-timeline-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.citizen-timeline-head strong {
-  color: var(--ink);
-  line-height: 1.4;
-}
-
-.citizen-timeline-head small {
-  flex: none;
-  color: #98a2b3;
-  white-space: nowrap;
-  font-size: 12px;
-}
-
-.citizen-timeline-description {
-  margin: 6px 0 0;
-  color: #667085;
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.citizen-timeline-actor {
-  display: block;
-  margin-top: 6px;
-  color: #8a97a5;
-  font-size: 12px;
-}
-
-.citizen-timeline-photo {
-  display: block;
-  width: min(100%, 320px);
-  max-height: 220px;
-  margin-top: 12px;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-}
-
-@media (max-width: 640px) {
-  .citizen-timeline-head {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .citizen-timeline-head small {
-    white-space: normal;
-  }
+.citizen-complaint-loading { min-height: 420px; display: flex; align-items: center; justify-content: center; }
+.citizen-complaint-loading-content { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); }
+.citizen-complaint-error-state { padding: 40px; text-align: center; }
+.citizen-complaint-error-icon { color: var(--color-danger); margin-bottom: 14px; }
+.citizen-complaint-error-copy { color: var(--text-secondary); margin: 10px 0 20px; }
+.citizen-complaint-retry, .report-camera-retry { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-elevated); color: var(--text-primary); cursor: pointer; font-weight: 600; }
+.citizen-complaint-back, .report-camera-back { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 4px 0; margin-bottom: 18px; color: var(--color-info); font-weight: 700; cursor: pointer; font-size: 14px; }
+.citizen-complaint-status { display: inline-flex; align-items: center; gap: 7px; padding: 9px 13px; border-radius: var(--radius-full); font-size: 14px; font-weight: 700; white-space: nowrap; border: 1px solid transparent; }
+.citizen-complaint-status-received { background: #eef4ff; color: #315c9d; }
+.citizen-complaint-status-assigned, .citizen-complaint-status-verified, .citizen-complaint-status-closed { background: var(--color-success-bg); color: var(--color-success); }
+.citizen-complaint-status-in-progress, .citizen-complaint-status-pending-citizen-response { background: var(--color-warning-bg); color: var(--color-warning); }
+.citizen-complaint-status-pending-verification { background: #f4f0ff; color: #7654a6; }
+.citizen-complaint-status-reopened, .citizen-complaint-status-rejected { background: var(--color-danger-bg); color: var(--color-danger); }
+.citizen-complaint-detail-grid { margin-top: 24px; }
+.citizen-complaint-photo { display: block; width: 100%; max-height: 380px; object-fit: cover; border-radius: var(--radius-md); }
+.citizen-complaint-photo-empty { min-height: 260px; border-radius: var(--radius-md); background: var(--surface-muted); display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+.citizen-complaint-panel { padding: 24px; margin-top: 16px; }
+.civic-content-grid > .citizen-complaint-panel { margin-top: 0; }
+.citizen-complaint-section-title { margin-bottom: 20px; }
+.citizen-complaint-info-list { display: flex; flex-direction: column; gap: 17px; }
+.citizen-complaint-description-panel { margin-top: 16px; }
+.citizen-complaint-description { margin: 0; color: var(--text-secondary); line-height: 1.7; }
+.citizen-complaint-location-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.citizen-complaint-location-note { margin-top: 8px; color: var(--text-secondary); }
+.citizen-complaint-map-link { display: inline-flex; align-items: center; gap: 8px; padding: 10px 15px; border-radius: var(--radius-md); background: var(--surface-muted); color: var(--color-info); text-decoration: none; font-weight: 700; font-size: 14px; }
+.citizen-complaint-response-title { margin-bottom: 8px; }
+.citizen-complaint-response-note { margin-top: 0; color: var(--text-secondary); line-height: 1.6; }
+.citizen-complaint-response-error, .citizen-complaint-response-success { padding: 12px 14px; border-radius: var(--radius-md); margin-top: 16px; font-size: 14px; }
+.citizen-complaint-response-error { background: var(--color-danger-bg); color: var(--color-danger); }
+.citizen-complaint-response-success { background: var(--color-success-bg); color: var(--color-success); }
+.citizen-complaint-response-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.citizen-complaint-choice { padding: 15px 16px; border-radius: 12px; border: 1px solid var(--border-default); background: var(--surface-elevated); cursor: pointer; text-align: left; }
+.citizen-complaint-choice-satisfied.is-selected { border: 2px solid var(--color-success); background: var(--color-success-bg); }
+.citizen-complaint-choice-reopen.is-selected { border: 2px solid var(--color-danger); background: var(--color-danger-bg); }
+.citizen-complaint-choice.is-disabled { cursor: not-allowed; }
+.citizen-complaint-choice-title { display: block; margin-bottom: 4px; }
+.citizen-complaint-choice-copy { color: var(--text-secondary); font-size: 13px; }
+.citizen-complaint-rating { margin-top: 20px; }
+.citizen-complaint-field-label { display: block; font-weight: 700; margin-bottom: 9px; }
+.citizen-complaint-rating-group { display: flex; gap: 6px; align-items: center; }
+.citizen-complaint-rating-star { border: 0; background: transparent; padding: 2px; cursor: pointer; color: #c8ced8; }
+.citizen-complaint-rating-star.is-active { color: #d9a441; }
+.citizen-complaint-rating-star.is-disabled { cursor: not-allowed; }
+.citizen-complaint-review { margin-top: 20px; }
+.citizen-complaint-review-input { width: 100%; resize: vertical; padding: 12px 13px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-elevated); color: var(--text-primary); font: inherit; box-sizing: border-box; }
+.citizen-complaint-submit { display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; padding: 11px 16px; border: 0; border-radius: var(--radius-md); background: var(--color-success); color: var(--text-inverse); cursor: pointer; font-weight: 700; }
+.citizen-complaint-submit.is-disabled { cursor: not-allowed; opacity: .65; }
+.citizen-complaint-history-title { margin-bottom: 24px; }
+.citizen-complaint-history-note { color: var(--text-secondary); }
+.citizen-complaint-history-list { display: flex; flex-direction: column; }
+.citizen-complaint-history-item { display: flex; gap: 15px; }
+.citizen-complaint-history-rail { display: flex; flex-direction: column; align-items: center; width: 28px; flex-shrink: 0; }
+.citizen-complaint-history-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.citizen-complaint-history-icon-received { background: #eef4ff; color: #315c9d; }
+.citizen-complaint-history-icon-assigned, .citizen-complaint-history-icon-verified, .citizen-complaint-history-icon-closed { background: var(--color-success-bg); color: var(--color-success); }
+.citizen-complaint-history-icon-in-progress, .citizen-complaint-history-icon-pending-citizen-response { background: var(--color-warning-bg); color: var(--color-warning); }
+.citizen-complaint-history-icon-pending-verification { background: #f4f0ff; color: #7654a6; }
+.citizen-complaint-history-icon-reopened, .citizen-complaint-history-icon-rejected { background: var(--color-danger-bg); color: var(--color-danger); }
+.citizen-complaint-history-connector { width: 2px; flex: 1; min-height: 44px; background: var(--border-subtle); margin: 5px 0; }
+.citizen-complaint-history-event { padding-bottom: 24px; flex: 1; }
+.citizen-complaint-history-item.is-last .citizen-complaint-history-event { padding-bottom: 0; }
+.citizen-complaint-history-event-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.citizen-complaint-history-time { color: var(--text-muted); white-space: nowrap; }
+.citizen-complaint-history-from { margin: 5px 0 0; color: var(--text-secondary); font-size: 13px; }
+.citizen-complaint-history-remarks { margin: 7px 0 0; color: var(--text-secondary); line-height: 1.5; }
+.citizen-complaint-info-row { display: flex; align-items: center; gap: 12px; }
+.citizen-complaint-info-icon { width: 34px; height: 34px; border-radius: 9px; background: var(--color-info-bg); color: var(--color-info); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.citizen-complaint-info-label { display: block; color: var(--text-muted); margin-bottom: 2px; }
+.report-camera-container { max-width: 850px; width: 100%; margin: 0 auto; }
+.report-camera-heading { margin: 18px 0 8px; font-family: var(--font-display); color: var(--text-primary); }
+.report-camera-subtitle { margin: 0; color: var(--text-secondary); font-size: 14px; }
+.report-camera-location-section { margin-top: 20px; }
+.report-camera-location-row { display: flex; align-items: center; gap: 12px; }
+.report-camera-location-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--color-info-bg); color: var(--civic-navy-500); }
+.report-camera-location-title { display: block; color: var(--text-primary); font-size: 14px; }
+.report-camera-location-coordinates { display: block; margin-top: 4px; color: var(--text-secondary); font-size: 12px; }
+.report-camera-error { margin-top: 14px; color: var(--color-danger); font-size: 13px; }
+.report-camera-retry { margin-top: 13px; padding: 9px 14px; border: 0; border-radius: 9px; background: var(--civic-navy-900); color: var(--text-inverse); font-size: 12px; font-weight: 700; }
+.report-camera-camera-intro { padding: 32px 20px; text-align: center; }
+.report-camera-camera-icon { margin-bottom: 12px; color: var(--civic-navy-500); }
+.report-camera-camera-title { margin: 0 0 7px; }
+.report-camera-camera-copy { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
+.report-camera-camera-button, .report-camera-capture-button, .report-camera-submit { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: var(--radius-md); color: var(--text-inverse); font-size: 13px; font-weight: 700; cursor: pointer; }
+.report-camera-camera-button { margin-top: 18px; padding: 12px 20px; margin-inline: auto; background: var(--civic-navy-900); }
+.report-camera-viewport { position: relative; overflow: hidden; border-radius: 14px; background: #111; }
+.report-camera-video { display: block; width: 100%; max-height: 560px; object-fit: cover; }
+.report-camera-zoom { position: absolute; top: 14px; right: 14px; padding: 6px 10px; border-radius: 20px; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; font-weight: 700; }
+.report-camera-capture-button { width: 100%; margin-top: 15px; padding: 14px; background: var(--civic-terracotta-500); }
+.report-camera-photo-title { margin: 5px 0 15px; }
+.report-camera-photo { display: block; width: 100%; max-height: 560px; object-fit: contain; border-radius: 14px; background: #111; }
+.report-camera-analysis { margin-top: 18px; padding: 15px; border-radius: 11px; background: var(--surface-muted); color: var(--text-primary); text-align: center; font-size: 13px; font-weight: 600; }
+.report-camera-result { margin-top: 18px; padding: 18px; border: 1px solid var(--border-default); border-radius: 12px; background: var(--surface-card); }
+.report-camera-result-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--text-muted); }
+.report-camera-result-prediction { margin-top: 6px; font-size: 20px; font-weight: 700; color: var(--color-danger); }
+.report-camera-result-prediction.is-accepted { color: var(--color-success); }
+.report-camera-result-confidence { margin-top: 5px; color: var(--text-secondary); font-size: 13px; }
+.report-camera-result-message { display: flex; align-items: center; gap: 7px; margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--border-default); font-size: 13px; font-weight: 600; }
+.report-camera-result-message.is-accepted { color: var(--color-success); }
+.report-camera-result-message.is-rejected { color: var(--civic-terracotta-700); }
+.report-camera-submission { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-default); }
+.report-camera-label { display: block; margin-top: 10px; margin-bottom: 7px; font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.report-camera-optional { color: var(--text-secondary); font-weight: 400; }
+.report-camera-textarea { width: 100%; padding: 12px 13px; border: 1px solid var(--border-default); border-radius: 10px; background: var(--surface-elevated); color: var(--text-primary); font-family: inherit; font-size: 13px; resize: vertical; box-sizing: border-box; }
+.report-camera-submit { width: 100%; margin-top: 15px; padding: 14px; background: var(--color-success); }
+.report-camera-submit.is-loading { opacity: .65; cursor: not-allowed; }
+.report-camera-success { margin-top: 20px; padding: 20px; border-radius: 12px; background: var(--color-success-bg); border: 1px solid #cde5d4; }
+.report-camera-success-title { display: flex; align-items: center; gap: 9px; color: var(--color-success); }
+.report-camera-success-copy { margin: 12px 0 0; color: var(--text-primary); font-size: 13px; }
+.report-camera-complaint-number { margin-top: 14px; padding: 12px 14px; border-radius: 9px; background: color-mix(in srgb, var(--surface-elevated) 60%, transparent); font-size: 13px; }
+.report-camera-success-meta { margin-top: 8px; color: var(--text-secondary); font-size: 12px; }
+.report-camera-retake { display: inline-flex; align-items: center; justify-content: center; gap: 7px; margin-top: 15px; padding: 11px 16px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-elevated); color: var(--text-primary); font-size: 13px; font-weight: 600; cursor: pointer; }
+.report-camera-canvas { display: none; }
+@media (max-width: 700px) {
+  .citizen-complaint-response-choices { grid-template-columns: 1fr; }
+  .citizen-complaint-location-header { align-items: flex-start; flex-direction: column; }
+  .report-camera-container { max-width: 100%; }
 }
